@@ -1,0 +1,15 @@
+[
+  {
+    "teamA": "LA Clippers",
+    "scoreA": 119,
+    "teamB": "New York Knicks",
+    "scoreB": 100,
+    "week": "1",
+    "seasonNo": "1",
+    "submittedBy": "<@1076243288056664234>",
+    "resultType": "Force Win",
+    "approved": true,
+    "approvedBy": "1076243288056664234",
+    "approvedAt": "2025-10-11T18:29:51.865Z"
+  }
+]
