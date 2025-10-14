@@ -17,11 +17,16 @@ export async function execute(interaction) {
     const guild = interaction.guild;
     const allCategories = guild.channels.cache.filter(c => c.type === ChannelType.GuildCategory).map(c => `${c.name} (${c.id})`);
     console.log(`[deletegamechannel] All categories in guild:`, allCategories);
-    console.log(`[deletegamechannel] Start execute: replied=${interaction.replied}, deferred=${interaction.deferred}`);
+    console.log(`[deletegamechannel] Start execute`);
     // Debug: List all channels in the guild
     const allChannels = guild.channels.cache.map(c => `${c.name} (${c.id})`);
     console.log(`[deletegamechannel] All channels in guild:`, allChannels);
-    await interaction.deferReply();
+    try {
+        await interaction.deferReply({ ephemeral: false });
+    } catch (err) {
+        console.error('[deletegamechannel] Failed to defer reply:', err);
+        return;
+    }
     try {
         let replyMsg = '';
         const week = interaction.options.getInteger('week');
@@ -75,12 +80,10 @@ export async function execute(interaction) {
         await interaction.editReply({ content: replyMsg });
     } catch (err) {
         console.error('[deletegamechannel] Fatal error:', err);
-        if (!(interaction.replied || interaction.deferred)) {
-            try {
-                await interaction.followUp({ content: 'Error clearing week channels.' });
-            } catch (e) {
-                console.error('[deletegamechannel] Failed to send followUp reply:', e);
-            }
+        try {
+            await interaction.editReply({ content: 'Error clearing week channels.' });
+        } catch (e) {
+            console.error('[deletegamechannel] Failed to edit reply for error:', e);
         }
     }
 }
