@@ -247,7 +247,7 @@ export async function execute(interaction) {
         // Only update currentWeek in season.json
         const absSeasonPath = path.resolve(SEASON_FILE);
         let original = safeReadJSON(absSeasonPath, { currentWeek: 1, seasonNo: 1, coachRoleMap: {} });
-        original.currentWeek = weekNum + 1;
+        original.currentWeek = weekNum;
         writeJSON(absSeasonPath, original);
 
     } catch (err) {

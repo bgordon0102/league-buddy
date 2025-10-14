@@ -1,216 +1,212 @@
 {
-  "east": [
-    {
-      "team": "Atlanta Hawks",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "Boston Celtics",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "Brooklyn Nets",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "Charlotte Hornets",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "Chicago Bulls",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "Cleveland Cavaliers",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "Detroit Pistons",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "Indiana Pacers",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "Miami Heat",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "Milwaukee Bucks",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "Orlando Magic",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "Philadelphia 76ers",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "Toronto Raptors",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "Washington Wizards",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0
-    },
-    {
-      "team": "New York Knicks",
-      "wins": 0,
-      "losses": 1,
-      "winPct": 0,
-      "gb": 0.5
-    }
-  ],
-  "west": [
-    {
-      "team": "LA Clippers",
-      "wins": 1,
-      "losses": 0,
-      "winPct": 1,
-      "gb": 0
-    },
-    {
-      "team": "Dallas Mavericks",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    },
-    {
-      "team": "Denver Nuggets",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    },
-    {
-      "team": "Golden State Warriors",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    },
-    {
-      "team": "Houston Rockets",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    },
-    {
-      "team": "Los Angeles Lakers",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    },
-    {
-      "team": "Memphis Grizzlies",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    },
-    {
-      "team": "Minnesota Timberwolves",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    },
-    {
-      "team": "New Orleans Pelicans",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    },
-    {
-      "team": "Oklahoma City Thunder",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    },
-    {
-      "team": "Phoenix Suns",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    },
-    {
-      "team": "Portland Trail Blazers",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    },
-    {
-      "team": "Sacramento Kings",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    },
-    {
-      "team": "San Antonio Spurs",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    },
-    {
-      "team": "Utah Jazz",
-      "wins": 0,
-      "losses": 0,
-      "winPct": 0,
-      "gb": 0.5
-    }
-  ]
+  "Memphis Grizzlies": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Milwaukee Bucks": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Utah Jazz": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Indiana Pacers": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Golden State Warriors": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Toronto Raptors": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Phoenix Suns": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Brooklyn Nets": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Detroit Pistons": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Chicago Bulls": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "San Antonio Spurs": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "LA Clippers": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "New York Knicks": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Minnesota Timberwolves": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Denver Nuggets": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Philadelphia 76ers": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Charlotte Hornets": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Oklahoma City Thunder": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "New Orleans Pelicans": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Miami Heat": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Washington Wizards": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Portland Trail Blazers": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Orlando Magic": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Dallas Mavericks": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Houston Rockets": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Sacramento Kings": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Atlanta Hawks": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Boston Celtics": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Los Angeles Lakers": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  },
+  "Cleveland Cavaliers": {
+    "wins": 0,
+    "losses": 0,
+    "games": 0,
+    "pointsFor": 0,
+    "pointsAgainst": 0
+  }
 }
