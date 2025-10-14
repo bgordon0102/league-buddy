@@ -14,11 +14,12 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
     // Log all category names for debugging
+    const guild = interaction.guild;
     const allCategories = guild.channels.cache.filter(c => c.type === ChannelType.GuildCategory).map(c => `${c.name} (${c.id})`);
     console.log(`[deletegamechannel] All categories in guild:`, allCategories);
     console.log(`[deletegamechannel] Start execute: replied=${interaction.replied}, deferred=${interaction.deferred}`);
     // Debug: List all channels in the guild
-    const allChannels = interaction.guild.channels.cache.map(c => `${c.name} (${c.id})`);
+    const allChannels = guild.channels.cache.map(c => `${c.name} (${c.id})`);
     console.log(`[deletegamechannel] All channels in guild:`, allChannels);
     try {
         if (interaction.replied || interaction.deferred) return;
