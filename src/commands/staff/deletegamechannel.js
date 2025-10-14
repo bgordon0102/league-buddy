@@ -35,7 +35,7 @@ export async function execute(interaction) {
         }
         const allChannels = guild.channels.cache.map(c => `${c.name} (${c.id})`);
         console.log(`[deletegamechannel] All channels in guild:`, allChannels);
-        const category = guild.channels.cache.find(c => c.type === ChannelType.GuildCategory && c.name === `Season 1 - Week ${week}`);
+        const category = guild.channels.cache.find(c => c.type === ChannelType.GuildCategory && c.name === `Week ${week} Games`);
         if (!category) {
             // Truncate channel list to avoid exceeding Discord's 2000 character limit
             const maxChannels = 20;
