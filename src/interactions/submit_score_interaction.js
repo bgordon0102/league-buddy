@@ -34,7 +34,12 @@ export async function execute(interaction) {
     // Load coachRoleMap.json
     let coachRoleMap = {};
     try {
-        coachRoleMap = JSON.parse(fs.readFileSync('./data/coachRoleMap.json', 'utf8'));
+        const guildId = process.env.DISCORD_GUILD_ID;
+        let coachRoleMapFile = './data/coachRoleMap.main.json';
+        if (guildId === '1407111281147641976') {
+            coachRoleMapFile = './data/coachRoleMap.dev.json';
+        }
+        coachRoleMap = JSON.parse(fs.readFileSync(coachRoleMapFile, 'utf8'));
     } catch (e) {
         console.log('[submit_score] ERROR: Could not read coachRoleMap.json:', e);
     }
