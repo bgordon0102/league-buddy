@@ -1,4 +1,5 @@
 console.log('DEBUG: Bot startup log from app.js');
+console.log(`ENVIRONMENT: ${process.env.NODE_ENV || 'undefined'}`);
 import { Client, GatewayIntentBits, Collection } from 'discord.js';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join } from 'path';
@@ -111,6 +112,7 @@ client.interactions.set('sim_result', {
 
 // Bot clientReady event (Discord.js v15+)
 client.once('clientReady', (readyClient) => {
+  console.log(`ENVIRONMENT: ${process.env.NODE_ENV || 'undefined'}`);
   console.log('🏀 LEAGUEbuddy is online!');
   console.log(`📊 Logged in as ${readyClient.user.tag}`);
   console.log(`🏟️  Serving ${readyClient.guilds.cache.size} server(s)`);
