@@ -212,45 +212,7 @@ export async function execute(interaction) {
             }
         }
 
-        // Post Top Performer for this week in the specified channel
-        const performerChannelId = '1421189114912440423';
-        console.log('[advanceweek] Looking up Top Performer for week:', weekNum);
-        const performer = getTopPerformerForWeek(weekNum);
-        console.log(`[advanceweek] Top Performer for week ${weekNum}:`, performer ? performer.name : 'None');
-        if (performer) {
-            let performerChannel = null;
-            try {
-                console.log('[advanceweek] Fetching Top Performer channel:', performerChannelId);
-                performerChannel = await interaction.guild.channels.fetch(performerChannelId);
-                console.log(`[advanceweek] Fetched Top Performer channel:`, performerChannel ? performerChannel.name : 'Not found');
-            } catch (e) {
-                console.error(`[advanceweek] Could not fetch Top Performer channel (${performerChannelId}):`, e);
-            }
-            if (performerChannel && performerChannel.isTextBased && performerChannel.isTextBased()) {
-                try {
-                    console.log('[advanceweek] Building Top Performer embed...');
-                    const embed = new EmbedBuilder()
-                        .setTitle(`Week ${weekNum} Top Performer`)
-                        .setImage(performer.image)
-                        .setDescription(
-                            `${performer.position} ${performer.name}\n` +
-                            `${performer.from}, ${performer.class}\n` +
-                            `Physicals: ${performer.height} / ${performer.weight}\n\n` +
-                            `Stats: ${performer.points} pts, ${performer.rebounds} reb, ${performer.assists} ast, ${performer.blocks} blk, ${performer.steals} stl, ${performer.turnovers} TO vs ${performer.opponent}`
-                        )
-                        .setColor(0x0099ff);
-                    console.log('[advanceweek] Sending Top Performer embed...');
-                    await performerChannel.send({ embeds: [embed] });
-                    console.log('[advanceweek] Top Performer embed sent successfully.');
-                } catch (e) {
-                    console.error('[advanceweek] Failed to send Top Performer embed:', e);
-                }
-            } else {
-                console.error(`[advanceweek] Top Performer channel not found or not text-based: ${performerChannelId}`);
-            }
-        } else {
-            console.log(`[advanceweek] No Top Performer found for week ${weekNum}.`);
-        }
+        // Top Performer logic removed as requested
 
         await interaction.editReply({ content: `Current week advanced to Week ${weekNum}. Game channels created!` });
         const endTime = Date.now();
