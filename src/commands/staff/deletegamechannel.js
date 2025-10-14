@@ -37,7 +37,13 @@ export async function execute(interaction) {
         console.log(`[deletegamechannel] All channels in guild:`, allChannels);
         const category = guild.channels.cache.find(c => c.type === ChannelType.GuildCategory && c.name === `Season 1 - Week ${week}`);
         if (!category) {
-            replyMsg = `❌ No category found for Week ${week}. Channels in guild: ${allChannels.join(', ')}`;
+            // Truncate channel list to avoid exceeding Discord's 2000 character limit
+            const maxChannels = 20;
+            let channelList = allChannels.slice(0, maxChannels).join(', ');
+            if (allChannels.length > maxChannels) {
+                channelList += ` ...and ${allChannels.length - maxChannels} more.`;
+            }
+            replyMsg = `❌ No category found for Week ${week}. Channels in guild: ${channelList}`;
             console.error(`[deletegamechannel] No category found for Week ${week}.`);
             await interaction.editReply({ content: replyMsg });
             return;
