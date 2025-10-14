@@ -49,7 +49,15 @@ function readJSON(file) {
 export async function execute(interaction) {
     const startTime = Date.now();
     console.log('[advanceweek] Handler entered');
-    await interaction.deferReply(); // Always first, no conditions
+    let deferred = false;
+    try {
+        await interaction.deferReply({ ephemeral: false });
+        deferred = true;
+    } catch (err) {
+        console.error('[advanceweek] Failed to defer reply:', err);
+        return;
+    }
+    console.log(`[advanceweek] deferReply timing: ${(Date.now() - interaction.createdTimestamp) / 1000}s since interaction creation`);
     try {
         console.log('[advanceweek] Checking for season file...');
         const season = safeReadJSON(SEASON_FILE, { currentWeek: 1, seasonNo: 1, coachRoleMap: {} });
@@ -82,7 +90,8 @@ export async function execute(interaction) {
         // Only support 29 weeks (NBA: 30 teams, 29 games per team)
         const totalWeeks = 29;
         if (weekNum < 1 || weekNum > totalWeeks) {
-            return await interaction.editReply({ content: `Invalid week number. Must be between 1 and ${totalWeeks}.` });
+            await interaction.editReply({ content: `Invalid week number. Must be between 1 and ${totalWeeks}.` });
+            return;
         }
         // Use weekNum as index (week 0 is preseason/empty)
         const weekMatchups = Array.isArray(schedule[weekNum]) ? schedule[weekNum] : [];
@@ -254,18 +263,11 @@ export async function execute(interaction) {
         writeJSON(absSeasonPath, original);
 
     } catch (err) {
-        console.error(err);
-        // Only try to edit reply if still possible
-        if (!interaction.replied && !interaction.deferred) {
-            try {
-                await interaction.editReply({ content: 'Error advancing week.' });
-            } catch (e) {
-                try {
-                    await interaction.followUp({ content: 'Error advancing week (followUp fallback).' });
-                } catch (e2) {
-                    // Ignore
-                }
-            }
+        console.error('[advanceweek] Error:', err);
+        try {
+            await interaction.editReply({ content: 'Error advancing week.' });
+        } catch (e) {
+            console.error('[advanceweek] Failed to edit reply for error:', e);
         }
     }
 }
