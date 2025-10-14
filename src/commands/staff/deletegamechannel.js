@@ -13,6 +13,9 @@ export const data = new SlashCommandBuilder()
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction) {
+    // Log all category names for debugging
+    const allCategories = guild.channels.cache.filter(c => c.type === ChannelType.GuildCategory).map(c => `${c.name} (${c.id})`);
+    console.log(`[deletegamechannel] All categories in guild:`, allCategories);
     console.log(`[deletegamechannel] Start execute: replied=${interaction.replied}, deferred=${interaction.deferred}`);
     // Debug: List all channels in the guild
     const allChannels = interaction.guild.channels.cache.map(c => `${c.name} (${c.id})`);
