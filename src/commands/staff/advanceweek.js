@@ -47,6 +47,7 @@ function readJSON(file) {
 }
 
 export async function execute(interaction) {
+    const startTime = Date.now();
     console.log('[advanceweek] Handler entered');
     await interaction.deferReply(); // Always first, no conditions
     try {
@@ -243,6 +244,8 @@ export async function execute(interaction) {
         }
 
         await interaction.editReply({ content: `Current week advanced to Week ${weekNum}. Game channels created!` });
+        const endTime = Date.now();
+        console.log(`[advanceweek] Command completed in ${(endTime - startTime) / 1000}s`);
 
         // Only update currentWeek in season.json
         const absSeasonPath = path.resolve(SEASON_FILE);
@@ -257,7 +260,11 @@ export async function execute(interaction) {
             try {
                 await interaction.editReply({ content: 'Error advancing week.' });
             } catch (e) {
-                // Ignore
+                try {
+                    await interaction.followUp({ content: 'Error advancing week (followUp fallback).' });
+                } catch (e2) {
+                    // Ignore
+                }
             }
         }
     }
