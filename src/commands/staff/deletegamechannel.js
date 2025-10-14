@@ -21,9 +21,8 @@ export async function execute(interaction) {
     // Debug: List all channels in the guild
     const allChannels = guild.channels.cache.map(c => `${c.name} (${c.id})`);
     console.log(`[deletegamechannel] All channels in guild:`, allChannels);
+    await interaction.deferReply();
     try {
-        if (interaction.replied || interaction.deferred) return;
-        await interaction.deferReply();
         let replyMsg = '';
         const week = interaction.options.getInteger('week');
         const guild = interaction.guild;
@@ -78,9 +77,9 @@ export async function execute(interaction) {
         console.error('[deletegamechannel] Fatal error:', err);
         if (!(interaction.replied || interaction.deferred)) {
             try {
-                await interaction.reply({ content: 'Error clearing week channels.' });
+                await interaction.followUp({ content: 'Error clearing week channels.' });
             } catch (e) {
-                console.error('[deletegamechannel] Failed to send reply:', e);
+                console.error('[deletegamechannel] Failed to send followUp reply:', e);
             }
         }
     }
