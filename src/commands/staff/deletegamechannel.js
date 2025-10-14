@@ -14,6 +14,9 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
     console.log(`[deletegamechannel] Start execute: replied=${interaction.replied}, deferred=${interaction.deferred}`);
+    // Debug: List all channels in the guild
+    const allChannels = interaction.guild.channels.cache.map(c => `${c.name} (${c.id})`);
+    console.log(`[deletegamechannel] All channels in guild:`, allChannels);
     try {
         if (interaction.replied || interaction.deferred) return;
         await interaction.deferReply();
@@ -30,15 +33,18 @@ export async function execute(interaction) {
                 const childChannels = guild.channels.cache.filter(ch => ch.parentId === category.id);
                 let deleted = 0;
                 for (const channel of childChannels.values()) {
+                    console.log(`[deletegamechannel] Attempting to delete channel: ${channel.name} (${channel.id})`);
                     try {
                         await channel.delete();
                         deleted++;
+                        console.log(`[deletegamechannel] Deleted channel: ${channel.name} (${channel.id})`);
                     } catch (e) {
                         console.error(`[deletegamechannel] Failed to delete channel ${channel.name}:`, e);
                     }
                 }
                 try {
                     await category.delete();
+                    console.log(`[deletegamechannel] Deleted category: ${category.name} (${category.id})`);
                 } catch (e) {
                     console.error(`[deletegamechannel] Failed to delete category:`, e);
                 }
