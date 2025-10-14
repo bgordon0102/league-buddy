@@ -21,12 +21,15 @@ export async function execute(interaction) {
     // Debug: List all channels in the guild
     const allChannels = guild.channels.cache.map(c => `${c.name} (${c.id})`);
     console.log(`[deletegamechannel] All channels in guild:`, allChannels);
+    let deferred = false;
     try {
         await interaction.deferReply({ ephemeral: false });
+        deferred = true;
     } catch (err) {
         console.error('[deletegamechannel] Failed to defer reply:', err);
         return;
     }
+    console.log(`[deletegamechannel] deferReply timing: ${(Date.now() - interaction.createdTimestamp) / 1000}s since interaction creation`);
     try {
         let replyMsg = '';
         const week = interaction.options.getInteger('week');
