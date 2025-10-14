@@ -30,7 +30,14 @@ export async function execute(interaction) {
     const team2Full = abbrToFull[abbr2] || abbr2;
     let coachRoleMap = {};
     try {
-        coachRoleMap = JSON.parse(fs.readFileSync('./data/coachRoleMap.json', 'utf8'));
+        const guildId = process.env.DISCORD_GUILD_ID;
+        let coachRoleMapFile = './data/coachRoleMap.json';
+        if (guildId === '1415452215044473036') {
+            coachRoleMapFile = './data/coachRoleMap.main.json';
+        } else if (guildId === '1407111281147641976') {
+            coachRoleMapFile = './data/coachRoleMap.dev.json';
+        }
+        coachRoleMap = JSON.parse(fs.readFileSync(coachRoleMapFile, 'utf8'));
     } catch { }
     const team1RoleId = coachRoleMap[team1Full];
     const team2RoleId = coachRoleMap[team2Full];

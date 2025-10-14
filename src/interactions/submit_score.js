@@ -148,7 +148,14 @@ export async function sendWelcomeAndButton(channel, week, seasonNo) {
             // Load coachRoleMap.json
             let coachRoleMap = {};
             try {
-                coachRoleMap = JSON.parse(fs.readFileSync('./data/coachRoleMap.json', 'utf8'));
+                const guildId = process.env.DISCORD_GUILD_ID;
+                let coachRoleMapFile = './data/coachRoleMap.json';
+                if (guildId === '1415452215044473036') {
+                    coachRoleMapFile = './data/coachRoleMap.main.json';
+                } else if (guildId === '1407111281147641976') {
+                    coachRoleMapFile = './data/coachRoleMap.dev.json';
+                }
+                coachRoleMap = JSON.parse(fs.readFileSync(coachRoleMapFile, 'utf8'));
             } catch { }
             team1RoleId = coachRoleMap[team1Full];
             team2RoleId = coachRoleMap[team2Full];
