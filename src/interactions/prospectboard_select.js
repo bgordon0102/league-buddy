@@ -37,6 +37,13 @@ export async function execute(interaction) {
     const strengths = [selected.strength_1, selected.strength_2, selected.strength_3].filter(Boolean).join(", ") || "N/A";
     const weaknesses = [selected.weakness_1, selected.weakness_2, selected.weakness_3].filter(Boolean).join(", ") || "N/A";
 
+    // Load scouting data for the requesting coach
+    const userId = interaction.user.id;
+    const scoutPath = path.join(process.cwd(), 'data/scout_points.json');
+    let scoutData = fs.existsSync(scoutPath) ? JSON.parse(fs.readFileSync(scoutPath, 'utf8')) : {};
+    const userData = scoutData[userId] || { playersScouted: {} };
+    const unlocked = userData.playersScouted[selected.name] || [];
+
     const embed = new EmbedBuilder()
         .setTitle(`${selected.position_1} - ${selected.name}`)
         .setThumbnail(selected.image || null)
@@ -52,6 +59,21 @@ export async function execute(interaction) {
             { name: "Pro Comp", value: selected.pro_comp || "N/A", inline: true }
         )
         .setColor("Green");
+
+    // Add scouted info if unlocked
+    const displayOrder = ['build', 'draft_score', 'overall', 'potential'];
+    let info = [];
+    displayOrder.forEach(cat => {
+        if (unlocked.includes(cat) && selected[cat]) {
+            if (cat === 'build') info.push(`**Build:** ${selected.build}`);
+            if (cat === 'draft_score') info.push(`**Draft Score:** ${selected.draft_score}`);
+            if (cat === 'overall') info.push(`**Overall:** ${selected.overall}`);
+            if (cat === 'potential') info.push(`**Potential:** ${selected.potential}`);
+        }
+    });
+    if (info.length > 0) {
+        embed.addFields({ name: 'Scouted Info', value: info.join(' | '), inline: false });
+    }
 
     await interaction.editReply({ embeds: [embed], flags: 64 });
 }

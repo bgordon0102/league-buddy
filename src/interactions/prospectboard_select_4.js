@@ -1,10 +1,10 @@
-export const customId = "prospectboard_select_4";
+export const customId = "bigboard_select_4";
 import fs from "fs";
 import path from "path";
 import { EmbedBuilder } from "discord.js";
 
 // This handler is for page 4 (46-60)
-const prospectBoardsFile = path.join(process.cwd(), "data/prospectBoards.json");
+const bigBoardsFile = path.join(process.cwd(), "data/prospectBoards.json");
 
 export async function execute(interaction) {
     await interaction.deferUpdate();
@@ -15,7 +15,8 @@ export async function execute(interaction) {
     else if (boardTitle.includes("Pre Prospect")) board = "pre";
 
     const prospectBoards = JSON.parse(fs.readFileSync(prospectBoardsFile, 'utf8'));
-    let boardFilePath = prospectBoards[board];
+    const bigBoards = JSON.parse(fs.readFileSync(bigBoardsFile, 'utf8'));
+    let boardFilePath = bigBoards[board];
     if (!boardFilePath) {
         await interaction.editReply({ content: `Board file for phase '${board}' not found.`, flags: 64 });
         return;
@@ -38,6 +39,13 @@ export async function execute(interaction) {
     const strengths = [selected.strength_1, selected.strength_2, selected.strength_3].filter(Boolean).join(", ") || "N/A";
     const weaknesses = [selected.weakness_1, selected.weakness_2, selected.weakness_3].filter(Boolean).join(", ") || "N/A";
 
+    // Load scouting data for the requesting coach
+    const userId = interaction.user.id;
+    const scoutPath = path.join(process.cwd(), 'data/scout_points.json');
+    let scoutData = fs.existsSync(scoutPath) ? JSON.parse(fs.readFileSync(scoutPath, 'utf8')) : {};
+    const userData = scoutData[userId] || { playersScouted: {} };
+    const unlocked = userData.playersScouted[selected.name] || [];
+
     const embed = new EmbedBuilder()
         .setTitle(`${selected.position_1} - ${selected.name}`)
         .setThumbnail(selected.image || null)
@@ -54,6 +62,21 @@ export async function execute(interaction) {
             { name: "Pro Comparison", value: selected.pro_comp || "N/A", inline: false }
         )
         .setColor("Green");
+
+    // Add scouted info if unlocked
+    const displayOrder = ['build', 'draft_score', 'overall', 'potential'];
+    let info = [];
+    displayOrder.forEach(cat => {
+        if (unlocked.includes(cat) && selected[cat]) {
+            if (cat === 'build') info.push(`**Build:** ${selected.build}`);
+            if (cat === 'draft_score') info.push(`**Draft Score:** ${selected.draft_score}`);
+            if (cat === 'overall') info.push(`**Overall:** ${selected.overall}`);
+            if (cat === 'potential') info.push(`**Potential:** ${selected.potential}`);
+        }
+    });
+    if (info.length > 0) {
+        embed.addFields({ name: 'Scouted Info', value: info.join(' | '), inline: false });
+    }
 
     await interaction.editReply({ embeds: [embed], flags: 64 });
 }

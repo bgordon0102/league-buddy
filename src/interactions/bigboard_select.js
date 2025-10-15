@@ -1,18 +1,17 @@
-export const customId = "bigboard_select_3";
+export const customId = "bigboard_select";
 import fs from "fs";
 import path from "path";
 import { EmbedBuilder } from "discord.js";
 
-// This handler is for page 3 (31-45)
 const bigBoardsFile = path.join(process.cwd(), "data/prospectBoards.json");
 
 export async function execute(interaction) {
     await interaction.deferUpdate();
     // Get which board is active from the message embed title
     const boardTitle = interaction.message.embeds[0]?.title || "";
-    let board = "mid";
-    if (boardTitle.includes("Final Prospect")) board = "final";
-    else if (boardTitle.includes("Pre Prospect")) board = "pre";
+    let board = "pre";
+    if (boardTitle.includes("Mid Big Board")) board = "mid";
+    else if (boardTitle.includes("Final Big Board")) board = "final";
 
     const bigBoards = JSON.parse(fs.readFileSync(bigBoardsFile, 'utf8'));
     let boardFilePath = bigBoards[board];
@@ -30,8 +29,8 @@ export async function execute(interaction) {
     const bigBoardData = JSON.parse(fs.readFileSync(boardFilePath, 'utf8'));
     const allPlayers = Object.values(bigBoardData).filter(player => player && player.name && player.position_1);
 
-    // Page 3: 31-45
-    const players = allPlayers.slice(30, 45);
+    // Page 1: 1-15
+    const players = allPlayers.slice(0, 15);
     const selected = players.find(p => p.id_number.toString() === interaction.values[0]);
     if (!selected) return await interaction.editReply({ content: "Player not found.", flags: 64 });
 
@@ -50,15 +49,14 @@ export async function execute(interaction) {
         .setThumbnail(selected.image || null)
         .addFields(
             { name: "Team", value: selected.team || "N/A", inline: true },
-            { name: "Nationality", value: selected.nationality || "N/A", inline: true },
             { name: "Class", value: selected.class || "N/A", inline: true },
-            { name: "Height", value: selected.height || "N/A", inline: true },
-            { name: "Weight", value: selected.weight?.toString() || "N/A", inline: true },
-            { name: "Wingspan", value: selected.wingspan || "N/A", inline: true },
-            { name: "About", value: selected.about || "N/A" },
+            { name: "Age", value: selected.age?.toString() || "N/A", inline: true },
+            { name: "Nationality", value: selected.nationality || "N/A", inline: true },
+            { name: "Physicals", value: `**Ht:** ${selected.height || 'N/A'}  **Wt:** ${selected.weight?.toString() || 'N/A'}  **Wingspan:** ${selected.wingspan || 'N/A'}`, inline: false },
+            { name: "About", value: selected.about || "N/A", inline: false },
             { name: "Strengths", value: strengths, inline: true },
             { name: "Weaknesses", value: weaknesses, inline: true },
-            { name: "Pro Comparison", value: selected.pro_comp || "N/A", inline: false }
+            { name: "Pro Comp", value: selected.pro_comp || "N/A", inline: true }
         )
         .setColor("Green");
 

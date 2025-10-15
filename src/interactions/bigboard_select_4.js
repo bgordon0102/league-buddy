@@ -1,18 +1,18 @@
-export const customId = "bigboard_select_3";
+export const customId = "bigboard_select_4";
 import fs from "fs";
 import path from "path";
 import { EmbedBuilder } from "discord.js";
 
-// This handler is for page 3 (31-45)
+// This handler is for page 4 (46-60)
 const bigBoardsFile = path.join(process.cwd(), "data/prospectBoards.json");
 
 export async function execute(interaction) {
     await interaction.deferUpdate();
     // Get which board is active from the message embed title
     const boardTitle = interaction.message.embeds[0]?.title || "";
-    let board = "mid";
-    if (boardTitle.includes("Final Prospect")) board = "final";
-    else if (boardTitle.includes("Pre Prospect")) board = "pre";
+    let board = "final";
+    if (boardTitle.includes("Mid Big Board")) board = "mid";
+    else if (boardTitle.includes("Pre Big Board")) board = "pre";
 
     const bigBoards = JSON.parse(fs.readFileSync(bigBoardsFile, 'utf8'));
     let boardFilePath = bigBoards[board];
@@ -30,8 +30,8 @@ export async function execute(interaction) {
     const bigBoardData = JSON.parse(fs.readFileSync(boardFilePath, 'utf8'));
     const allPlayers = Object.values(bigBoardData).filter(player => player && player.name && player.position_1);
 
-    // Page 3: 31-45
-    const players = allPlayers.slice(30, 45);
+    // Page 4: 46-60
+    const players = allPlayers.slice(45, 60);
     const selected = players.find(p => p.id_number.toString() === interaction.values[0]);
     if (!selected) return await interaction.editReply({ content: "Player not found.", flags: 64 });
 

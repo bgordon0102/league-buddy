@@ -11,8 +11,8 @@ export async function execute(interaction) {
     // Get which board is active from the message embed title
     const boardTitle = interaction.message.embeds[0]?.title || "";
     let board = "mid";
-    if (boardTitle.includes("Final Prospect")) board = "final";
-    else if (boardTitle.includes("Pre Prospect")) board = "pre";
+    if (boardTitle.includes("Final Big Board")) board = "final";
+    else if (boardTitle.includes("Pre Big Board")) board = "pre";
 
     const bigBoards = JSON.parse(fs.readFileSync(bigBoardsFile, 'utf8'));
     let boardFilePath = bigBoards[board];

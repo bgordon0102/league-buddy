@@ -1,147 +1,199 @@
-import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } from 'discord.js';
 import fs from 'fs';
+
 import path from 'path';
+
+const SEASON_FILE = './data/season.json';
+const PLAYERS_FILE = './data/players.json';
+
+function readJSON(file) {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
 
 export const data = new SlashCommandBuilder()
     .setName('bigboard')
-    .setDescription('View and manage your personal draft big board (reorder your scouted players)');
+    .setDescription('View the big board')
+    .addStringOption(option =>
+        option.setName('board')
+            .setDescription('Which board to view')
+            .setRequired(true)
+            .addChoices(
+                { name: 'Pre Big Board', value: 'pre' },
+                { name: 'Mid Big Board', value: 'mid' },
+                { name: 'Final Big Board', value: 'final' }
+            ));
 
 export async function execute(interaction) {
-    const now = new Date();
-    console.log(`[myscouts] Command received at ${now.toISOString()} from user ${interaction.user.username} (${interaction.user.id})`);
-    await interaction.deferReply({ ephemeral: true }); // Always defer immediately
+    const board = interaction.options.getString('board');
+    // Always defer reply IMMEDIATELY for robust handling
+    let responded = false;
+    // Timeout: always respond within 10 seconds
+    const timeout = setTimeout(async () => {
+        if (!responded) {
+            responded = true;
+            try {
+                await interaction.editReply({ content: '⏰ Prospect board timed out. Please try again.' });
+            } catch (e) {
+                console.error('Timeout error sending fallback reply:', e);
+            }
+        }
+    }, 10000);
+    await interaction.deferReply();
     try {
-        // Use season.json to check current week
-        const seasonPath = path.join(process.cwd(), 'data/season.json');
-        const seasonData = JSON.parse(fs.readFileSync(seasonPath, 'utf8'));
-        const currentWeek = seasonData.currentWeek ?? 0;
-        if (currentWeek < 1) {
-            await interaction.editReply({ content: 'Scouting features unlock in Week 1. Only the recruit board is available during preseason.' });
-            return;
-        }
-
-        const userId = interaction.user.id;
-        const scoutPath = path.join(process.cwd(), 'data/scout_points.json');
-        if (!fs.existsSync(scoutPath)) {
-            await interaction.editReply({ content: 'No scouting data found.' });
-            return;
-        }
-
-        // Load and ensure user data structure
-        const scoutData = JSON.parse(fs.readFileSync(scoutPath, 'utf8'));
-        if (!scoutData[userId]) {
-            scoutData[userId] = { playersScouted: {}, weeklyPoints: {}, bigBoardOrder: [] };
-        }
-        const userData = scoutData[userId];
-        if (!userData.playersScouted) userData.playersScouted = {};
-        if (!userData.bigBoardOrder) userData.bigBoardOrder = [];
-
-        // If user has no scouted players
-        const scoutedNames = Object.keys(userData.playersScouted);
-        if (scoutedNames.length === 0) {
-            await interaction.editReply({ content: 'You have not scouted any players yet.' });
-            return;
-        }
-
-        // Only allow scouted players (by name) on big board
-        let changed = false;
-        userData.bigBoardOrder = userData.bigBoardOrder.filter(name => scoutedNames.includes(name));
-        // Add any missing scouted players to the end
-        for (const name of scoutedNames) {
-            if (!userData.bigBoardOrder.includes(name)) {
-                userData.bigBoardOrder.push(name);
-                changed = true;
+        // Read season data for current week
+        if (!fs.existsSync(SEASON_FILE)) {
+            if (!responded) {
+                responded = true;
+                clearTimeout(timeout);
+                await interaction.editReply({ content: 'Season file not found.' });
             }
-        }
-        if (changed) {
-            fs.writeFileSync(scoutPath, JSON.stringify(scoutData, null, 2));
+            return;
         }
 
-        // Use prospectBoards.json for board file selection
-        let phase = 'pre';
-        if (currentWeek >= 20) phase = 'final';
-        else if (currentWeek >= 10) phase = 'mid';
+        const season = readJSON(SEASON_FILE);
+        const currentWeek = season.currentWeek || 0;
+
+        // Check unlock rules
+        const unlockWeeks = { pre: 1, mid: 10, final: 20 };
+        if (currentWeek < unlockWeeks[board]) {
+            if (!responded) {
+                responded = true;
+                clearTimeout(timeout);
+                await interaction.editReply({
+                    content: `🔒 This board is locked until Week ${unlockWeeks[board]}. Current week: ${currentWeek}`
+                });
+            }
+            return;
+        }
+
+        // Read board file paths from prospectBoards.json
         const prospectBoardsPath = path.join(process.cwd(), 'data/prospectBoards.json');
-        const prospectBoards = JSON.parse(fs.readFileSync(prospectBoardsPath, 'utf8'));
-        const boardFile = prospectBoards[phase];
-        let boardData = {};
-        if (!boardFile) {
-            await interaction.editReply({ content: `No board file configured for phase: ${phase}. Please contact staff if this is unexpected.` });
-            return;
-        }
-        const boardPath = path.join(process.cwd(), boardFile);
-        try {
-            boardData = JSON.parse(fs.readFileSync(boardPath, 'utf8'));
-        } catch (err) {
-            await interaction.editReply({ content: `Could not load the board file for phase: ${phase}. Please contact staff if this is unexpected.` });
-            return;
-        }
-        // Build a map of name->player for the current phase
-        const currentBoardNameMap = {};
-        Object.values(boardData).forEach(p => { if (p && p.name) currentBoardNameMap[p.name] = p; });
-
-        const embed = new EmbedBuilder()
-            .setTitle('Your Personal Draft Big Board')
-            .setDescription('Use the ⬆️⬇️ buttons to reorder your board for the draft!')
-            .setColor(0x1e90ff);
-
-        // Show players in user-defined order
-        const components = [];
-        userData.bigBoardOrder.forEach((playerName, idx) => {
-            const player = Object.values(boardData).find(p => p.name === playerName);
-            if (!player) {
-                embed.addFields({ name: `#${idx + 1}: ${playerName}`, value: 'Not available this phase.' });
-                return;
+        if (!fs.existsSync(prospectBoardsPath)) {
+            if (!responded) {
+                responded = true;
+                clearTimeout(timeout);
+                await interaction.editReply({ content: 'Prospect boards file not found.' });
             }
-            // Use playerName directly for unlocks
-            const unlocked = userData.playersScouted[playerName] || [];
-            const fields = [];
-            if (unlocked.includes('overall')) fields.push(`Overall: ${player.overall}`);
-            if (unlocked.includes('potential')) fields.push(`Potential: ${player.potential}`);
-            if (unlocked.includes('draft_score')) fields.push(`Draft Score: ${player.draft_score}`);
-            if (unlocked.includes('build')) fields.push(`Build: ${player.build}`);
-            embed.addFields({ name: `#${idx + 1}: ${player.position_1} ${player.name} - ${player.team}`, value: fields.join(' | ') });
-        });
-
-        // Build select menu for player selection
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('bigboard_select_player')
-            .setPlaceholder('Select a player to move')
-            .addOptions(userData.bigBoardOrder.map((playerName, idx) => {
-                const player = Object.values(boardData).find(p => p.name === playerName);
-                return {
-                    label: `#${idx + 1}: ${playerName}`,
-                    value: playerName
-                };
-            }))
-            .setMinValues(1)
-            .setMaxValues(1);
-        const selectRow = new ActionRowBuilder().addComponents(selectMenu);
-
-        // Add move up/down buttons (act on selected player)
-        const buttonRow = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId('bigboard_move_up')
-                .setLabel('⬆️ Move Up')
-                .setStyle(ButtonStyle.Primary),
-            new ButtonBuilder()
-                .setCustomId('bigboard_move_down')
-                .setLabel('⬇️ Move Down')
-                .setStyle(ButtonStyle.Primary)
-        );
-
-        await interaction.editReply({ embeds: [embed], components: [selectRow, buttonRow] });
-    } catch (err) {
-        console.error('❌ Error in /bigboard:', err);
-        // Only try to reply if not already replied
-        if (!interaction.replied && !interaction.deferred) {
-            try {
-                await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-            } catch { }
-        } else {
-            try {
-                await interaction.editReply({ content: 'There was an error while executing this command!' });
-            } catch { }
+            return;
         }
+        const prospectBoards = readJSON(prospectBoardsPath);
+        let boardFilePath = prospectBoards[board];
+        if (!boardFilePath) {
+            if (!responded) {
+                responded = true;
+                clearTimeout(timeout);
+                await interaction.editReply({ content: `${board} board file not found in prospectBoards.json.` });
+            }
+            return;
+        }
+        // Always resolve to absolute path
+        if (!path.isAbsolute(boardFilePath)) {
+            boardFilePath = path.join(process.cwd(), boardFilePath);
+        }
+        if (!fs.existsSync(boardFilePath)) {
+            if (!responded) {
+                responded = true;
+                clearTimeout(timeout);
+                await interaction.editReply({ content: `${board} board file not found at resolved path: ${boardFilePath}` });
+            }
+            return;
+        }
+
+        // Read the actual big board data
+        let bigBoardData;
+        try {
+            bigBoardData = readJSON(boardFilePath);
+        } catch (e) {
+            console.error('Failed to parse board file:', e);
+            if (!responded) {
+                responded = true;
+                clearTimeout(timeout);
+                await interaction.editReply({ content: `Failed to parse ${board} board file.` });
+            }
+            return;
+        }
+        // Get all players for the board
+        const allPlayers = Object.values(bigBoardData).filter(player =>
+            player && player.name && player.position_1
+        );
+        console.log(`[prospectboard] Loaded ${allPlayers.length} players from ${boardFilePath}`);
+        if (allPlayers.length > 0) {
+            console.log('[prospectboard] First player:', allPlayers[0]);
+        }
+        if (allPlayers.length === 0) {
+            if (!responded) {
+                responded = true;
+                clearTimeout(timeout);
+                await interaction.editReply({ content: `No players found in ${board} board.` });
+            }
+            return;
+        }
+
+        // Determine number of select menus
+        let numMenus = 1;
+        if (board === 'pre') numMenus = 2;
+        else if (board === 'mid') numMenus = 3;
+        else if (board === 'final') numMenus = 4;
+
+        // Set embed title based on phase
+        let boardTitle = '';
+        if (board === 'pre') boardTitle = 'Pre-Season Board';
+        else if (board === 'mid') boardTitle = 'Mid-Season Board';
+        else if (board === 'final') boardTitle = 'Final Board';
+
+        // Create embed with all players in one clean list
+        const embed = new EmbedBuilder()
+            .setTitle(`📋 ${boardTitle}`)
+            .setColor(0x1f8b4c)
+            .setDescription(`Week ${currentWeek} • ${allPlayers.length} players available`);
+
+        const playerLines = allPlayers.map((player, index) => `${index + 1}: ${player.position_1} ${player.name} - ${player.team}`);
+        embed.addFields({ name: 'Players', value: playerLines.length ? playerLines.join('\n') : 'No players available' });
+
+        // Create all select menus for this board
+        const components = [];
+        for (let i = 0; i < numMenus; i++) {
+            const startIdx = i * 15;
+            const boardPlayers = allPlayers.slice(startIdx, startIdx + 15);
+            if (boardPlayers.length === 0) continue;
+            let customId = 'prospectboard_select';
+            if (i > 0) customId = `prospectboard_select_${i + 1}`;
+            const selectOptions = boardPlayers.map((player, idx) => ({
+                label: `${startIdx + idx + 1}. ${player.name}`,
+                description: `${player.position_1} - ${player.team}`,
+                value: player.id_number.toString()
+            }));
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId(customId)
+                .setPlaceholder(`Select a player to view their card (${startIdx + 1}-${startIdx + boardPlayers.length})`)
+                .addOptions(selectOptions);
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            components.push(row);
+        }
+
+        if (!responded) {
+            responded = true;
+            clearTimeout(timeout);
+            await interaction.editReply({
+                embeds: [embed],
+                components
+            });
+        }
+    } catch (err) {
+        // Enhanced error logging for debugging
+        console.error('prospectboard.js error:', err && err.stack ? err.stack : err);
+        if (!responded) {
+            responded = true;
+            clearTimeout(timeout);
+            try {
+                await interaction.editReply({ content: 'Error loading recruit board.' });
+            } catch (e) {
+                console.error('Failed to send error message:', e && e.stack ? e.stack : e);
+            }
+        }
+    }
+    if (!responded) {
+        responded = true;
+        clearTimeout(timeout);
     }
 }
