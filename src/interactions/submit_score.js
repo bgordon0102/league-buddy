@@ -225,6 +225,12 @@ export async function handleButton(interaction) {
             const normalize = str => str.replace(/\s+/g, ' ').trim().toLowerCase();
             const target1 = normalize(`${nickname1} Coach`);
             const target2 = normalize(`${nickname2} Coach`);
+            // Debug: print all normalized role names and IDs
+            console.log('[submit_score] All guild roles:');
+            guild.roles.cache.forEach(r => {
+                console.log(`  Raw: '${r.name}' | Normalized: '${normalize(r.name)}' | ID: ${r.id}`);
+            });
+            console.log(`[submit_score] Target1: '${target1}' Target2: '${target2}'`);
             const team1Role = guild.roles.cache.find(r => normalize(r.name) === target1);
             const team2Role = guild.roles.cache.find(r => normalize(r.name) === target2);
             const member = await guild.members.fetch(interaction.user.id);
