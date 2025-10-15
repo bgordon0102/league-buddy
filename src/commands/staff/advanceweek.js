@@ -82,16 +82,16 @@ export async function execute(interaction) {
         // Removed logic that forced weekNum to 1 if Week 1 Games category does not exist.
 
         // Delete previous week's category/channels before advancing (but not on week 1)
-        if (weekNum > 1) {
-            const prevCategoryName = `Week ${weekNum - 1} Games`;
-            const prevCategory = interaction.guild.channels.cache.find(c => c.type === ChannelType.GuildCategory && c.name === prevCategoryName);
-            if (prevCategory) {
-                for (const channel of interaction.guild.channels.cache.filter(ch => ch.parentId === prevCategory.id).values()) {
-                    await channel.delete().catch(() => { });
-                }
-                await prevCategory.delete().catch(() => { });
-            }
-        }
+        // if (weekNum > 1) {
+        //     const prevCategoryName = `Week ${weekNum - 1} Games`;
+        //     const prevCategory = interaction.guild.channels.cache.find(c => c.type === ChannelType.GuildCategory && c.name === prevCategoryName);
+        //     if (prevCategory) {
+        //         for (const channel of interaction.guild.channels.cache.filter(ch => ch.parentId === prevCategory.id).values()) {
+        //             await channel.delete().catch(() => { });
+        //         }
+        //         await prevCategory.delete().catch(() => { });
+        //     }
+        // }
 
         // Calculate week number and matchups (week-based schedule)
         const schedulePath = path.join(process.cwd(), 'data/schedule.json');
