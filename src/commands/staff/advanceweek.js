@@ -57,6 +57,7 @@ function readJSON(file) {
 export async function execute(interaction) {
     const startTime = Date.now();
     console.log('[advanceweek] Handler entered');
+    console.log(`[advanceweek] Interaction createdTimestamp: ${interaction.createdTimestamp}, handler start: ${startTime}, diff: ${(startTime - interaction.createdTimestamp) / 1000}s`);
     let deferred = false;
     try {
         await interaction.deferReply({ ephemeral: false });
