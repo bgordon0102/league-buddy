@@ -22,22 +22,27 @@ export async function execute(interaction) {
     const allChannels = guild.channels.cache.map(c => `${c.name} (${c.id})`);
     console.log(`[deletegamechannel] All channels in guild:`, allChannels);
     let deferred = false;
+    // Try to defer reply first
     try {
         await interaction.deferReply({ ephemeral: false });
         deferred = true;
     } catch (err) {
         console.error('[deletegamechannel] Failed to defer reply:', err);
-        return;
+        deferred = false;
     }
     console.log(`[deletegamechannel] deferReply timing: ${(Date.now() - interaction.createdTimestamp) / 1000}s since interaction creation`);
+    let replyMsg = '';
     try {
-        let replyMsg = '';
         const week = interaction.options.getInteger('week');
         const guild = interaction.guild;
         if (!guild || !guild.channels || !guild.channels.cache) {
             replyMsg = '❌ Error: Guild or channels not found.';
             console.error('[deletegamechannel] Guild or channels not found.');
-            await interaction.editReply({ content: replyMsg });
+            if (deferred) {
+                await interaction.editReply({ content: replyMsg });
+            } else {
+                await interaction.reply({ content: replyMsg });
+            }
             return;
         }
         const allChannels = guild.channels.cache.map(c => `${c.name} (${c.id})`);
@@ -52,14 +57,22 @@ export async function execute(interaction) {
             }
             replyMsg = `❌ No category found for Week ${week}. Channels in guild: ${channelList}`;
             console.error(`[deletegamechannel] No category found for Week ${week}.`);
-            await interaction.editReply({ content: replyMsg });
+            if (deferred) {
+                await interaction.editReply({ content: replyMsg });
+            } else {
+                await interaction.reply({ content: replyMsg });
+            }
             return;
         }
         const childChannels = guild.channels.cache.filter(ch => ch.parentId === category.id);
         if (childChannels.size === 0) {
             replyMsg = `⚠️ No child channels found under category '${category.name}'.`;
             console.warn(`[deletegamechannel] No child channels found under category '${category.name}'.`);
-            await interaction.editReply({ content: replyMsg });
+            if (deferred) {
+                await interaction.editReply({ content: replyMsg });
+            } else {
+                await interaction.reply({ content: replyMsg });
+            }
             return;
         }
         let deleted = 0;
@@ -80,13 +93,31 @@ export async function execute(interaction) {
             console.error(`[deletegamechannel] Failed to delete category:`, e);
         }
         replyMsg = `✅ Deleted ${deleted} channels and the category for Week ${week}.`;
-        await interaction.editReply({ content: replyMsg });
+        if (deferred) {
+            await interaction.editReply({ content: replyMsg });
+        } else {
+            await interaction.reply({ content: replyMsg });
+        }
     } catch (err) {
         console.error('[deletegamechannel] Fatal error:', err);
-        try {
-            await interaction.editReply({ content: 'Error clearing week channels.' });
-        } catch (e) {
-            console.error('[deletegamechannel] Failed to edit reply for error:', e);
+        // Only reply if not already acknowledged
+        if (deferred) {
+            try {
+                await interaction.editReply({ content: 'Error clearing week channels.' });
+            } catch (e) {
+                console.error('[deletegamechannel] Failed to edit reply for error:', e);
+            }
+        } else {
+            try {
+                await interaction.reply({ content: 'Error clearing week channels.' });
+            } catch (e) {
+                // If reply fails, try followUp as last resort
+                try {
+                    await interaction.followUp({ content: 'Error clearing week channels.' });
+                } catch (ee) {
+                    console.error('[deletegamechannel] Failed to followUp for error:', ee);
+                }
+            }
         }
     }
 }
