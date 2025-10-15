@@ -57,7 +57,18 @@ function readJSON(file) {
 export async function execute(interaction) {
     try {
         await interaction.deferReply({ ephemeral: false });
-        await interaction.editReply({ content: 'Advanceweek test: interaction works.' });
+        // Restore: read season.json, calculate weekNum, validate
+        const season = safeReadJSON(SEASON_FILE, { currentWeek: 1, seasonNo: 1, coachRoleMap: {} });
+        if (!season.currentWeek || season.currentWeek < 1) {
+            season.currentWeek = 1;
+        }
+        let weekNum = interaction.options.getInteger('week') || season.currentWeek;
+        const totalWeeks = 29;
+        if (weekNum < 1 || weekNum > totalWeeks) {
+            await interaction.editReply({ content: `Invalid week number. Must be between 1 and ${totalWeeks}.` });
+            return;
+        }
+        await interaction.editReply({ content: `Advanceweek: weekNum is ${weekNum}, currentWeek in season.json is ${season.currentWeek}` });
     } catch (err) {
         console.error('[advanceweek] Error:', err);
     }
