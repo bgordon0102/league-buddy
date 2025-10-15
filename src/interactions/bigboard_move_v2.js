@@ -5,16 +5,25 @@ import path from 'path';
 export const customId = 'bigboard_move_v2';
 
 export async function execute(interaction) {
+    // Always deferUpdate immediately to prevent interaction expiration
+    try {
+        await interaction.deferUpdate();
+    } catch (err) {
+        console.error('[bigboard_move_v2] Failed to deferUpdate:', err);
+        return;
+    }
     // This handler is for button presses (move up/down) with a selected player in the customId
     const userId = interaction.user.id;
     const scoutPath = path.join(process.cwd(), 'data/scout_points.json');
     if (!fs.existsSync(scoutPath)) {
-        return await interaction.reply({ content: 'No scouting data found.', flags: 64 });
+        await interaction.editReply({ content: 'No scouting data found.', flags: 64 });
+        return;
     }
     const scoutData = JSON.parse(fs.readFileSync(scoutPath, 'utf8'));
     const userData = scoutData[userId];
     if (!userData || !userData.bigBoardOrder || userData.bigBoardOrder.length === 0) {
-        return await interaction.reply({ content: 'No big board found.', flags: 64 });
+        await interaction.editReply({ content: 'No big board found.', flags: 64 });
+        return;
     }
     // Parse which player and direction from customId: e.g., bigboard_move_up:<playerId>
     const [baseId, playerName] = interaction.customId.split(':');
@@ -22,21 +31,25 @@ export async function execute(interaction) {
     if (baseId === 'bigboard_move_up') direction = 'up';
     if (baseId === 'bigboard_move_down') direction = 'down';
     if (!playerName) {
-        return await interaction.reply({ content: 'Please select a player first.', flags: 64 });
+        await interaction.editReply({ content: 'Please select a player first.', flags: 64 });
+        return;
     }
     const idx = userData.bigBoardOrder.indexOf(playerName);
     if (idx === -1) {
-        return await interaction.reply({ content: 'Player not found in your big board.', flags: 64 });
+        await interaction.editReply({ content: 'Player not found in your big board.', flags: 64 });
+        return;
     }
     if (!direction) {
-        return await interaction.reply({ content: 'Invalid move action.', flags: 64 });
+        await interaction.editReply({ content: 'Invalid move action.', flags: 64 });
+        return;
     }
     if (direction === 'up' && idx > 0) {
         [userData.bigBoardOrder[idx - 1], userData.bigBoardOrder[idx]] = [userData.bigBoardOrder[idx], userData.bigBoardOrder[idx - 1]];
     } else if (direction === 'down' && idx < userData.bigBoardOrder.length - 1) {
         [userData.bigBoardOrder[idx + 1], userData.bigBoardOrder[idx]] = [userData.bigBoardOrder[idx], userData.bigBoardOrder[idx + 1]];
     } else {
-        return await interaction.reply({ content: 'Cannot move further in that direction.', flags: 64 });
+        await interaction.editReply({ content: 'Cannot move further in that direction.', flags: 64 });
+        return;
     }
     // After move, always re-sync bigBoardOrder with playersScouted
     const scoutedNames = Object.keys(userData.playersScouted);
@@ -58,7 +71,8 @@ export async function execute(interaction) {
     else if (currentWeek >= 10) phase = 'mid';
     const boardFile = seasonData.prospectBoards?.[phase];
     if (!boardFile) {
-        return await interaction.reply({ content: `No board file configured for phase: ${phase}`, flags: 64 });
+        await interaction.editReply({ content: `No board file configured for phase: ${phase}`, flags: 64 });
+        return;
     }
     const boardPath = path.join(process.cwd(), boardFile);
     const boardData = JSON.parse(fs.readFileSync(boardPath, 'utf8'));

@@ -1,1 +1,20 @@
-[]
+{
+    "1": {
+        "name": "Isaiah Bailey",
+        "position_1": "SF",
+        "team": "Duke",
+        "build": "Iso Sniper"
+    },
+    "2": {
+        "name": "Saúl Segura",
+        "position_1": "SF",
+        "team": "F.C. Barcelona",
+        "build": "Mig-Range Menace"
+    },
+    "3": {
+        "name": "Joshua Boston",
+        "position_1": "SF",
+        "team": "Tennessee",
+        "build": "Athletic Blow-By Ace"
+    }
+}
