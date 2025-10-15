@@ -9,20 +9,6 @@ export const data = new SlashCommandBuilder()
     );
 
 export async function execute(interaction) {
-    const role = interaction.options.getRole("role");
-    const channel = interaction.channel;
-
-    try {
-        await channel.permissionOverwrites.delete(role.id);
-        await interaction.reply({ content: `✅ Successfully uninvited role ${role}.`, flags: 64 });
-    } catch (err) {
-        // Ignore 'Interaction has already been acknowledged' errors
-        if (err.code === 40060) return;
-        console.error(err);
-        if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: "❌ Failed to remove coach role.", flags: 64 });
-        }
-    }
     let responded = false;
     try {
         await interaction.deferReply({ flags: 64 });
@@ -31,6 +17,8 @@ export async function execute(interaction) {
         console.error('Failed to defer reply in /uninvitecoach:', err?.message || err);
         return;
     }
+    const role = interaction.options.getRole("role");
+    const channel = interaction.channel;
     try {
         await channel.permissionOverwrites.delete(role.id);
         if (responded) await interaction.editReply({ content: `✅ Successfully uninvited role ${role}.` });

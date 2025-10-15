@@ -9,27 +9,30 @@ export const data = new SlashCommandBuilder()
     );
 
 export async function execute(interaction) {
-    const role = interaction.options.getRole("role");
-    const channel = interaction.channel;
-
+    let responded = false;
     try {
         await interaction.deferReply({ ephemeral: true });
+        responded = true;
+    } catch (err) {
+        console.error('Failed to defer reply in /invitecoach:', err?.message || err);
+        return;
+    }
+    const role = interaction.options.getRole("role");
+    const channel = interaction.channel;
+    try {
         await channel.permissionOverwrites.edit(role.id, {
             ViewChannel: true,
             SendMessages: true,
             ReadMessageHistory: true,
         });
-        if (!responded) {
-            responded = true;
+        if (responded) {
             await interaction.editReply({ content: `✅ Role ${role} has been invited to this channel.` });
         }
     } catch (err) {
         console.error(err);
-        if (!responded) {
-            responded = true;
+        if (responded) {
             await interaction.editReply({ content: "❌ Failed to invite coach role." });
         }
     }
-    let responded = false;
 }
 // Removed leftover CommonJS export
