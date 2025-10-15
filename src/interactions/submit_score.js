@@ -221,9 +221,12 @@ export async function handleButton(interaction) {
             const nickname1 = abbrToNickname[abbr1] || abbr1;
             const nickname2 = abbrToNickname[abbr2] || abbr2;
             const guild = interaction.guild;
-            // Always check for '[Team Nickname] Coach' role
-            const team1Role = guild.roles.cache.find(r => r.name === `${nickname1} Coach`);
-            const team2Role = guild.roles.cache.find(r => r.name === `${nickname2} Coach`);
+            // Find coach roles case-insensitively and ignoring extra spaces
+            const normalize = str => str.replace(/\s+/g, ' ').trim().toLowerCase();
+            const target1 = normalize(`${nickname1} Coach`);
+            const target2 = normalize(`${nickname2} Coach`);
+            const team1Role = guild.roles.cache.find(r => normalize(r.name) === target1);
+            const team2Role = guild.roles.cache.find(r => normalize(r.name) === target2);
             const member = await guild.members.fetch(interaction.user.id);
             // Debug logging
             console.log('[submit_score] User:', interaction.user.tag, 'ID:', interaction.user.id);
