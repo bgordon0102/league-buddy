@@ -135,33 +135,20 @@ export async function execute(interaction) {
         else if (board === 'mid') numMenus = 3;
         else if (board === 'final') numMenus = 4;
 
-        // Create embed
+        // Set embed title based on phase
+        let boardTitle = '';
+        if (board === 'pre') boardTitle = 'Pre-Season Board';
+        else if (board === 'mid') boardTitle = 'Mid-Season Board';
+        else if (board === 'final') boardTitle = 'Final Board';
+
+        // Create embed with all players in one clean list
         const embed = new EmbedBuilder()
-            .setTitle(`📋 ${board.charAt(0).toUpperCase() + board.slice(1)} Prospect Board`)
+            .setTitle(`📋 ${boardTitle}`)
             .setColor(0x1f8b4c)
             .setDescription(`Week ${currentWeek} • ${allPlayers.length} players available`);
 
-        // Add players list (all players, all boards), show position, name, and school/team
-        const playerLines = allPlayers.map((player, index) => `${index + 1}. ${player.position_1} ${player.name} - ${player.team}`);
-        if (playerLines.length === 0) {
-            embed.addFields({ name: 'Players', value: 'No players available' });
-        } else {
-            let chunk = [];
-            let chunkLen = 0;
-            for (const line of playerLines) {
-                // +1 for newline
-                if (chunkLen + line.length + 1 > 1024 || chunk.length >= 25) {
-                    embed.addFields({ name: 'Players', value: chunk.join('\n') });
-                    chunk = [];
-                    chunkLen = 0;
-                }
-                chunk.push(line);
-                chunkLen += line.length + 1;
-            }
-            if (chunk.length > 0) {
-                embed.addFields({ name: 'Players', value: chunk.join('\n') });
-            }
-        }
+        const playerLines = allPlayers.map((player, index) => `${index + 1}: ${player.position_1} ${player.name} - ${player.team}`);
+        embed.addFields({ name: 'Players', value: playerLines.length ? playerLines.join('\n') : 'No players available' });
 
         // Create all select menus for this board
         const components = [];
