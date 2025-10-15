@@ -25,7 +25,7 @@ export async function execute(interaction) {
         const seasonData = JSON.parse(fs.readFileSync(seasonPath, 'utf8'));
         const currentWeek = seasonData.currentWeek ?? 0;
         if (currentWeek < 1) {
-            if (deferred) await interaction.editReply({ content: 'Scouting features unlock in Week 1. Only the recruit board is available during preseason.' });
+            if (deferred) await interaction.editReply({ content: 'Big board and scouting features unlock in Week 1. Only the recruit board is available during preseason.' });
             return;
         }
 
