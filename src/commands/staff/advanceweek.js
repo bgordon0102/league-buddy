@@ -5,8 +5,16 @@ function writeJSON(file, data) {
             return;
         }
         fs.writeFileSync(file, JSON.stringify(data, null, 2));
+        // Confirm file write
+        const confirm = fs.readFileSync(file, 'utf8');
+        if (!confirm || confirm.length === 0) {
+            console.error(`[writeJSON] File ${file} written but is empty!`);
+        } else {
+            console.log(`[writeJSON] Successfully wrote to ${file}. Length: ${confirm.length}`);
+        }
     } catch (err) {
         console.error(`[writeJSON] Failed to write to ${file}:`, err);
+        throw err;
     }
 }
 
@@ -222,7 +230,14 @@ export async function execute(interaction) {
         const absSeasonPath = path.resolve(SEASON_FILE);
         let original = safeReadJSON(absSeasonPath, { currentWeek: 1, seasonNo: 1, coachRoleMap: {} });
         original.currentWeek = weekNum;
-        writeJSON(absSeasonPath, original);
+        try {
+            writeJSON(absSeasonPath, original);
+            // Confirm update
+            const after = safeReadJSON(absSeasonPath, {});
+            console.log(`[advanceweek] After update, currentWeek in season.json:`, after.currentWeek);
+        } catch (err) {
+            console.error(`[advanceweek] Failed to update currentWeek in season.json:`, err);
+        }
 
     } catch (err) {
         console.error('[advanceweek] Error:', err);
