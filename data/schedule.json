@@ -14,7 +14,10 @@
         "name": "Denver Nuggets",
         "abbreviation": "DEN",
         "coach": null
-      }
+      },
+      "score1": 91,
+      "score2": 102,
+      "approved": true
     },
     {
       "id": 1,
@@ -29,7 +32,10 @@
         "name": "Detroit Pistons",
         "abbreviation": "DET",
         "coach": null
-      }
+      },
+      "score1": 118,
+      "score2": 110,
+      "approved": true
     },
     {
       "id": 2,
@@ -44,7 +50,10 @@
         "name": "Houston Rockets",
         "abbreviation": "HOU",
         "coach": null
-      }
+      },
+      "score1": 95,
+      "score2": 110,
+      "approved": true
     },
     {
       "id": 3,
@@ -59,7 +68,10 @@
         "name": "Brooklyn Nets",
         "abbreviation": "BKN",
         "coach": null
-      }
+      },
+      "score1": 104,
+      "score2": 93,
+      "approved": true
     },
     {
       "id": 4,
@@ -74,7 +86,10 @@
         "name": "Charlotte Hornets",
         "abbreviation": "CHA",
         "coach": null
-      }
+      },
+      "score1": 120,
+      "score2": 100,
+      "approved": true
     },
     {
       "id": 5,
@@ -89,7 +104,10 @@
         "name": "Phoenix Suns",
         "abbreviation": "PHX",
         "coach": null
-      }
+      },
+      "score1": 103,
+      "score2": 101,
+      "approved": true
     },
     {
       "id": 6,
@@ -104,7 +122,10 @@
         "name": "Toronto Raptors",
         "abbreviation": "TOR",
         "coach": null
-      }
+      },
+      "score1": 112,
+      "score2": 107,
+      "approved": true
     },
     {
       "id": 7,
@@ -119,7 +140,10 @@
         "name": "Philadelphia 76ers",
         "abbreviation": "PHI",
         "coach": null
-      }
+      },
+      "score1": 94,
+      "score2": 129,
+      "approved": true
     },
     {
       "id": 8,
@@ -134,7 +158,10 @@
         "name": "Boston Celtics",
         "abbreviation": "BOS",
         "coach": null
-      }
+      },
+      "score1": 113,
+      "score2": 104,
+      "approved": true
     },
     {
       "id": 9,
@@ -149,7 +176,10 @@
         "name": "Memphis Grizzlies",
         "abbreviation": "MEM",
         "coach": null
-      }
+      },
+      "score1": 112,
+      "score2": 118,
+      "approved": true
     },
     {
       "id": 10,
@@ -164,7 +194,10 @@
         "name": "Dallas Mavericks",
         "abbreviation": "DAL",
         "coach": null
-      }
+      },
+      "score1": 101,
+      "score2": 98,
+      "approved": true
     },
     {
       "id": 11,
@@ -179,7 +212,10 @@
         "name": "Oklahoma City Thunder",
         "abbreviation": "OKC",
         "coach": null
-      }
+      },
+      "score1": 129,
+      "score2": 98,
+      "approved": true
     },
     {
       "id": 12,
@@ -194,7 +230,10 @@
         "name": "New Orleans Pelicans",
         "abbreviation": "NOP",
         "coach": null
-      }
+      },
+      "score1": 126,
+      "score2": 118,
+      "approved": true
     },
     {
       "id": 13,
@@ -209,7 +248,10 @@
         "name": "Portland Trail Blazers",
         "abbreviation": "POR",
         "coach": null
-      }
+      },
+      "score1": 128,
+      "score2": 122,
+      "approved": true
     },
     {
       "id": 14,
@@ -224,7 +266,10 @@
         "name": "Cleveland Cavaliers",
         "abbreviation": "CLE",
         "coach": null
-      }
+      },
+      "score1": 92,
+      "score2": 126,
+      "approved": true
     }
   ],
   [

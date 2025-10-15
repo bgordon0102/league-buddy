@@ -45,66 +45,51 @@ export async function autocomplete(interaction) {
 }
 
 export async function execute(interaction) {
-    const team = interaction.options.getString("team");
-
-    // Path to teams and schedule files
-    const teamsPath = path.join(process.cwd(), "data/teams.json");
-    const schedulePath = path.join(process.cwd(), "data/schedule.json");
-    const seasonPath = path.join(process.cwd(), "data/season.json");
-    if (!fs.existsSync(teamsPath) || !fs.existsSync(schedulePath) || !fs.existsSync(seasonPath)) {
-        return interaction.reply({
-            content: "No season data found. Please run `/startseason` first.",
-            ephemeral: true,
-        });
-    }
-
-    const teams = JSON.parse(fs.readFileSync(teamsPath, "utf8"));
-    const schedule = JSON.parse(fs.readFileSync(schedulePath, "utf8"));
-    const seasonData = JSON.parse(fs.readFileSync(seasonPath, "utf8"));
-    const currentWeek = seasonData.currentWeek;
-
-    // Build a week-by-week list for this team, showing only the opponent
-    let week = 1;
-    // schedule is now an array of weeks, each week is an array of games
-    const gamesList = schedule
-        .flat()
-        .map((g) => {
-            let opponent = null;
-            if (g.team1 && g.team1.name === team) {
-                opponent = g.team2 && g.team2.name ? g.team2.name : '';
-            } else if (g.team2 && g.team2.name === team) {
-                opponent = g.team1 && g.team1.name ? g.team1.name : '';
-            }
-            if (!opponent) return null;
-            const line = week === currentWeek
-                ? `➡️ **W${week}. ${opponent}**`
-                : `W${week}. ${opponent}`;
-            week++;
-            return line;
-        })
-        .filter(Boolean)
-        .join("\n");
-
-    const send = async (msg) => {
-        if (interaction.deferred || interaction.replied) {
-            await interaction.editReply(msg);
-        } else {
-            await interaction.reply(msg);
+    let responded = false;
+    try {
+        await interaction.deferReply({ ephemeral: true });
+        responded = true;
+        const team = interaction.options.getString("team");
+        const teamsPath = path.join(process.cwd(), "data/teams.json");
+        const schedulePath = path.join(process.cwd(), "data/schedule.json");
+        const seasonPath = path.join(process.cwd(), "data/season.json");
+        if (!fs.existsSync(teamsPath) || !fs.existsSync(schedulePath) || !fs.existsSync(seasonPath)) {
+            await interaction.editReply({
+                content: "No season data found. Please run `/startseason` first."
+            });
+            return;
         }
-    };
-
-    if (!gamesList) {
-        return send({
-            content: `No schedule found for **${team}**.`,
-            ephemeral: true,
-        });
+        const teams = JSON.parse(fs.readFileSync(teamsPath, "utf8"));
+        const schedule = JSON.parse(fs.readFileSync(schedulePath, "utf8"));
+        const seasonData = JSON.parse(fs.readFileSync(seasonPath, "utf8"));
+        const currentWeek = seasonData.currentWeek;
+        let week = 1;
+        const gamesList = schedule
+            .flat()
+            .map((g) => {
+                let opponent = null;
+                if (g.team1 && g.team1.name === team) {
+                    opponent = g.team2 && g.team2.name ? g.team2.name : '';
+                } else if (g.team2 && g.team2.name === team) {
+                    opponent = g.team1 && g.team1.name ? g.team1.name : '';
+                }
+                if (!opponent) return null;
+                const line = week === currentWeek
+                    ? `➡️ **W${week}. ${opponent}**`
+                    : `W${week}. ${opponent}`;
+                week++;
+                return line;
+            })
+            .filter(Boolean);
+        const embed = new EmbedBuilder()
+            .setTitle(`Schedule for ${team}`)
+            .setDescription(gamesList.length ? gamesList.join("\n") : "No games found.")
+            .setColor(0x1E90FF);
+        await interaction.editReply({ embeds: [embed] });
+    } catch (err) {
+        console.error('schedule.js error:', err);
+        if (responded) {
+            await interaction.editReply({ content: 'Failed to load schedule.' });
+        }
     }
-
-    const embed = new EmbedBuilder()
-        .setTitle(`${team} Season Schedule`)
-        .setColor(0x1e90ff)
-        .setDescription(gamesList)
-        .setFooter({ text: `Current Week: ${currentWeek}` });
-
-    await send({ embeds: [embed] });
 }

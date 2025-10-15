@@ -32,23 +32,31 @@ export async function execute(interaction) {
     const roleName1 = interaction.options.getString('role1');
     const roleName2 = interaction.options.getString('role2');
     const member = interaction.guild.members.cache.get(user.id);
-
-    if (!member) {
-        return interaction.reply({ content: 'User not found in this server.', ephemeral: true });
+    let responded = false;
+    try {
+        await interaction.deferReply({ ephemeral: true });
+        responded = true;
+    } catch (err) {
+        console.error('Failed to defer reply in /assignrole:', err?.message || err);
+        return;
     }
-
+    if (!member) {
+        if (responded) await interaction.editReply({ content: 'User not found in this server.' });
+        return;
+    }
     const role1 = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === roleName1.toLowerCase());
     if (!role1) {
-        return interaction.reply({ content: `Role "${roleName1}" not found.`, ephemeral: true });
+        if (responded) await interaction.editReply({ content: `Role "${roleName1}" not found.` });
+        return;
     }
     let role2 = null;
     if (roleName2) {
         role2 = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === roleName2.toLowerCase());
         if (!role2) {
-            return interaction.reply({ content: `Role "${roleName2}" not found.`, ephemeral: true });
+            if (responded) await interaction.editReply({ content: `Role "${roleName2}" not found.` });
+            return;
         }
     }
-
     try {
         await member.roles.add(role1);
         let msg = `Assigned role "${role1.name}" to ${user.tag}.`;
@@ -56,10 +64,10 @@ export async function execute(interaction) {
             await member.roles.add(role2);
             msg = `Assigned roles "${role1.name}" and "${role2.name}" to ${user.tag}.`;
         }
-        await interaction.reply({ content: msg, ephemeral: false });
+        if (responded) await interaction.editReply({ content: msg });
     } catch (err) {
-        console.error(err);
-        await interaction.reply({ content: 'Error assigning role. Check bot permissions.', ephemeral: true });
+        console.error('Error assigning role:', err);
+        if (responded) await interaction.editReply({ content: 'Error assigning role. Check bot permissions.' });
     }
 }
 

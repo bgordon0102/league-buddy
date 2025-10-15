@@ -25,26 +25,13 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
     const board = interaction.options.getString('board');
-    // Always defer reply IMMEDIATELY for robust handling
     let responded = false;
-    // Timeout: always respond within 10 seconds
-    const timeout = setTimeout(async () => {
-        if (!responded) {
-            responded = true;
-            try {
-                await interaction.editReply({ content: '⏰ Prospect board timed out. Please try again.' });
-            } catch (e) {
-                console.error('Timeout error sending fallback reply:', e);
-            }
-        }
-    }, 10000);
-    await interaction.deferReply();
     try {
+        await interaction.deferReply();
         // Read season data for current week
         if (!fs.existsSync(SEASON_FILE)) {
             if (!responded) {
                 responded = true;
-                clearTimeout(timeout);
                 await interaction.editReply({ content: 'Season file not found.' });
             }
             return;
@@ -58,7 +45,6 @@ export async function execute(interaction) {
         if (currentWeek < unlockWeeks[board]) {
             if (!responded) {
                 responded = true;
-                clearTimeout(timeout);
                 await interaction.editReply({
                     content: `🔒 This board is locked until Week ${unlockWeeks[board]}. Current week: ${currentWeek}`
                 });
@@ -71,7 +57,6 @@ export async function execute(interaction) {
         if (!fs.existsSync(prospectBoardsPath)) {
             if (!responded) {
                 responded = true;
-                clearTimeout(timeout);
                 await interaction.editReply({ content: 'Prospect boards file not found.' });
             }
             return;
@@ -81,7 +66,6 @@ export async function execute(interaction) {
         if (!boardFilePath) {
             if (!responded) {
                 responded = true;
-                clearTimeout(timeout);
                 await interaction.editReply({ content: `${board} board file not found in prospectBoards.json.` });
             }
             return;
@@ -93,7 +77,6 @@ export async function execute(interaction) {
         if (!fs.existsSync(boardFilePath)) {
             if (!responded) {
                 responded = true;
-                clearTimeout(timeout);
                 await interaction.editReply({ content: `${board} board file not found at resolved path: ${boardFilePath}` });
             }
             return;
@@ -107,7 +90,6 @@ export async function execute(interaction) {
             console.error('Failed to parse board file:', e);
             if (!responded) {
                 responded = true;
-                clearTimeout(timeout);
                 await interaction.editReply({ content: `Failed to parse ${board} board file.` });
             }
             return;
@@ -116,14 +98,9 @@ export async function execute(interaction) {
         const allPlayers = Object.values(bigBoardData).filter(player =>
             player && player.name && player.position_1
         );
-        console.log(`[prospectboard] Loaded ${allPlayers.length} players from ${boardFilePath}`);
-        if (allPlayers.length > 0) {
-            console.log('[prospectboard] First player:', allPlayers[0]);
-        }
         if (allPlayers.length === 0) {
             if (!responded) {
                 responded = true;
-                clearTimeout(timeout);
                 await interaction.editReply({ content: `No players found in ${board} board.` });
             }
             return;
@@ -156,8 +133,8 @@ export async function execute(interaction) {
             const startIdx = i * 15;
             const boardPlayers = allPlayers.slice(startIdx, startIdx + 15);
             if (boardPlayers.length === 0) continue;
-            let customId = 'prospectboard_select';
-            if (i > 0) customId = `prospectboard_select_${i + 1}`;
+            let customId = 'bigboard_select';
+            if (i > 0) customId = `bigboard_select_${i + 1}`;
             const selectOptions = boardPlayers.map((player, idx) => ({
                 label: `${startIdx + idx + 1}. ${player.name}`,
                 description: `${player.position_1} - ${player.team}`,
@@ -173,7 +150,6 @@ export async function execute(interaction) {
 
         if (!responded) {
             responded = true;
-            clearTimeout(timeout);
             await interaction.editReply({
                 embeds: [embed],
                 components
@@ -181,19 +157,14 @@ export async function execute(interaction) {
         }
     } catch (err) {
         // Enhanced error logging for debugging
-        console.error('prospectboard.js error:', err && err.stack ? err.stack : err);
+        console.error('bigboard.js error:', err && err.stack ? err.stack : err);
         if (!responded) {
             responded = true;
-            clearTimeout(timeout);
             try {
-                await interaction.editReply({ content: 'Error loading recruit board.' });
+                await interaction.editReply({ content: 'Error loading big board.' });
             } catch (e) {
                 console.error('Failed to send error message:', e && e.stack ? e.stack : e);
             }
         }
-    }
-    if (!responded) {
-        responded = true;
-        clearTimeout(timeout);
     }
 }

@@ -7,18 +7,26 @@ export const data = new SlashCommandBuilder()
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels);
 
 export async function execute(interaction) {
+    let responded = false;
+    try {
+        await interaction.deferReply({ ephemeral: true });
+        responded = true;
+    } catch (err) {
+        console.error('Failed to defer reply in /remindgame:', err?.message || err);
+        return;
+    }
     // Only allow staff
     const member = await interaction.guild.members.fetch(interaction.user.id);
     const isStaff = member.permissions.has(PermissionFlagsBits.ManageChannels);
     if (!isStaff) {
-        await interaction.reply({ content: 'Only staff can use this command.', ephemeral: true });
+        if (responded) await interaction.editReply({ content: 'Only staff can use this command.' });
         return;
     }
     // Get channel and coach roles
     const channel = interaction.channel;
     const match = channel.name.match(/^(.*?)-vs-(.*?)$/);
     if (!match) {
-        await interaction.reply({ content: 'This command can only be used in a game channel.', ephemeral: true });
+        if (responded) await interaction.editReply({ content: 'This command can only be used in a game channel.' });
         return;
     }
     const abbrToFull = {
@@ -50,5 +58,5 @@ export async function execute(interaction) {
         content += `Reminder: Coaches, please play your game!\n`;
     }
     content += `:alarm_clock: **Score must be submitted within <t:${deadline}:R> (<t:${deadline}:f>)**`;
-    await interaction.reply({ content });
+    if (responded) await interaction.editReply({ content });
 }

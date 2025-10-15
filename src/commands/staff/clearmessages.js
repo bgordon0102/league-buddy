@@ -12,11 +12,18 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction) {
   const amountArg = interaction.options.getString('amount').toLowerCase();
   const channel = interaction.channel;
-
-  if (!channel || !channel.isTextBased()) {
-    return interaction.reply({ content: 'This command can only be used in text channels.', ephemeral: true });
+  let responded = false;
+  try {
+    await interaction.deferReply({ ephemeral: true });
+    responded = true;
+  } catch (err) {
+    console.error('Failed to defer reply in /clearmessages:', err?.message || err);
+    return;
   }
-
+  if (!channel || !channel.isTextBased()) {
+    if (responded) await interaction.editReply({ content: 'This command can only be used in text channels.' });
+    return;
+  }
   try {
     if (amountArg === 'all') {
       // Fetch all messages and delete in batches of 100
@@ -27,19 +34,19 @@ export async function execute(interaction) {
           await channel.bulkDelete(fetched, true).catch(err => console.error(err));
         }
       } while (fetched.size >= 2); // stop when fewer than 2 messages left
-      await interaction.reply({ content: 'All messages deleted in this channel.', ephemeral: false });
+      if (responded) await interaction.editReply({ content: 'All messages deleted in this channel.' });
     } else {
       const amount = parseInt(amountArg);
       if (isNaN(amount) || amount < 1) {
-        return interaction.reply({ content: 'Please provide a valid number of messages to delete.', ephemeral: true });
+        if (responded) await interaction.editReply({ content: 'Please provide a valid number of messages to delete.' });
+        return;
       }
-
       const deleteAmount = Math.min(amount, 100); // Discord bulkDelete limit
       await channel.bulkDelete(deleteAmount, true);
-      await interaction.reply({ content: `Deleted ${deleteAmount} messages.`, ephemeral: false });
+      if (responded) await interaction.editReply({ content: `Deleted ${deleteAmount} messages.` });
     }
   } catch (err) {
-    console.error(err);
-    await interaction.reply({ content: 'Error deleting messages.', ephemeral: true });
+    console.error('Error deleting messages:', err);
+    if (responded) await interaction.editReply({ content: 'Error deleting messages.' });
   }
 }

@@ -70,24 +70,61 @@ export async function execute(interaction) {
     }
     const east = getPlayoffPicture(standings.east);
     const west = getPlayoffPicture(standings.west);
-    function getTeamName(arr, idx) {
-        return arr[idx] ? arr[idx].team : 'TBD';
-    }
-    // Playoff matchups: 1 vs 8, 2 vs 7, 3 vs 6, 4 vs 5 (NBA format)
-    function playoffMatchups(conf) {
-        return [
-            `1️⃣ ${getTeamName(conf, 0)} vs 8️⃣ ${getTeamName(conf, 7)}`,
-            `2️⃣ ${getTeamName(conf, 1)} vs 7️⃣ ${getTeamName(conf, 6)}`,
-            `3️⃣ ${getTeamName(conf, 2)} vs 6️⃣ ${getTeamName(conf, 5)}`,
-            `4️⃣ ${getTeamName(conf, 3)} vs 5️⃣ ${getTeamName(conf, 4)}`
-        ].join('\n');
-    }
-    // Play-In matchups: 7 vs 10, 8 vs 9
-    function playinMatchups(conf) {
-        return [
-            `7️⃣ ${getTeamName(conf, 6)} vs 🔟 ${getTeamName(conf, 9)}`,
-            `8️⃣ ${getTeamName(conf, 7)} vs 9️⃣ ${getTeamName(conf, 8)}`
-        ].join('\n');
+    let responded = false;
+    try {
+        await interaction.deferReply({ ephemeral: true });
+        const standings = getStandings();
+        if (!standings) {
+            if (!responded) {
+                responded = true;
+                await interaction.editReply('Standings data not available.');
+            }
+            return;
+        }
+        const east = getPlayoffPicture(standings.east);
+        const west = getPlayoffPicture(standings.west);
+        function getTeamName(arr, idx) {
+            return arr[idx] ? arr[idx].team : 'TBD';
+        }
+        function playoffMatchups(conf) {
+            return [
+                `1️⃣ ${getTeamName(conf, 0)} vs 8️⃣ ${getTeamName(conf, 7)}`,
+                `2️⃣ ${getTeamName(conf, 1)} vs 7️⃣ ${getTeamName(conf, 6)}`,
+                `3️⃣ ${getTeamName(conf, 2)} vs 6️⃣ ${getTeamName(conf, 5)}`,
+                `4️⃣ ${getTeamName(conf, 3)} vs 5️⃣ ${getTeamName(conf, 4)}`
+            ].join('\n');
+        }
+        function playinMatchups(conf) {
+            return [
+                `7️⃣ ${getTeamName(conf, 6)} vs 🔟 ${getTeamName(conf, 9)}`,
+                `8️⃣ ${getTeamName(conf, 7)} vs 9️⃣ ${getTeamName(conf, 8)}`
+            ].join('\n');
+        }
+        const eastEmbed = new EmbedBuilder()
+            .setTitle('🏆 Eastern Conference Playoff Bracket')
+            .addFields(
+                { name: 'Playoff Matchups', value: playoffMatchups(standings.east), inline: false },
+                { name: 'Play-In Matchups', value: playinMatchups(standings.east), inline: false }
+            )
+            .setColor(0x1D428A)
+            .setFooter({ text: 'Top 6: Playoff | 7-10: Play-In' });
+
+        const westEmbed = new EmbedBuilder()
+            .setTitle('🏆 Western Conference Playoff Bracket')
+            .addFields(
+                { name: 'Playoff Matchups', value: playoffMatchups(standings.west), inline: false },
+                { name: 'Play-In Matchups', value: playinMatchups(standings.west), inline: false }
+            )
+            .setColor(0xE03A3E)
+            .setFooter({ text: 'Top 6: Playoff | 7-10: Play-In' });
+
+        await interaction.editReply({ embeds: [eastEmbed, westEmbed] });
+    } catch (err) {
+        console.error('playoffpicture.js error:', err);
+        if (!responded) {
+            responded = true;
+            await interaction.editReply('Error loading playoff picture.');
+        }
     }
 
     const eastEmbed = new EmbedBuilder()

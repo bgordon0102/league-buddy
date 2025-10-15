@@ -13,16 +13,23 @@ export async function execute(interaction) {
     const channel = interaction.channel;
 
     try {
+        await interaction.deferReply({ ephemeral: true });
         await channel.permissionOverwrites.edit(role.id, {
             ViewChannel: true,
             SendMessages: true,
             ReadMessageHistory: true,
         });
-
-        await interaction.reply({ content: `✅ Role ${role} has been invited to this channel.`, flags: 64 });
+        if (!responded) {
+            responded = true;
+            await interaction.editReply({ content: `✅ Role ${role} has been invited to this channel.` });
+        }
     } catch (err) {
         console.error(err);
-        await interaction.reply({ content: "❌ Failed to invite coach role.", flags: 64 });
+        if (!responded) {
+            responded = true;
+            await interaction.editReply({ content: "❌ Failed to invite coach role." });
+        }
     }
+    let responded = false;
 }
 // Removed leftover CommonJS export
