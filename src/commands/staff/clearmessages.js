@@ -10,16 +10,9 @@ export const data = new SlashCommandBuilder()
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction) {
+  await interaction.deferReply({ ephemeral: true });
   const amountArg = interaction.options.getString('amount').toLowerCase();
   const channel = interaction.channel;
-  let responded = false;
-  try {
-    await interaction.deferReply({ ephemeral: true });
-    responded = true;
-  } catch (err) {
-    console.error('Failed to defer reply in /clearmessages:', err?.message || err);
-    return;
-  }
   if (!channel || !channel.isTextBased()) {
     if (responded) await interaction.editReply({ content: 'This command can only be used in text channels.' });
     return;

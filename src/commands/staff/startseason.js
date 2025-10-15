@@ -258,9 +258,9 @@ export async function execute(interaction, seasonnoOverride = null) {
     // Always get season number from override or interaction
     const seasonno = seasonnoOverride !== null ? seasonnoOverride : interaction.options.getInteger('seasonno');
 
+    await interaction.deferReply({ ephemeral: true });
     // Immediately defer reply to prevent Discord timeout
     try {
-        await interaction.deferReply({ ephemeral: true });
     } catch (err) {
         console.error('[startseason] Failed to defer reply:', err);
     }

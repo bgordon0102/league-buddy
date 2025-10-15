@@ -28,18 +28,11 @@ export const data = new SlashCommandBuilder()
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction) {
+    await interaction.deferReply({ ephemeral: true });
     const user = interaction.options.getUser('user');
     const roleName1 = interaction.options.getString('role1');
     const roleName2 = interaction.options.getString('role2');
     const member = interaction.guild.members.cache.get(user.id);
-    let responded = false;
-    try {
-        await interaction.deferReply({ ephemeral: true });
-        responded = true;
-    } catch (err) {
-        console.error('Failed to defer reply in /assignrole:', err?.message || err);
-        return;
-    }
     if (!member) {
         if (responded) await interaction.editReply({ content: 'User not found in this server.' });
         return;

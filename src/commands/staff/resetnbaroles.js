@@ -19,10 +19,10 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
   console.log('🏀 Starting resetnbaroles command...');
-  let responded = false;
+  let responded = true;
+  await interaction.deferReply({ flags: 64 });
+  console.log('🏀 Starting resetnbaroles command...');
   try {
-    await interaction.deferReply({ flags: 64 });
-    responded = true;
   } catch (err) {
     console.error('Failed to defer reply in /resetnbaroles:', err?.message || err);
     return;

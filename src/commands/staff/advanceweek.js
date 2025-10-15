@@ -1,34 +1,8 @@
-function writeJSON(file, data) {
-    try {
-        if (typeof data === 'undefined') {
-            console.error(`[writeJSON] Tried to write undefined data to ${file}`);
-            return;
-        }
-        fs.writeFileSync(file, JSON.stringify(data, null, 2));
-        // Confirm file write
-        const confirm = fs.readFileSync(file, 'utf8');
-        if (!confirm || confirm.length === 0) {
-            console.error(`[writeJSON] File ${file} written but is empty!`);
-        } else {
-            console.log(`[writeJSON] Successfully wrote to ${file}. Length: ${confirm.length}`);
-        }
-    } catch (err) {
-        console.error(`[writeJSON] Failed to write to ${file}:`, err);
-        throw err;
-    }
-}
 
-function safeReadJSON(file, fallback) {
-    try {
-        const data = fs.readFileSync(file, 'utf8');
-        if (!data) throw new Error('Empty file');
-        return JSON.parse(data);
-    } catch {
-        console.warn(`[advanceweek] File ${file} missing or invalid, using fallback.`);
-        writeJSON(file, fallback);
-        return fallback;
-    }
-}
+import { SlashCommandBuilder, PermissionFlagsBits, ChannelType } from 'discord.js';
+import fs from 'fs';
+import { sendWelcomeAndButton } from '../../interactions/submit_score.js';
+
 export const data = new SlashCommandBuilder()
     .setName('advanceweek')
     .setDescription('Advance the current week by 1, or specify a week to advance to')
@@ -38,39 +12,84 @@ export const data = new SlashCommandBuilder()
             .setRequired(false))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-
-import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, PermissionsBitField } from 'discord.js';
-import fs from 'fs';
-import path from 'path';
-import { sendWelcomeAndButton } from '../../interactions/submit_score.js';
-// ...existing code...
-import { EmbedBuilder } from 'discord.js';
-
-
 const SEASON_FILE = './data/season.json';
-
-
-function readJSON(file) {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
-}
+const SCHEDULE_FILE = './data/schedule.json';
+const TOTAL_WEEKS = 29;
 
 export async function execute(interaction) {
+    await interaction.deferReply();
     try {
-        await interaction.deferReply({ ephemeral: false });
-        // Restore: read season.json, calculate weekNum, validate
-        const season = safeReadJSON(SEASON_FILE, { currentWeek: 1, seasonNo: 1, coachRoleMap: {} });
-        if (!season.currentWeek || season.currentWeek < 1) {
-            season.currentWeek = 1;
+        // Read season.json
+        let season;
+        try {
+            season = JSON.parse(fs.readFileSync(SEASON_FILE, 'utf8'));
+        } catch {
+            season = { currentWeek: 1, seasonNo: 1, coachRoleMap: {} };
         }
-        let weekNum = interaction.options.getInteger('week') || season.currentWeek;
-        const totalWeeks = 29;
-        if (weekNum < 1 || weekNum > totalWeeks) {
-            await interaction.editReply({ content: `Invalid week number. Must be between 1 and ${totalWeeks}.` });
+        // Get week number from option or increment
+        let weekNum = interaction.options.getInteger('week');
+        if (!weekNum) {
+            weekNum = (season.currentWeek || 1) + 1;
+        }
+        if (weekNum < 1 || weekNum > TOTAL_WEEKS) {
+            await interaction.editReply({ content: `Invalid week number. Must be between 1 and ${TOTAL_WEEKS}.` });
             return;
         }
-        await interaction.editReply({ content: `Advanceweek: weekNum is ${weekNum}, currentWeek in season.json is ${season.currentWeek}` });
+        // Update backend
+        season.currentWeek = weekNum;
+        fs.writeFileSync(SEASON_FILE, JSON.stringify(season, null, 2));
+        // Read schedule for the week
+        let schedule;
+        try {
+            schedule = JSON.parse(fs.readFileSync(SCHEDULE_FILE, 'utf8'));
+        } catch {
+            schedule = [];
+        }
+        const matchups = schedule[weekNum] || [];
+
+        console.log(`[advanceweek] Creating game channels for week ${weekNum}, total matchups: ${matchups.length}`);
+        let createdChannels = [];
+        // Create a category for the week
+        const guild = interaction.guild;
+        const weekCategoryName = `Week ${weekNum} Games`;
+        let weekCategory = guild.channels.cache.find(c => c.name === weekCategoryName && c.type === ChannelType.GuildCategory);
+        if (!weekCategory) {
+            weekCategory = await guild.channels.create({
+                name: weekCategoryName,
+                type: ChannelType.GuildCategory
+            });
+        }
+
+        // Batch channel creation
+        const batchSize = 5;
+        for (let i = 0; i < matchups.length; i += batchSize) {
+            const batch = matchups.slice(i, i + batchSize);
+            for (const matchup of batch) {
+                try {
+                    const chanName = `${matchup.team1.abbreviation.toLowerCase()}-vs-${matchup.team2.abbreviation.toLowerCase()}`;
+                    let gameChannel = guild.channels.cache.find(c => c.name === chanName && c.parentId === weekCategory.id);
+                    if (!gameChannel) {
+                        gameChannel = await guild.channels.create({
+                            name: chanName,
+                            type: ChannelType.GuildText,
+                            parent: weekCategory.id
+                        });
+                        createdChannels.push(chanName);
+                    }
+                    await sendWelcomeAndButton(gameChannel, weekNum, season.seasonNo);
+                } catch (err) {
+                    console.error(`[advanceweek] Error creating channel or sending message:`, err);
+                }
+            }
+            // Progress update after each batch
+            await interaction.followUp({ content: `Created ${createdChannels.length}/${matchups.length} channels...`, ephemeral: true });
+            await new Promise(res => setTimeout(res, 1500));
+        }
+        console.log(`[advanceweek] All channels created:`, createdChannels);
+        await interaction.editReply({ content: `Week advanced! Current week is now ${season.currentWeek}. All game channels created.` });
     } catch (err) {
         console.error('[advanceweek] Error:', err);
+        await interaction.editReply({ content: 'Error advancing week.' });
     }
 }
 

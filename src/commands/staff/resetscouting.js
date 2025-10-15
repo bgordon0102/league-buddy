@@ -34,14 +34,8 @@ export const data = new SlashCommandBuilder()
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction) {
+  await interaction.deferReply({ flags: 64 });
   try {
-    // Always defer immediately to avoid interaction expiration
-    try {
-      await interaction.deferReply({ flags: 64 });
-    } catch (err) {
-      console.error('Failed to defer reply in /resetscouting:', err?.message || err);
-      return;
-    }
     // Reset scouting.json (legacy or other use)
     const scoutingData = safeReadJSON(SCOUTING_FILE, {});
     for (const coachId in scoutingData) {

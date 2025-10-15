@@ -13,6 +13,7 @@ export const data = new SlashCommandBuilder()
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction) {
+    await interaction.deferReply({ ephemeral: false });
     // Log all category names for debugging
     const guild = interaction.guild;
     const allCategories = guild.channels.cache.filter(c => c.type === ChannelType.GuildCategory).map(c => `${c.name} (${c.id})`);
@@ -21,16 +22,6 @@ export async function execute(interaction) {
     // Debug: List all channels in the guild
     const allChannels = guild.channels.cache.map(c => `${c.name} (${c.id})`);
     console.log(`[deletegamechannel] All channels in guild:`, allChannels);
-    let deferred = false;
-    // Try to defer reply first
-    try {
-        await interaction.deferReply({ ephemeral: false });
-        deferred = true;
-    } catch (err) {
-        console.error('[deletegamechannel] Failed to defer reply:', err);
-        deferred = false;
-    }
-    console.log(`[deletegamechannel] deferReply timing: ${(Date.now() - interaction.createdTimestamp) / 1000}s since interaction creation`);
     let replyMsg = '';
     try {
         const week = interaction.options.getInteger('week');

@@ -7,6 +7,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
     await interaction.deferReply({ flags: 64 });
+    await interaction.deferReply({ flags: 64 });
     const guild = interaction.guild;
     if (!guild) return await interaction.editReply('❌ This command must be run in a server.');
 

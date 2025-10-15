@@ -7,14 +7,7 @@ export const data = new SlashCommandBuilder()
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels);
 
 export async function execute(interaction) {
-    let responded = false;
-    try {
-        await interaction.deferReply({ ephemeral: true });
-        responded = true;
-    } catch (err) {
-        console.error('Failed to defer reply in /remindgame:', err?.message || err);
-        return;
-    }
+    await interaction.deferReply({ ephemeral: true });
     // Only allow staff
     const member = await interaction.guild.members.fetch(interaction.user.id);
     const isStaff = member.permissions.has(PermissionFlagsBits.ManageChannels);
