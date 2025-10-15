@@ -214,15 +214,16 @@ export async function handleButton(interaction) {
         const match = interaction.channel.name.match(/^(.*?)-vs-(.*?)$/);
         if (match) {
             const abbrToNickname = {
-                ATL: 'Hawks', BOS: 'Celtics', BKN: 'Nets', CHA: 'Hornets', CHI: 'Bulls', CLE: 'Cavaliers', DAL: 'Mavericks', DEN: 'Nuggets', DET: 'Pistons', GSW: 'Warriors', HOU: 'Rockets', IND: 'Pacers', LAC: 'Clippers', LAL: 'Lakers', MEM: 'Grizzlies', MIA: 'Heat', MIL: 'Bucks', MIN: 'Timberwolves', NOP: 'Pelicans', NYK: 'Knicks', OKC: 'Thunder', ORL: 'Magic', PHI: 'Sixers', PHX: 'Suns', POR: 'Trail Blazers', SAC: 'Kings', SAS: 'Spurs', TOR: 'Raptors', UTA: 'Jazz', WAS: 'Wizards'
+                ATL: 'Hawks', BOS: 'Celtics', BKN: 'Nets', CHA: 'Hornets', CHI: 'Bulls', CLE: 'Cavaliers', DAL: 'Mavericks', DEN: 'Nuggets', DET: 'Pistons', GSW: 'Warriors', HOU: 'Rockets', IND: 'Pacers', LAC: 'Clippers', LAL: 'Lakers', MEM: 'Grizzlies', MIA: 'Heat', MIL: 'Bucks', MIN: 'Timberwolves', NOP: 'Pelicans', NYK: 'Knicks', OKC: 'Thunder', ORL: 'Magic', PHI: '76ers', PHX: 'Suns', POR: 'Blazers', SAC: 'Kings', SAS: 'Spurs', TOR: 'Raptors', UTA: 'Jazz', WAS: 'Wizards'
             };
             const abbr1 = match[1].toUpperCase();
             const abbr2 = match[2].toUpperCase();
             const nickname1 = abbrToNickname[abbr1] || abbr1;
             const nickname2 = abbrToNickname[abbr2] || abbr2;
             const guild = interaction.guild;
-            const team1Role = guild.roles.cache.find(r => r.name.toLowerCase() === `${nickname1.toLowerCase()} coach`);
-            const team2Role = guild.roles.cache.find(r => r.name.toLowerCase() === `${nickname2.toLowerCase()} coach`);
+            // Always check for '[Team Nickname] Coach' role
+            const team1Role = guild.roles.cache.find(r => r.name === `${nickname1} Coach`);
+            const team2Role = guild.roles.cache.find(r => r.name === `${nickname2} Coach`);
             const member = await guild.members.fetch(interaction.user.id);
             // Debug logging
             console.log('[submit_score] User:', interaction.user.tag, 'ID:', interaction.user.id);
