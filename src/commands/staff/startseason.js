@@ -1,7 +1,9 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
+
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import fsPromises from 'fs/promises';
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const COACHROLEMAP_FILE = path.join(DATA_DIR, 'coachRoleMap.json');
@@ -9,7 +11,9 @@ const SEASON_FILE = path.join(DATA_DIR, 'season.json');
 const TEAMS_FILE = path.join(DATA_DIR, 'teams.json');
 const LEAGUE_FILE = path.join(DATA_DIR, 'league.json');
 const PLAYERS_FILE = path.join(DATA_DIR, 'players.json');
-const BIGBOARD_FILE = path.join(DATA_DIR, 'bigboard.json');
+
+// Use the draft class file directly for big board operations
+const BIGBOARD_FILE = path.join(process.cwd(), 'draft classes/CUS01/2k26_CUS01 - Big Board.json');
 const SCOUTING_FILE = path.join(DATA_DIR, 'scouting.json');
 const RECRUITS_FILE = path.join(DATA_DIR, 'recruits.json');
 const SCOUT_POINTS_FILE = path.join(DATA_DIR, 'scout_points.json');
@@ -92,7 +96,7 @@ export function resetSeasonData(seasonno, guild, caller = 'unknown') {
     if (guild && guild.roles && guild.roles.cache) {
         for (const team of staticTeams) {
             const nickname = team.name.split(' ').slice(-1)[0];
-            let role = guild.roles.cache.find(r => r.name.toLowerCase() === `${nickname.toLowerCase()} coach`);
+            let role = guild.roles.cache.find(r => r.name.toLowerCase() === 'ghost paradise');
             if (role) {
                 coachRoleMap[team.name] = role.id;
             } else if (team.name === 'Portland Trail Blazers') {
@@ -108,7 +112,7 @@ export function resetSeasonData(seasonno, guild, caller = 'unknown') {
     if (Object.keys(coachRoleMap).length === 0) {
         const fileMap = safeReadJSON(COACHROLEMAP_FILE, {});
         for (const team of staticTeams) {
-            coachRoleMap[team.name] = fileMap[team.name] || null;
+            coachRoleMap[team.name] = fileMap[team.name] || '1428119680572325929';
         }
         usedFallback = true;
     }
@@ -151,28 +155,16 @@ export function resetSeasonData(seasonno, guild, caller = 'unknown') {
     writeJSON(TEAMS_FILE, staticTeams);
     console.log('[startseason] Wrote teams.json');
 
-    // Use CUS02 files for season 2, otherwise default to CUS01
-    let classDir = seasonno === 2 ? 'CUS02' : 'CUS01';
-    const prospectBoards = {
-        pre: `./${classDir}/2k26_${classDir} - Preseason Big Board.json`,
-        mid: `./${classDir}/2k26_${classDir} - Midseason Big Board.json`,
-        final: `./${classDir}/2k26_${classDir} - Final Big Board.json`
-    };
-    let preseasonData = safeReadJSON(path.resolve(process.cwd(), prospectBoards.pre.replace('./', '')), []);
-    let midseasonData = safeReadJSON(path.resolve(process.cwd(), prospectBoards.mid.replace('./', '')), []);
-    let finalData = safeReadJSON(path.resolve(process.cwd(), prospectBoards.final.replace('./', '')), []);
-    writeJSON(path.join(DATA_DIR, 'prospectBoards.json'), prospectBoards);
-    writeJSON(prospectBoards.pre, preseasonData);
-    writeJSON(prospectBoards.mid, midseasonData);
-    writeJSON(prospectBoards.final, finalData);
-
-    // Recruiting and Top Performer files
-    const recruitingFile = `./${classDir}/2k26_${classDir} - Recruiting.json`;
-    const topPerformerFile = `./${classDir}/2k26_${classDir} - Top Performer.json`;
-    let recruitingData = safeReadJSON(path.resolve(process.cwd(), recruitingFile.replace('./', '')), []);
-    let topPerformerData = safeReadJSON(path.resolve(process.cwd(), topPerformerFile.replace('./', '')), []);
+    // --- DRAFT CLASS SELECTION LOGIC ---
+    // Only use the draft class files for big board and recruiting data
+    let recruitingSource;
+    if (seasonno === 2) {
+        recruitingSource = path.resolve(process.cwd(), 'draft classes/CUS02/2k26_CUS02 - Recruiting.json');
+    } else {
+        recruitingSource = path.resolve(process.cwd(), 'draft classes/CUS01/2k26_CUS01 - Recruiting.json');
+    }
+    const recruitingData = safeReadJSON(recruitingSource, []);
     writeJSON(path.join(DATA_DIR, 'recruiting.json'), recruitingData);
-    // ...existing code...
 
     // Standings
     const standings = {};
@@ -206,7 +198,6 @@ export function resetSeasonData(seasonno, guild, caller = 'unknown') {
     writeJSON(LEAGUE_FILE, leagueData);
     console.log('[startseason] Wrote league.json');
     writeJSON(PLAYERS_FILE, []);
-    writeJSON(BIGBOARD_FILE, []);
     writeJSON(SCOUTING_FILE, {});
     writeJSON(RECRUITS_FILE, []);
     writeJSON(SCOUT_POINTS_FILE, {});
@@ -254,31 +245,161 @@ export const data = new SlashCommandBuilder()
             .setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-export async function execute(interaction, seasonnoOverride = null) {
-    // Always get season number from override or interaction
-    const seasonno = seasonnoOverride !== null ? seasonnoOverride : interaction.options.getInteger('seasonno');
+import { DataManager } from '../../utils/dataManager.js';
 
+export async function execute(interaction) {
     await interaction.deferReply({ ephemeral: true });
-    // Immediately defer reply to prevent Discord timeout
+    const dataManager = new DataManager();
+    // fs and path are already imported at the top as ES modules
+    const SEASON_FILE = path.join(process.cwd(), 'data', 'season.json');
     try {
-    } catch (err) {
-        console.error('[startseason] Failed to defer reply:', err);
-    }
-
-    // Show confirmation button instead of resetting immediately
-    const confirmRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-            .setCustomId(`startseason_confirm_${seasonno}`)
-            .setLabel('✅ Yes, start/reset season')
-            .setStyle(ButtonStyle.Danger)
-    );
-    try {
-        await interaction.editReply({
-            content: `⚠️ Are you sure you want to start/reset Season ${seasonno}? This will erase and recreate all league data files.`,
-            components: [confirmRow],
+        // --- Unpin old standings/playoff messages and pin new reset ones ---
+        const standingsChannelId = '1428159168904167535';
+        const playoffChannelId = '1428159324341141576';
+        const guild = interaction.guild;
+        async function resetPinnedEmbed(channelId, embedArr, envKey = null) {
+            try {
+                const channel = await guild.channels.fetch(channelId);
+                if (!channel) return;
+                const pins = await channel.messages.fetchPinned();
+                for (const msg of pins.values()) {
+                    if (msg.author.id === guild.client.user.id) {
+                        await msg.unpin();
+                        await msg.delete();
+                    }
+                }
+                const sentMsg = await channel.send({ embeds: embedArr });
+                await sentMsg.pin();
+                // If envKey is provided, update .env with the new message ID
+                if (envKey) {
+                    const envPath = path.resolve(process.cwd(), '.env');
+                    let envContent = '';
+                    try {
+                        envContent = await fsPromises.readFile(envPath, 'utf8');
+                    } catch { }
+                    const regex = new RegExp(`^${envKey}=.*$`, 'm');
+                    if (regex.test(envContent)) {
+                        envContent = envContent.replace(regex, `${envKey}=${sentMsg.id}`);
+                    } else {
+                        envContent += `\n${envKey}=${sentMsg.id}`;
+                    }
+                    await fsPromises.writeFile(envPath, envContent, 'utf8');
+                }
+            } catch (err) {
+                console.error('Failed to reset pinned message in channel', channelId, err);
+            }
+        }
+        // Blank/reset standings embed
+        const blankStandingsEmbed = new (await import('discord.js')).EmbedBuilder()
+            .setTitle('NBA League Standings')
+            .addFields(
+                { name: 'Eastern Conference', value: 'No games played', inline: false },
+                { name: 'Western Conference', value: 'No games played', inline: false }
+            )
+            .setColor(0x1D428A)
+            .setFooter({ text: 'W-L | Win% | Games Behind (GB)' });
+        await resetPinnedEmbed(standingsChannelId, [blankStandingsEmbed], 'STANDINGS_PINNED_MESSAGE_ID');
+        // Blank/reset playoff picture embeds
+        const blankEastEmbed = new (await import('discord.js')).EmbedBuilder()
+            .setTitle('🏆 Eastern Conference Playoff Bracket')
+            .addFields(
+                { name: 'Playoff Matchups', value: 'No games played', inline: false },
+                { name: 'Play-In Matchups', value: 'No games played', inline: false }
+            )
+            .setColor(0x1D428A)
+            .setFooter({ text: 'Top 6: Playoff | 7-10: Play-In' });
+        const blankWestEmbed = new (await import('discord.js')).EmbedBuilder()
+            .setTitle('🏆 Western Conference Playoff Bracket')
+            .addFields(
+                { name: 'Playoff Matchups', value: 'No games played', inline: false },
+                { name: 'Play-In Matchups', value: 'No games played', inline: false }
+            )
+            .setColor(0xE03A3E)
+            .setFooter({ text: 'Top 6: Playoff | 7-10: Play-In' });
+        await resetPinnedEmbed(playoffChannelId, [blankEastEmbed, blankWestEmbed]);
+        // Check if season.json exists and is non-empty
+        let seasonExists = false;
+        try {
+            const stats = fs.statSync(SEASON_FILE);
+            if (stats.size > 10) seasonExists = true;
+        } catch { }
+        if (seasonExists) {
+            // Show confirmation button with season number in customId
+            const seasonno = interaction.options.getInteger('seasonno');
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`startseason_confirm_${seasonno}`)
+                    .setLabel('Are you sure? This will reset all season data!')
+                    .setStyle(ButtonStyle.Danger)
+            );
+            await interaction.editReply({
+                content: 'Season data already exists. Are you sure you want to reset everything?',
+                components: [row],
+                ephemeral: true
+            });
+            return;
+        }
+        // ...existing code for season initialization...
+        const seasonno = interaction.options.getInteger('seasonno');
+        const nbaTeams = [
+            { id: 1, name: "Atlanta Hawks", abbreviation: "ATL" },
+            { id: 2, name: "Boston Celtics", abbreviation: "BOS" },
+            { id: 3, name: "Brooklyn Nets", abbreviation: "BKN" },
+            { id: 4, name: "Charlotte Hornets", abbreviation: "CHA" },
+            { id: 5, name: "Chicago Bulls", abbreviation: "CHI" },
+            { id: 6, name: "Cleveland Cavaliers", abbreviation: "CLE" },
+            { id: 7, name: "Dallas Mavericks", abbreviation: "DAL" },
+            { id: 8, name: "Denver Nuggets", abbreviation: "DEN" },
+            { id: 9, name: "Detroit Pistons", abbreviation: "DET" },
+            { id: 10, name: "Golden State Warriors", abbreviation: "GSW" },
+            { id: 11, name: "Houston Rockets", abbreviation: "HOU" },
+            { id: 12, name: "Indiana Pacers", abbreviation: "IND" },
+            { id: 13, name: "LA Clippers", abbreviation: "LAC" },
+            { id: 14, name: "Los Angeles Lakers", abbreviation: "LAL" },
+            { id: 15, name: "Memphis Grizzlies", abbreviation: "MEM" },
+            { id: 16, name: "Miami Heat", abbreviation: "MIA" },
+            { id: 17, name: "Milwaukee Bucks", abbreviation: "MIL" },
+            { id: 18, name: "Minnesota Timberwolves", abbreviation: "MIN" },
+            { id: 19, name: "New Orleans Pelicans", abbreviation: "NOP" },
+            { id: 20, name: "New York Knicks", abbreviation: "NYK" },
+            { id: 21, name: "Oklahoma City Thunder", abbreviation: "OKC" },
+            { id: 22, name: "Orlando Magic", abbreviation: "ORL" },
+            { id: 23, name: "Philadelphia 76ers", abbreviation: "PHI" },
+            { id: 24, name: "Phoenix Suns", abbreviation: "PHX" },
+            { id: 25, name: "Portland Trail Blazers", abbreviation: "POR" },
+            { id: 26, name: "Sacramento Kings", abbreviation: "SAC" },
+            { id: 27, name: "San Antonio Spurs", abbreviation: "SAS" },
+            { id: 28, name: "Toronto Raptors", abbreviation: "TOR" },
+            { id: 29, name: "Utah Jazz", abbreviation: "UTA" },
+            { id: 30, name: "Washington Wizards", abbreviation: "WAS" }
+        ];
+        const staticTeams = nbaTeams.map(team => ({ ...team, coach: null }));
+        for (let i = staticTeams.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [staticTeams[i], staticTeams[j]] = [staticTeams[j], staticTeams[i]];
+        }
+        let coachRoleMap = {};
+        staticTeams.forEach(team => { coachRoleMap[team.name] = null; });
+        const standings = {};
+        staticTeams.forEach(team => {
+            standings[team.name] = { wins: 0, losses: 0, games: 0, pointsFor: 0, pointsAgainst: 0 };
         });
+        const prospectBoards = [];
+        const recruitingData = [];
+        const seasonData = {
+            currentWeek: 0,
+            seasonNo: seasonno,
+            coachRoleMap: coachRoleMap
+        };
+        dataManager.writeData('season', seasonData);
+        dataManager.writeData('teams', staticTeams);
+        dataManager.writeData('standings', standings);
+        dataManager.writeData('scores', []);
+        dataManager.writeData('prospectBoards', prospectBoards);
+        dataManager.writeData('recruiting', recruitingData);
+        await interaction.editReply({ content: `Season ${seasonData.seasonNo} started! All data initialized.` });
     } catch (err) {
-        console.error('[startseason] Failed to send confirmation button:', err);
+        console.error('[startseason] Error:', err);
+        await interaction.editReply({ content: 'Error starting season.' });
     }
-    // Actual reset will be handled in a button interaction handler.
 }

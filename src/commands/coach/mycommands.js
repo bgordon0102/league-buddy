@@ -20,15 +20,19 @@ export async function execute(interaction) {
                 .setDescription('Here are the commands available to Staff:')
                 .addFields(
                     { name: '/mycommands ⭐', value: 'Shows this menu' },
+                    { name: '/bigboard', value: 'View the big board' },
                     { name: '/advanceweek', value: 'Advance the league to the next week' },
                     { name: '/assignrole', value: 'Assign a coach role to a user' },
-                    { name: '/clearcoachoffices', value: 'Remove all messages from coach office channels' },
-                    { name: '/clearmessages', value: 'Clear messages from a specified channel' },
-                    { name: '/createcoachoffices', value: 'Create all coach office channels' },
-                    { name: '/deletegamechannel', value: 'Delete a game channel' },
+                    { name: '/clearmessages', value: 'Clear messages from a specified thread' },
+                    { name: '/deletegamechannel', value: 'Delete a game thread' },
                     { name: '/generaterandomscores', value: 'Simulate and approve random scores for all games up to a given week' },
+                    { name: '/ping', value: 'Ping the bot to check responsiveness' },
+                    { name: '/remindgame', value: 'Send a reminder for a scheduled game' },
                     { name: '/resetnbaroles', value: 'Reset NBA coach roles for all teams' },
                     { name: '/resetscouting', value: 'Reset all scouting data' },
+                    { name: '/runtestseason', value: 'Run a test season simulation' },
+                    { name: '/schedule', value: 'Show a team’s NBA season schedule' },
+                    { name: '/scout', value: 'Scout a player from the big board' },
                     { name: '/startseason', value: 'Start or reset the NBA season and all league data files' }
                 )
                 .setFooter({ text: 'Staff access only' });
@@ -39,13 +43,9 @@ export async function execute(interaction) {
                 .setDescription('Here are the commands available to Coaches:')
                 .addFields(
                     { name: '/mycommands ⭐', value: 'Shows this menu' },
-                    { name: '/standings', value: 'Show NBA-style conference standings' },
-                    { name: '/schedule', value: "Show a team's NBA season schedule" },
-                    { name: '/bigboard', value: 'View and manage your personal draft big board (reorder your scouted players)' },
-                    { name: '/scout', value: 'Show the current NBA-style playoff bracket and play-in teams' },
-                    { name: '/recruitboard', value: 'View recruits and player cards' },
-                    { name: '/invitecoach', value: 'Invite a coach to your office channel' },
-                    { name: '/uninvitecoach', value: 'Remove a coach from your office channel' }
+                    { name: '/bigboard', value: 'View the big board' },
+                    { name: '/schedule', value: 'Show a team’s NBA season schedule' },
+                    { name: '/scout', value: 'Scout a player from the big board' }
                 )
                 .setFooter({ text: 'Coach access only' });
         }

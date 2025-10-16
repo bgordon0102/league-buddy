@@ -1,4 +1,4 @@
-export const customId = "bigboard_select";
+export const customId = "bigboard_select_1";
 import fs from "fs";
 import path from "path";
 import { EmbedBuilder } from "discord.js";
@@ -6,24 +6,10 @@ import { EmbedBuilder } from "discord.js";
 const bigBoardsFile = path.join(process.cwd(), "data/prospectBoards.json");
 
 export async function execute(interaction) {
-    await interaction.deferUpdate();
-    // Get which board is active from the message embed title
-    const boardTitle = interaction.message.embeds[0]?.title || "";
-    let board = "pre";
-    if (boardTitle.includes("Mid Big Board")) board = "mid";
-    else if (boardTitle.includes("Final Big Board")) board = "final";
-
-    const bigBoards = JSON.parse(fs.readFileSync(bigBoardsFile, 'utf8'));
-    let boardFilePath = bigBoards[board];
-    if (!boardFilePath) {
-        await interaction.editReply({ content: `Board file for phase '${board}' not found.`, flags: 64 });
-        return;
-    }
-    if (!path.isAbsolute(boardFilePath)) {
-        boardFilePath = path.join(process.cwd(), boardFilePath);
-    }
+    // Always use the same big board file
+    const boardFilePath = path.join(process.cwd(), "draft classes/CUS01/2k26_CUS01 - Big Board.json");
     if (!fs.existsSync(boardFilePath)) {
-        await interaction.editReply({ content: `Board file not found at resolved path: ${boardFilePath}`, flags: 64 });
+        await interaction.reply({ content: `Big board file not found at resolved path: ${boardFilePath}`, flags: 64 });
         return;
     }
     const bigBoardData = JSON.parse(fs.readFileSync(boardFilePath, 'utf8'));
@@ -31,8 +17,25 @@ export async function execute(interaction) {
 
     // Page 1: 1-15
     const players = allPlayers.slice(0, 15);
-    const selected = players.find(p => p.id_number.toString() === interaction.values[0]);
-    if (!selected) return await interaction.editReply({ content: "Player not found.", flags: 64 });
+    // Extract player name (remove leading number and dot if present)
+    function normalize(str) {
+        return str
+            .replace(/^\d+\.\s*/, '')
+            .trim()
+            .toLowerCase()
+            .normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g, '');
+    }
+    const normalizedSelected = normalize(interaction.values[0]);
+    const selected = players.find(p => p.name && normalize(p.name) === normalizedSelected);
+    if (!selected) {
+        console.log('Bigboard select debug: Selected value (raw):', interaction.values[0]);
+        console.log('Bigboard select debug: Selected value (normalized):', normalizedSelected);
+        console.log('Bigboard select debug: All normalized player names:', players.map(p => normalize(p.name)));
+        console.log('Bigboard select debug: All raw player names:', players.map(p => p.name));
+        await interaction.reply({ content: "Player not found.", flags: 64 });
+        return;
+    }
 
     const strengths = [selected.strength_1, selected.strength_2, selected.strength_3].filter(Boolean).join(", ") || "N/A";
     const weaknesses = [selected.weakness_1, selected.weakness_2, selected.weakness_3].filter(Boolean).join(", ") || "N/A";
@@ -75,5 +78,5 @@ export async function execute(interaction) {
         embed.addFields({ name: 'Scouted Info', value: info.join(' | '), inline: false });
     }
 
-    await interaction.editReply({ embeds: [embed], flags: 64 });
+    await interaction.reply({ embeds: [embed], flags: 64 });
 }

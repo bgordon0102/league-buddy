@@ -4,7 +4,7 @@ const SEASON_FILE = './data/season.json';
 const TEAMS_FILE = './data/teams.json';
 const LEAGUE_FILE = './data/league.json';
 const PLAYERS_FILE = './data/players.json';
-const BIGBOARD_FILE = './data/bigboard.json';
+// const BIGBOARD_FILE = './data/bigboard.json'; // REMOVED: No longer used
 const SCOUTING_FILE = './data/scouting.json';
 const RECRUITS_FILE = './data/recruits.json';
 

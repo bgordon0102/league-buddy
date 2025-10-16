@@ -28,7 +28,7 @@ const __dirname = dirname(__filename);
 
 // Function to dynamically load all commands
 async function loadCommands() {
-  const commandFolders = ['staff', 'coach'];
+  const commandFolders = ['staff', 'coach']; // Only load final folders
 
   for (const folder of commandFolders) {
     const commandsPath = join(__dirname, 'src', 'commands', folder);
@@ -80,16 +80,9 @@ async function loadInteractions() {
 
 // Register bigboard_move interaction
 
-import * as bigboardMove from './src/interactions/bigboard_move.js';
-client.interactions.set('bigboard_move', bigboardMove);
-import * as bigboardMoveV2 from './src/interactions/bigboard_move_v2.js';
-client.interactions.set('bigboard_move_up', bigboardMoveV2);
-client.interactions.set('bigboard_move_down', bigboardMoveV2);
-import * as bigboardSelectPlayer from './src/interactions/bigboard_select_player.js';
-client.interactions.set('bigboard_select_player', bigboardSelectPlayer);
 
 // Register submit_score button/modal/approval handlers
-import * as submitScore from './src/interactions/submit_score_interaction.js';
+import * as submitScore from './src/interactions/submit_score.js';
 client.interactions.set('submit_score', submitScore);
 client.interactions.set('submit_score_modal', { execute: submitScore.handleModal });
 client.interactions.set('force_win_modal', { execute: (interaction) => submitScore.handleModal(interaction, 'Force Win') });
@@ -174,11 +167,12 @@ client.on('interactionCreate', async interaction => {
   console.log(`[INTERACTION EVENT] type: ${interaction.type}, id: ${interaction.id}, createdAt: ${interaction.createdAt}, user: ${interaction.user?.tag || interaction.user?.id}`);
   // Handle autocomplete interactions
   if (interaction.isAutocomplete()) {
+    console.log(`[AUTOCOMPLETE] id: ${interaction.id}, user: ${interaction.user?.tag || interaction.user?.id}`);
     const command = client.commands.get(interaction.commandName);
     if (!command || !command.autocomplete) return;
-
     try {
       await command.autocomplete(interaction);
+      console.log(`[AUTOCOMPLETE] responded for id: ${interaction.id}`);
     } catch (error) {
       console.error(`❌ Error with autocomplete for ${interaction.commandName}:`, error);
     }
@@ -195,9 +189,6 @@ client.on('interactionCreate', async interaction => {
       console.log(`[SCOUT SELECT MENU] customId: ${interaction.customId}, user: ${interaction.user.username} (${interaction.user.id}), values: ${JSON.stringify(interaction.values)}`);
     }
     // Support prefix matching for bigboard_move
-    if (!interactionHandler && interaction.customId.startsWith('bigboard_move')) {
-      interactionHandler = client.interactions.get('bigboard_move');
-    }
     if (!interactionHandler) {
       console.error(`❌ No interaction handler matching ${interaction.customId} was found.`);
       return;
@@ -236,9 +227,6 @@ client.on('interactionCreate', async interaction => {
           break;
         }
       }
-    }
-    if (!interactionHandler && (interaction.customId.startsWith('bigboard_move_up:') || interaction.customId.startsWith('bigboard_move_down:'))) {
-      interactionHandler = client.interactions.get('bigboard_move_up');
     }
     // Support submit_score approval/deny
     if (!interactionHandler && (interaction.customId === 'approve_score' || interaction.customId === 'deny_score')) {
@@ -301,6 +289,11 @@ client.on('interactionCreate', async interaction => {
   // Handle slash command interactions
   if (!interaction.isChatInputCommand()) return;
 
+  console.log(`[COMMAND] id: ${interaction.id}, user: ${interaction.user?.tag || interaction.user?.id}, command: ${interaction.commandName}`);
+  if (interaction.replied || interaction.deferred) {
+    console.warn(`[COMMAND] Interaction already handled for id: ${interaction.id}, skipping execution.`);
+    return;
+  }
   const command = client.commands.get(interaction.commandName);
   if (!command) {
     console.error(`❌ No command matching ${interaction.commandName} was found.`);

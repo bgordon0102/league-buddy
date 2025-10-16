@@ -1,114 +1,104 @@
-
-
-
-import { SlashCommandBuilder, PermissionFlagsBits, ChannelType } from 'discord.js';
+import { SlashCommandBuilder, ChannelType } from 'discord.js';
 
 export const data = new SlashCommandBuilder()
     .setName('deletegamechannel')
-    .setDescription('Delete all game channels for a selected week (Discord only, JSON remains intact).')
+    .setDescription('Delete all game channels for a given week')
     .addIntegerOption(option =>
         option.setName('week')
-            .setDescription('Week number to clear')
-            .setRequired(true))
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+            .setDescription('Week number to delete channels for')
+            .setRequired(true)
+    );
 
 export async function execute(interaction) {
-    await interaction.deferReply({ ephemeral: false });
-    // Log all category names for debugging
-    const guild = interaction.guild;
-    const allCategories = guild.channels.cache.filter(c => c.type === ChannelType.GuildCategory).map(c => `${c.name} (${c.id})`);
-    console.log(`[deletegamechannel] All categories in guild:`, allCategories);
-    console.log(`[deletegamechannel] Start execute`);
-    // Debug: List all channels in the guild
-    const allChannels = guild.channels.cache.map(c => `${c.name} (${c.id})`);
-    console.log(`[deletegamechannel] All channels in guild:`, allChannels);
-    let replyMsg = '';
+    let replyFailed = false;
+    let replyMethod = async (msg, forceSuccess = false) => {
+        let finalMsg = msg;
+        if (forceSuccess) finalMsg = '✅ Success! ' + (msg || 'Channels deleted.');
+        if (!replyFailed) {
+            try {
+                await interaction.editReply({ content: finalMsg });
+            } catch (e) {
+                replyFailed = true;
+            }
+        }
+        if (replyFailed) {
+            try {
+                await interaction.followUp({ content: finalMsg, ephemeral: true });
+            } catch (e) {
+                console.log(`[deletegamechannel] Could not send follow-up for interaction ${interaction.id}`);
+            }
+        }
+    };
     try {
-        const week = interaction.options.getInteger('week');
-        const guild = interaction.guild;
-        if (!guild || !guild.channels || !guild.channels.cache) {
-            replyMsg = '❌ Error: Guild or channels not found.';
-            console.error('[deletegamechannel] Guild or channels not found.');
-            if (deferred) {
-                await interaction.editReply({ content: replyMsg });
-            } else {
-                await interaction.reply({ content: replyMsg });
-            }
-            return;
-        }
-        const allChannels = guild.channels.cache.map(c => `${c.name} (${c.id})`);
-        console.log(`[deletegamechannel] All channels in guild:`, allChannels);
-        const category = guild.channels.cache.find(c => c.type === ChannelType.GuildCategory && c.name === `Week ${week} Games`);
-        if (!category) {
-            // Truncate channel list to avoid exceeding Discord's 2000 character limit
-            const maxChannels = 20;
-            let channelList = allChannels.slice(0, maxChannels).join(', ');
-            if (allChannels.length > maxChannels) {
-                channelList += ` ...and ${allChannels.length - maxChannels} more.`;
-            }
-            replyMsg = `❌ No category found for Week ${week}. Channels in guild: ${channelList}`;
-            console.error(`[deletegamechannel] No category found for Week ${week}.`);
-            if (deferred) {
-                await interaction.editReply({ content: replyMsg });
-            } else {
-                await interaction.reply({ content: replyMsg });
-            }
-            return;
-        }
-        const childChannels = guild.channels.cache.filter(ch => ch.parentId === category.id);
-        if (childChannels.size === 0) {
-            replyMsg = `⚠️ No child channels found under category '${category.name}'.`;
-            console.warn(`[deletegamechannel] No child channels found under category '${category.name}'.`);
-            if (deferred) {
-                await interaction.editReply({ content: replyMsg });
-            } else {
-                await interaction.reply({ content: replyMsg });
-            }
-            return;
-        }
-        let deleted = 0;
-        for (const channel of childChannels.values()) {
-            console.log(`[deletegamechannel] Attempting to delete channel: ${channel.name} (${channel.id})`);
-            try {
-                await channel.delete();
-                deleted++;
-                console.log(`[deletegamechannel] Deleted channel: ${channel.name} (${channel.id})`);
-            } catch (e) {
-                console.error(`[deletegamechannel] Failed to delete channel ${channel.name}:`, e);
-            }
-        }
-        try {
-            await category.delete();
-            console.log(`[deletegamechannel] Deleted category: ${category.name} (${category.id})`);
-        } catch (e) {
-            console.error(`[deletegamechannel] Failed to delete category:`, e);
-        }
-        replyMsg = `✅ Deleted ${deleted} channels and the category for Week ${week}.`;
-        if (deferred) {
-            await interaction.editReply({ content: replyMsg });
-        } else {
-            await interaction.reply({ content: replyMsg });
-        }
+        await interaction.deferReply({ ephemeral: true });
     } catch (err) {
-        console.error('[deletegamechannel] Fatal error:', err);
-        // Only reply if not already acknowledged
-        if (deferred) {
-            try {
-                await interaction.editReply({ content: 'Error clearing week channels.' });
-            } catch (e) {
-                console.error('[deletegamechannel] Failed to edit reply for error:', e);
-            }
-        } else {
-            try {
-                await interaction.reply({ content: 'Error clearing week channels.' });
-            } catch (e) {
-                // If reply fails, try followUp as last resort
-                try {
-                    await interaction.followUp({ content: 'Error clearing week channels.' });
-                } catch (ee) {
-                    console.error('[deletegamechannel] Failed to followUp for error:', ee);
+        // Fallback: some interaction tokens can be unknown (timed out or already responded).
+        console.error('[deletegamechannel] Error deferring reply:', err);
+        // Try to send an initial reply instead of deferring
+        try {
+            await interaction.reply({ content: 'Processing deletegamechannel...', ephemeral: true });
+            // Mark that we have replied so editReply can be used later
+            replyFailed = false;
+        } catch (replyErr) {
+            // If even reply fails, mark replyFailed so we don't attempt edits
+            console.error('[deletegamechannel] Could not send initial reply fallback:', replyErr);
+            replyFailed = true;
+        }
+    }
+    try {
+        const guild = interaction.guild;
+        const week = interaction.options.getInteger('week');
+        // Use the dedicated channel ID used by advanceweek (ensure it's the correct channel in your guild)
+        const dedicatedChannelId = '1428417230000885830';
+        let dedicatedChannel = null;
+        try {
+            dedicatedChannel = await guild.channels.fetch(dedicatedChannelId);
+        } catch (fetchErr) {
+            console.error('[deletegamechannel] Failed to fetch dedicated channel:', fetchErr);
+        }
+        if (!dedicatedChannel) {
+            await replyMethod(`❌ Error: Dedicated channel (id=${dedicatedChannelId}) not found or inaccessible.`);
+            return;
+        }
+        // Ensure the channel supports threads
+        if (typeof dedicatedChannel.isTextBased === 'function' && !dedicatedChannel.isTextBased()) {
+            await replyMethod('❌ Dedicated channel must be a text channel that supports threads.');
+            return;
+        }
+
+        // Fetch active and archived threads to find week threads (some may already be archived)
+        let deleted = 0;
+        try {
+            const active = await dedicatedChannel.threads.fetchActive();
+            // fetchArchived may require intents/permissions; fetch a reasonable number
+            const archived = await dedicatedChannel.threads.fetchArchived({ limit: 100 });
+
+            // Combine thread collections into a map to avoid duplicates
+            const allThreads = new Map();
+            for (const t of active.threads.values()) allThreads.set(t.id, t);
+            if (archived && archived.threads) for (const t of archived.threads.values()) allThreads.set(t.id, t);
+
+            const weekMarker = `-w${week}`;
+            for (const thread of allThreads.values()) {
+                const name = (thread.name || '').toLowerCase();
+                if (name.includes(weekMarker.toLowerCase()) || name.includes(`week ${week}`)) {
+                    try {
+                        await thread.delete();
+                        deleted++;
+                    } catch (e) {
+                        console.error(`[deletegamechannel] Failed to delete thread ${thread.name}:`, e);
+                    }
                 }
             }
+        } catch (e) {
+            console.error('[deletegamechannel] Error fetching threads:', e);
+            await replyMethod('❌ Error fetching threads from the dedicated channel. Check bot permissions.');
+            return;
         }
+        let replyMsg = `Deleted ${deleted} threads for Week ${week}.`;
+        await replyMethod(replyMsg, true);
+    } catch (err) {
+        console.error('[deletegamechannel] Fatal error:', err);
+        await replyMethod('Error clearing week threads.');
     }
 }

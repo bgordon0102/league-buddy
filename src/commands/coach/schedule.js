@@ -64,9 +64,12 @@ export async function execute(interaction) {
         const seasonData = JSON.parse(fs.readFileSync(seasonPath, "utf8"));
         const currentWeek = seasonData.currentWeek;
         let week = 1;
-        const gamesList = schedule
-            .flat()
-            .map((g) => {
+        let gamesList = [];
+        if (currentWeek === 0) {
+            gamesList.push('**Week 0**');
+        }
+        gamesList = gamesList.concat(
+            schedule.flat().map((g) => {
                 let opponent = null;
                 if (g.team1 && g.team1.name === team) {
                     opponent = g.team2 && g.team2.name ? g.team2.name : '';
@@ -74,22 +77,31 @@ export async function execute(interaction) {
                     opponent = g.team1 && g.team1.name ? g.team1.name : '';
                 }
                 if (!opponent) return null;
-                const line = week === currentWeek
-                    ? `➡️ **W${week}. ${opponent}**`
-                    : `W${week}. ${opponent}`;
-                week++;
-                return line;
-            })
-            .filter(Boolean);
+                if (week === currentWeek && currentWeek !== 0) {
+                    // Highlight current week
+                    const line = `➡️ **W${week}. ${opponent}**`;
+                    week++;
+                    return line;
+                } else {
+                    const line = `W${week}. ${opponent}`;
+                    week++;
+                    return line;
+                }
+            }).filter(Boolean)
+        );
+        const weekLabel = currentWeek === 0 ? 'Week 0' : `Current Week: ${currentWeek}`;
         const embed = new EmbedBuilder()
             .setTitle(`Schedule for ${team}`)
             .setDescription(gamesList.length ? gamesList.join("\n") : "No games found.")
+            .setFooter({ text: weekLabel })
             .setColor(0x1E90FF);
         await interaction.editReply({ embeds: [embed] });
     } catch (err) {
-        console.error('schedule.js error:', err);
+        console.error('Error in schedule:', err);
         if (responded) {
             await interaction.editReply({ content: 'Failed to load schedule.' });
+        } else {
+            await interaction.reply({ content: 'An error occurred while processing your request.', ephemeral: true });
         }
     }
 }

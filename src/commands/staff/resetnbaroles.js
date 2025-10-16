@@ -12,24 +12,15 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export const data = new SlashCommandBuilder()
+const data = new SlashCommandBuilder()
   .setName('resetnbaroles')
   .setDescription('Delete existing NBA roles and recreate them properly.')
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-export async function execute(interaction) {
-  console.log('🏀 Starting resetnbaroles command...');
-  let responded = true;
-  await interaction.deferReply({ flags: 64 });
-  console.log('🏀 Starting resetnbaroles command...');
-  try {
-  } catch (err) {
-    console.error('Failed to defer reply in /resetnbaroles:', err?.message || err);
-    return;
-  }
+async function execute(interaction) {
+  await interaction.deferReply({ ephemeral: true });
   try {
     const guild = interaction.guild;
-    // Full list of roles to create
     const allRoleNames = [...NBA_TEAMS.map(t => `${t} Coach`), ...STAFF_ROLES];
     let deletedCount = 0;
     for (const roleName of allRoleNames) {
@@ -43,8 +34,7 @@ export async function execute(interaction) {
         }
       }
     }
-    if (responded) await interaction.editReply({ content: `Deleted ${deletedCount} roles. Creating ${allRoleNames.length} new ones...`, flags: 64 });
-    // Create roles with 1-second delay
+    await interaction.followUp({ content: `Deleted ${deletedCount} roles. Creating ${allRoleNames.length} new ones...`, ephemeral: true });
     let createdCount = 0;
     for (const roleName of allRoleNames) {
       try {
@@ -54,26 +44,21 @@ export async function execute(interaction) {
           reason: 'NBA role creation'
         });
         createdCount++;
-        // Progress update every 5 roles
-        if (createdCount % 5 === 0 && responded) {
-          await interaction.editReply({
-            content: `Progress: ${createdCount}/${allRoleNames.length} roles created...`,
-            flags: 64
-          });
-        }
-        // 1-second delay to avoid rate limits
-        await delay(1000);
       } catch (err) {
         console.error(`Create failed: ${roleName} - ${err.message}`);
       }
+      if (createdCount % 5 === 0) {
+        await interaction.followUp({
+          content: `Progress: ${createdCount}/${allRoleNames.length} roles created...`, ephemeral: true
+        });
+      }
+      await delay(1000);
     }
-    if (responded) await interaction.editReply({
-      content: `✅ Complete! Created ${createdCount}/${allRoleNames.length} NBA roles`,
-      flags: 64
-    });
-    console.log(`🏀 NBA roles reset complete! Created ${createdCount} roles.`);
-  } catch (error) {
-    console.error('Command failed:', error);
-    if (responded) await interaction.editReply({ content: '❌ Something went wrong', flags: 64 });
+    await interaction.editReply({ content: `✅ All roles reset and created!`, ephemeral: true });
+  } catch (err) {
+    console.error('Error in resetnbaroles:', err);
+    await interaction.editReply({ content: 'Error resetting NBA roles.' });
   }
 }
+
+export { data, execute };

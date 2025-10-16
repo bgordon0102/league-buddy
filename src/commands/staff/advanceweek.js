@@ -1,7 +1,8 @@
 
-import { SlashCommandBuilder, PermissionFlagsBits, ChannelType } from 'discord.js';
-import fs from 'fs';
-import { sendWelcomeAndButton } from '../../interactions/submit_score.js';
+
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { DataManager } from '../../utils/dataManager.js';
+import { sendWelcomeAndButton, updateStandingsAndPlayoff } from '../../interactions/submit_score.js';
 
 export const data = new SlashCommandBuilder()
     .setName('advanceweek')
@@ -12,84 +13,65 @@ export const data = new SlashCommandBuilder()
             .setRequired(false))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-const SEASON_FILE = './data/season.json';
-const SCHEDULE_FILE = './data/schedule.json';
 const TOTAL_WEEKS = 29;
+// Updated dedicated channel for weekly game threads
+const DEDICATED_CHANNEL_ID = '1428417230000885830';
 
 export async function execute(interaction) {
-    await interaction.deferReply();
+    await interaction.deferReply({ ephemeral: true });
+    const dataManager = new DataManager();
+    let season = dataManager.readData('season') || { currentWeek: 1, seasonNo: 1 };
+    let weekNum = interaction.options.getInteger('week');
+    if (!weekNum) weekNum = (season.currentWeek || 1) + 1;
+    if (weekNum < 1 || weekNum > TOTAL_WEEKS) {
+        await interaction.editReply({ content: `Invalid week number. Must be between 1 and ${TOTAL_WEEKS}.` });
+        return;
+    }
+    let schedule = dataManager.readData('schedule') || [];
+    const matchups = schedule[weekNum] || [];
+    const guild = interaction.guild;
+    // Try to fetch the dedicated channel (use fetch to ensure latest and handle uncached channels)
+    let dedicatedChannel = null;
     try {
-        // Read season.json
-        let season;
-        try {
-            season = JSON.parse(fs.readFileSync(SEASON_FILE, 'utf8'));
-        } catch {
-            season = { currentWeek: 1, seasonNo: 1, coachRoleMap: {} };
-        }
-        // Get week number from option or increment
-        let weekNum = interaction.options.getInteger('week');
-        if (!weekNum) {
-            weekNum = (season.currentWeek || 1) + 1;
-        }
-        if (weekNum < 1 || weekNum > TOTAL_WEEKS) {
-            await interaction.editReply({ content: `Invalid week number. Must be between 1 and ${TOTAL_WEEKS}.` });
-            return;
-        }
-        // Update backend
-        season.currentWeek = weekNum;
-        fs.writeFileSync(SEASON_FILE, JSON.stringify(season, null, 2));
-        // Read schedule for the week
-        let schedule;
-        try {
-            schedule = JSON.parse(fs.readFileSync(SCHEDULE_FILE, 'utf8'));
-        } catch {
-            schedule = [];
-        }
-        const matchups = schedule[weekNum] || [];
-
-        console.log(`[advanceweek] Creating game channels for week ${weekNum}, total matchups: ${matchups.length}`);
-        let createdChannels = [];
-        // Create a category for the week
-        const guild = interaction.guild;
-        const weekCategoryName = `Week ${weekNum} Games`;
-        let weekCategory = guild.channels.cache.find(c => c.name === weekCategoryName && c.type === ChannelType.GuildCategory);
-        if (!weekCategory) {
-            weekCategory = await guild.channels.create({
-                name: weekCategoryName,
-                type: ChannelType.GuildCategory
-            });
-        }
-
-        // Batch channel creation
-        const batchSize = 5;
-        for (let i = 0; i < matchups.length; i += batchSize) {
-            const batch = matchups.slice(i, i + batchSize);
-            for (const matchup of batch) {
-                try {
-                    const chanName = `${matchup.team1.abbreviation.toLowerCase()}-vs-${matchup.team2.abbreviation.toLowerCase()}`;
-                    let gameChannel = guild.channels.cache.find(c => c.name === chanName && c.parentId === weekCategory.id);
-                    if (!gameChannel) {
-                        gameChannel = await guild.channels.create({
-                            name: chanName,
-                            type: ChannelType.GuildText,
-                            parent: weekCategory.id
-                        });
-                        createdChannels.push(chanName);
-                    }
-                    await sendWelcomeAndButton(gameChannel, weekNum, season.seasonNo);
-                } catch (err) {
-                    console.error(`[advanceweek] Error creating channel or sending message:`, err);
-                }
-            }
-            // Progress update after each batch
-            await interaction.followUp({ content: `Created ${createdChannels.length}/${matchups.length} channels...`, ephemeral: true });
-            await new Promise(res => setTimeout(res, 1500));
-        }
-        console.log(`[advanceweek] All channels created:`, createdChannels);
-        await interaction.editReply({ content: `Week advanced! Current week is now ${season.currentWeek}. All game channels created.` });
+        dedicatedChannel = await guild.channels.fetch(DEDICATED_CHANNEL_ID);
     } catch (err) {
-        console.error('[advanceweek] Error:', err);
-        await interaction.editReply({ content: 'Error advancing week.' });
+        console.error('[advanceweek] Failed to fetch dedicated channel:', err);
+    }
+    if (!dedicatedChannel) {
+        await interaction.editReply({ content: `❌ Dedicated channel not found or bot lacks access. Check DISCORD_GUILD_ID, DEDICATED_CHANNEL_ID, and bot permissions.` });
+        return;
+    }
+    // Ensure channel supports threads
+    if (typeof dedicatedChannel.isTextBased === 'function' && !dedicatedChannel.isTextBased()) {
+        await interaction.editReply({ content: '❌ Dedicated channel must be a text channel that supports threads.' });
+        return;
+    }
+    let createdThreads = [];
+    for (const matchup of matchups) {
+        // Use short team names for thread names to match coach role naming
+        const team1Short = matchup.team1.name.replace('Milwaukee ', '').replace('Portland ', '').replace('Los Angeles ', '').replace('Golden State ', '').replace('New York ', '').replace('San Antonio ', '').replace('Oklahoma City ', '').replace('Charlotte ', '').replace('Philadelphia ', '').replace('Minnesota ', '').replace('Cleveland ', '').replace('Indiana ', '').replace('Sacramento ', '').replace('Toronto ', '').replace('New Orleans ', '').replace('Washington ', '').replace('Atlanta ', '').replace('Brooklyn ', '').replace('Chicago ', '').replace('Dallas ', '').replace('Denver ', '').replace('Detroit ', '').replace('Houston ', '').replace('LA ', '').replace('Memphis ', '').replace('Miami ', '').replace('Orlando ', '').replace('Phoenix ', '').replace('Utah ', '').replace('Boston ', '').replace('Clippers', 'Clippers').replace('Lakers', 'Lakers').replace('Trail Blazers', 'Trail Blazers').replace('Thunder', 'Thunder').replace('Spurs', 'Spurs').replace('Jazz', 'Jazz').replace('Wizards', 'Wizards').replace('Raptors', 'Raptors').replace('Kings', 'Kings').replace('Suns', 'Suns').replace('Magic', 'Magic').replace('Heat', 'Heat').replace('Grizzlies', 'Grizzlies').replace('Bucks', 'Bucks').replace('Mavericks', 'Mavericks').replace('Nuggets', 'Nuggets').replace('Pistons', 'Pistons').replace('Rockets', 'Rockets').replace('Pacers', 'Pacers').replace('Cavaliers', 'Cavaliers').replace('Timberwolves', 'Timberwolves').replace('76ers', '76ers').replace('Hornets', 'Hornets').replace('Bulls', 'Bulls').replace('Nets', 'Nets').replace('Hawks', 'Hawks').replace('Celtics', 'Celtics');
+        const team2Short = matchup.team2.name.replace('Milwaukee ', '').replace('Portland ', '').replace('Los Angeles ', '').replace('Golden State ', '').replace('New York ', '').replace('San Antonio ', '').replace('Oklahoma City ', '').replace('Charlotte ', '').replace('Philadelphia ', '').replace('Minnesota ', '').replace('Cleveland ', '').replace('Indiana ', '').replace('Sacramento ', '').replace('Toronto ', '').replace('New Orleans ', '').replace('Washington ', '').replace('Atlanta ', '').replace('Brooklyn ', '').replace('Chicago ', '').replace('Dallas ', '').replace('Denver ', '').replace('Detroit ', '').replace('Houston ', '').replace('LA ', '').replace('Memphis ', '').replace('Miami ', '').replace('Orlando ', '').replace('Phoenix ', '').replace('Utah ', '').replace('Boston ', '').replace('Clippers', 'Clippers').replace('Lakers', 'Lakers').replace('Trail Blazers', 'Trail Blazers').replace('Thunder', 'Thunder').replace('Spurs', 'Spurs').replace('Jazz', 'Jazz').replace('Wizards', 'Wizards').replace('Raptors', 'Raptors').replace('Kings', 'Kings').replace('Suns', 'Suns').replace('Magic', 'Magic').replace('Heat', 'Heat').replace('Grizzlies', 'Grizzlies').replace('Bucks', 'Bucks').replace('Mavericks', 'Mavericks').replace('Nuggets', 'Nuggets').replace('Pistons', 'Pistons').replace('Rockets', 'Rockets').replace('Pacers', 'Pacers').replace('Cavaliers', 'Cavaliers').replace('Timberwolves', 'Timberwolves').replace('76ers', '76ers').replace('Hornets', 'Hornets').replace('Bulls', 'Bulls').replace('Nets', 'Nets').replace('Hawks', 'Hawks').replace('Celtics', 'Celtics');
+        const threadName = `${team1Short}-vs-${team2Short}-w${weekNum}`;
+        try {
+            const thread = await dedicatedChannel.threads.create({
+                name: threadName,
+                autoArchiveDuration: 1440,
+                reason: `Game thread for ${threadName} (Week ${weekNum})`
+            });
+            createdThreads.push(threadName);
+            await sendWelcomeAndButton(thread, weekNum, season.seasonNo);
+        } catch (err) {
+            console.error(`[advanceweek] Error creating thread:`, err);
+        }
+    }
+    season.currentWeek = weekNum;
+    dataManager.writeData('season', season);
+    // After advancing week, update standings
+    try {
+        await updateStandingsAndPlayoff(interaction.guild);
+        await interaction.editReply({ content: `Week advanced! Current week is now ${season.currentWeek}. Created ${createdThreads.length}/${matchups.length} threads in the dedicated channel. Standings updated.` });
+    } catch (err) {
+        console.error('[advanceweek] Failed to update standings:', err);
+        await interaction.editReply({ content: `Week advanced! Current week is now ${season.currentWeek}. Created ${createdThreads.length}/${matchups.length} threads in the dedicated channel. (Standings update failed)` });
     }
 }
-

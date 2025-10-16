@@ -34,7 +34,7 @@ export const data = new SlashCommandBuilder()
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction) {
-  await interaction.deferReply({ flags: 64 });
+  await interaction.deferReply({ ephemeral: true });
   try {
     // Reset scouting.json (legacy or other use)
     const scoutingData = safeReadJSON(SCOUTING_FILE, {});
@@ -59,7 +59,7 @@ export async function execute(interaction) {
 
     await interaction.editReply({ content: 'All coaches weekly scouting points and scouted info have been reset.' });
   } catch (err) {
-    console.error(err);
+    console.error('Error in resetscouting:', err);
     await interaction.editReply({ content: 'Error resetting scouting data.' });
   }
 }

@@ -25,25 +25,19 @@ export async function execute(interaction) {
         const seasonData = JSON.parse(fs.readFileSync(seasonPath, 'utf8'));
         const currentWeek = seasonData.currentWeek ?? 0;
         if (currentWeek < 1) {
-            if (deferred) await interaction.editReply({ content: 'Big board and scouting features unlock in Week 1. Only the recruit board is available during preseason.' });
+            const msg = 'Big board and scouting features unlock in Week 1.';
+            if (deferred) await interaction.editReply({ content: msg });
+            else await interaction.reply({ content: msg, ephemeral: true });
             return;
         }
 
-        // Determine current phase
-        let board = 'pre';
-        if (currentWeek >= 20) board = 'final';
-        else if (currentWeek >= 10) board = 'mid';
-
-        // Use board file logic from prospectBoards.json
-        const prospectBoardsPath = path.join(process.cwd(), 'data/prospectBoards.json');
-        const prospectBoards = JSON.parse(fs.readFileSync(prospectBoardsPath, 'utf8'));
-        let boardFilePath = prospectBoards[board];
-        if (!boardFilePath) throw new Error(`No board file path configured for phase: ${board}`);
-        // Always resolve to absolute path
-        if (!path.isAbsolute(boardFilePath)) {
-            boardFilePath = path.join(process.cwd(), boardFilePath);
+        // Use only the single big board file for all weeks
+        const boardFilePath = path.join(process.cwd(), 'draft classes/CUS01/2k26_CUS01 - Big Board.json');
+        if (!fs.existsSync(boardFilePath)) {
+            if (deferred) await interaction.editReply({ content: 'Big board file not found.' });
+            else await interaction.reply({ content: 'Big board file not found.', ephemeral: true });
+            return;
         }
-        if (!fs.existsSync(boardFilePath)) throw new Error(`Board file not found at resolved path: ${boardFilePath}`);
         const bigBoardData = JSON.parse(fs.readFileSync(boardFilePath, 'utf8'));
         const allPlayers = Object.values(bigBoardData).filter(player => player && player.name && player.position_1);
 
@@ -63,10 +57,8 @@ export async function execute(interaction) {
         }
 
         // Create select menus grouped by 15, just like prospectboard
-        let numMenus = 1;
-        if (board === 'pre') numMenus = 2;
-        else if (board === 'mid') numMenus = 3;
-        else if (board === 'final') numMenus = 4;
+        // Always use 2 select menus for consistency (or adjust as needed)
+        let numMenus = 4;
 
         const components = [];
         for (let i = 0; i < numMenus; i++) {
@@ -77,7 +69,7 @@ export async function execute(interaction) {
             const selectOptions = boardPlayers.map((player, idx) => ({
                 label: `${startIdx + idx + 1}. ${player.name}`,
                 description: `${player.position_1} - ${player.team}`,
-                value: player.id_number.toString()
+                value: player.id_number ? player.id_number.toString() : `${startIdx + idx + 1}`
             }));
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId(customId)
@@ -90,7 +82,7 @@ export async function execute(interaction) {
         }
 
         const embed = new EmbedBuilder()
-            .setTitle(`Big Board - ${board.charAt(0).toUpperCase() + board.slice(1)} Phase`)
+            .setTitle('Big Board')
             .setColor(0x1e90ff)
             .setDescription(allPlayers.map((p, idx) => `${idx + 1}: ${p.position_1} ${p.name} - ${p.team}`).join('\n'))
             .setFooter({ text: `You have ${userData.weeklyPoints[`week_${currentWeek}`]} scouting points left this week.` });
@@ -124,20 +116,8 @@ export async function handleScoutSelect(interaction, menuIndex) {
         await interaction.editReply({ content: 'Scouting features unlock in Week 1. Only the recruit board is available during preseason.' });
         return;
     }
-    let board = 'pre';
-    if (currentWeek >= 20) board = 'final';
-    else if (currentWeek >= 10) board = 'mid';
-    // Use board file logic from prospectBoards.json
-    const prospectBoardsPath = path.join(process.cwd(), 'data/prospectBoards.json');
-    const prospectBoards = JSON.parse(fs.readFileSync(prospectBoardsPath, 'utf8'));
-    let boardFilePath = prospectBoards[board];
-    if (!boardFilePath) {
-        await interaction.editReply({ content: `No board file path configured for phase: ${board}` });
-        return;
-    }
-    if (!path.isAbsolute(boardFilePath)) {
-        boardFilePath = path.join(process.cwd(), boardFilePath);
-    }
+    // Always use the single big board file
+    const boardFilePath = path.join(process.cwd(), 'draft classes/CUS01/2k26_CUS01 - Big Board.json');
     if (!fs.existsSync(boardFilePath)) {
         await interaction.editReply({ content: `Board file not found at resolved path: ${boardFilePath}` });
         return;
