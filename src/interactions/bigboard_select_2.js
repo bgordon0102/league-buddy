@@ -27,6 +27,11 @@ export async function execute(interaction) {
             .replace(/[\u0300-\u036f]/g, '');
     }
     const normalizedSelected = normalize(interaction.values[0]);
+    // Debug logging for value matching
+    console.log('Bigboard select 2 debug: Selected value (raw):', interaction.values[0]);
+    console.log('Bigboard select 2 debug: Selected value (normalized):', normalizedSelected);
+    console.log('Bigboard select 2 debug: All normalized player names:', players.map(p => normalize(p.name)));
+    console.log('Bigboard select 2 debug: All raw player names:', players.map(p => p.name));
     const selected = players.find(p => p.name && normalize(p.name) === normalizedSelected);
     if (!selected) return await interaction.reply({ content: "Player not found.", flags: 64 });
 
