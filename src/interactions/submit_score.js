@@ -350,20 +350,28 @@ export async function sendWelcomeAndButton(channel, week, seasonNo) {
         const abbrToFull = {
             ATL: 'Atlanta Hawks', BOS: 'Boston Celtics', BKN: 'Brooklyn Nets', CHA: 'Charlotte Hornets', CHI: 'Chicago Bulls', CLE: 'Cleveland Cavaliers', DAL: 'Dallas Mavericks', DEN: 'Denver Nuggets', DET: 'Detroit Pistons', GSW: 'Golden State Warriors', HOU: 'Houston Rockets', IND: 'Indiana Pacers', LAC: 'LA Clippers', LAL: 'Los Angeles Lakers', MEM: 'Memphis Grizzlies', MIA: 'Miami Heat', MIL: 'Milwaukee Bucks', MIN: 'Minnesota Timberwolves', NOP: 'New Orleans Pelicans', NYK: 'New York Knicks', OKC: 'Oklahoma City Thunder', ORL: 'Orlando Magic', PHI: 'Philadelphia 76ers', PHX: 'Phoenix Suns', POR: 'Portland Trail Blazers', SAC: 'Sacramento Kings', SAS: 'San Antonio Spurs', TOR: 'Toronto Raptors', UTA: 'Utah Jazz', WAS: 'Washington Wizards'
         };
+        const fullNames = Object.values(abbrToFull);
         const parts = channel.name.split(/-vs-/i).map(s => s.replace(/-w\d+|-week\d+/i, '').trim());
-        if (parts.length === 2) {
-            // Accept either abbreviation or full team name
-            function getFullTeam(str) {
-                const upper = str.split('-')[0].toUpperCase();
-                if (abbrToFull[upper]) return abbrToFull[upper];
-                // Try to match full team name
-                for (const abbr in abbrToFull) {
-                    if (abbrToFull[abbr].toUpperCase().includes(upper)) return abbrToFull[abbr];
-                }
-                return str;
+        function resolveFullTeamName(str) {
+            const upper = str.split('-')[0].toUpperCase();
+            if (abbrToFull[upper]) return abbrToFull[upper];
+            // Try to match by inclusion ("pelicans" => "New Orleans Pelicans")
+            const lower = str.toLowerCase();
+            for (const name of fullNames) {
+                if (name.toLowerCase().includes(lower)) return name;
             }
-            const team1Full = getFullTeam(parts[0]);
-            const team2Full = getFullTeam(parts[1]);
+            // Try to match by last word ("76ers" => "Philadelphia 76ers")
+            const lastWord = lower.split(' ').pop();
+            for (const name of fullNames) {
+                if (name.toLowerCase().endsWith(lastWord)) return name;
+            }
+            return str;
+        }
+        if (parts.length === 2) {
+            const team1Raw = parts[0];
+            const team2Raw = parts[1];
+            const team1Full = resolveFullTeamName(team1Raw);
+            const team2Full = resolveFullTeamName(team2Raw);
             let coachRoleMap = {};
             try {
                 const guildId = process.env.DISCORD_GUILD_ID;
@@ -379,20 +387,26 @@ export async function sendWelcomeAndButton(channel, week, seasonNo) {
             const guildRoles = channel.guild ? channel.guild.roles.cache : (channel.roles ? channel.roles.cache : []);
             let tag1 = coachRoleMap[team1Full] ? `<@&${coachRoleMap[team1Full]}>` : '';
             let tag2 = coachRoleMap[team2Full] ? `<@&${coachRoleMap[team2Full]}>` : '';
+            // Debug logging
+            console.log('[sendWelcomeAndButton] Raw team names:', team1Raw, team2Raw);
+            console.log('[sendWelcomeAndButton] Resolved full team names:', team1Full, team2Full);
+            console.log('[sendWelcomeAndButton] Role IDs from map:', coachRoleMap[team1Full], coachRoleMap[team2Full]);
             if (!tag1) {
                 const normalizedRoleName1 = normalize(`${team1Full} Coach`);
                 const foundRole1 = guildRoles.find(r => normalize(r.name) === normalizedRoleName1);
                 if (foundRole1) tag1 = `<@&${foundRole1.id}>`;
+                console.log('[sendWelcomeAndButton] Fallback role search for team1:', normalizedRoleName1, foundRole1 ? foundRole1.id : null);
             }
             if (!tag2) {
                 const normalizedRoleName2 = normalize(`${team2Full} Coach`);
                 const foundRole2 = guildRoles.find(r => normalize(r.name) === normalizedRoleName2);
                 if (foundRole2) tag2 = `<@&${foundRole2.id}>`;
+                console.log('[sendWelcomeAndButton] Fallback role search for team2:', normalizedRoleName2, foundRole2 ? foundRole2.id : null);
             }
-            // Deduplicate and join tags
             coachTags = Array.from(new Set([tag1, tag2].filter(Boolean)));
+            console.log('[sendWelcomeAndButton] Final coachTags:', coachTags);
         }
-    } catch (err) { }
+    } catch (err) { console.error('[sendWelcomeAndButton] Error:', err); }
     const submitBtn = new ButtonBuilder()
         .setCustomId('submit_score')
         .setLabel('Submit Score')

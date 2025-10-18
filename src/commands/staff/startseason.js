@@ -34,6 +34,14 @@ function writeJSON(file, data) {
 
 // Extracted season reset logic (no Discord interaction)
 export function resetSeasonData(seasonno, guild, caller = 'unknown') {
+    // Load coachRoleMap from file at the very top
+    let coachRoleMap = {};
+    try {
+        const data = fs.readFileSync(COACHROLEMAP_FILE, 'utf8');
+        coachRoleMap = JSON.parse(data);
+    } catch (err) {
+        console.error(`[resetSeasonData] Failed to load coachRoleMap.json:`, err);
+    }
     console.log(`[resetSeasonData] Called from: ${caller}`);
     console.log(`[resetSeasonData] process.cwd():`, process.cwd());
     const gameno = 29;
@@ -90,52 +98,8 @@ export function resetSeasonData(seasonno, guild, caller = 'unknown') {
         }
     }
 
-    // Coach Role Map: always try to generate from guild, fallback to file, fallback to all nulls (but always all teams)
-    let coachRoleMap = {};
-    let usedFallback = false;
-    if (guild && guild.roles && guild.roles.cache) {
-        for (const team of staticTeams) {
-            const nickname = team.name.split(' ').slice(-1)[0];
-            let role = guild.roles.cache.find(r => r.name.toLowerCase() === 'ghost paradise');
-            if (role) {
-                coachRoleMap[team.name] = role.id;
-            } else if (team.name === 'Portland Trail Blazers') {
-                coachRoleMap[team.name] = '1423036950700626053';
-                console.warn(`[startseason] No role found for team ${team.name}, using hardcoded fallback role ID.`);
-            } else {
-                coachRoleMap[team.name] = null;
-                console.warn(`[startseason] No role found for team ${team.name}`);
-            }
-        }
-    }
-    // If still empty, fallback to file
-    if (Object.keys(coachRoleMap).length === 0) {
-        const fileMap = safeReadJSON(COACHROLEMAP_FILE, {});
-        for (const team of staticTeams) {
-            coachRoleMap[team.name] = fileMap[team.name] || '1428119680572325929';
-        }
-        usedFallback = true;
-    }
-    // If still empty, fallback to all nulls (but always all teams)
-    if (Object.keys(coachRoleMap).length === 0 || Object.values(coachRoleMap).every(v => v === null)) {
-        for (const team of staticTeams) {
-            coachRoleMap[team.name] = null;
-        }
-        usedFallback = true;
-        console.warn('[startseason] coachRoleMap fallback: all nulls');
-    }
-    // Always ensure all teams are present
-    for (const team of staticTeams) {
-        if (!(team.name in coachRoleMap)) {
-            coachRoleMap[team.name] = null;
-        }
-    }
-    console.log('[startseason] Writing coachRoleMap.json:', COACHROLEMAP_FILE, JSON.stringify(coachRoleMap, null, 2));
-    writeJSON(COACHROLEMAP_FILE, coachRoleMap);
-    console.log('[startseason] Wrote coachRoleMap.json');
-    if (usedFallback) {
-        console.warn('[startseason] Used fallback for coachRoleMap, check your guild context or role setup.');
-    }
+    // Coach Role Map: never rewrite or update coachRoleMap.json in startseason. Always use the existing file as-is.
+    // If you need to update coachRoleMap.json, do it manually.
 
     // Schedule
     const schedule = generateWeekBasedSchedule(staticTeams, gameno);
