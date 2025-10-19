@@ -46,14 +46,18 @@ export async function autocomplete(interaction) {
 
 export async function execute(interaction) {
     let responded = false;
+    console.log('[DEBUG] schedule.js execute called');
     try {
         await interaction.deferReply({ ephemeral: true });
         responded = true;
         const team = interaction.options.getString("team");
+        console.log(`[DEBUG] Requested team: ${team}`);
         const teamsPath = path.join(process.cwd(), "data/teams.json");
         const schedulePath = path.join(process.cwd(), "data/schedule.json");
         const seasonPath = path.join(process.cwd(), "data/season.json");
+        console.log(`[DEBUG] teamsPath: ${teamsPath}, schedulePath: ${schedulePath}, seasonPath: ${seasonPath}`);
         if (!fs.existsSync(teamsPath) || !fs.existsSync(schedulePath) || !fs.existsSync(seasonPath)) {
+            console.log('[DEBUG] One or more data files missing');
             await interaction.editReply({
                 content: "No season data found. Please run `/startseason` first."
             });
@@ -62,6 +66,9 @@ export async function execute(interaction) {
         const teams = JSON.parse(fs.readFileSync(teamsPath, "utf8"));
         const schedule = JSON.parse(fs.readFileSync(schedulePath, "utf8"));
         const seasonData = JSON.parse(fs.readFileSync(seasonPath, "utf8"));
+        console.log('[DEBUG] Loaded teams:', teams.length);
+        console.log('[DEBUG] Loaded schedule:', Array.isArray(schedule), schedule.length);
+        console.log('[DEBUG] Loaded seasonData:', seasonData);
         const currentWeek = seasonData.currentWeek;
         let week = 1;
         let gamesList = [];
@@ -89,6 +96,7 @@ export async function execute(interaction) {
                 }
             }).filter(Boolean)
         );
+        console.log('[DEBUG] gamesList:', gamesList);
         const weekLabel = currentWeek === 0 ? 'Week 0' : `Current Week: ${currentWeek}`;
         const embed = new EmbedBuilder()
             .setTitle(`Schedule for ${team}`)
@@ -96,6 +104,7 @@ export async function execute(interaction) {
             .setFooter({ text: weekLabel })
             .setColor(0x1E90FF);
         await interaction.editReply({ embeds: [embed] });
+        console.log('[DEBUG] Sent schedule embed');
     } catch (err) {
         console.error('Error in schedule:', err);
         if (responded) {

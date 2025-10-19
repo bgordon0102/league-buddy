@@ -10,11 +10,13 @@ export const data = new SlashCommandBuilder()
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction) {
+  console.log('[DEBUG] clearmessages.js execute called');
   await interaction.deferReply({ ephemeral: true });
   try {
     const amountArg = interaction.options.getString('amount').toLowerCase();
     const channel = interaction.channel;
     if (!channel || (!channel.isTextBased() && !channel.isThread())) {
+      console.log('[DEBUG] Not a text or thread channel');
       await interaction.editReply({ content: 'This command can only be used in threads or text channels.' });
       return;
     }
@@ -27,18 +29,22 @@ export async function execute(interaction) {
         if (fetched.size > 0) {
           const deleted = await channel.bulkDelete(fetched, true).catch(err => console.error(err));
           totalDeleted += deleted?.size || 0;
+          console.log(`[DEBUG] Deleted ${totalDeleted} messages so far...`);
           await interaction.followUp({ content: `Deleted ${totalDeleted} messages so far...`, ephemeral: true });
         }
       } while (fetched.size >= 2); // stop when fewer than 2 messages left
+      console.log('[DEBUG] All messages deleted');
       await interaction.editReply({ content: `All messages deleted in this channel. Total: ${totalDeleted}` });
     } else {
       const amount = parseInt(amountArg);
       if (isNaN(amount) || amount < 1) {
+        console.log('[DEBUG] Invalid amount');
         await interaction.editReply({ content: 'Please provide a valid number of messages to delete.' });
         return;
       }
       const deleteAmount = Math.min(amount, 100); // Discord bulkDelete limit
       const deleted = await channel.bulkDelete(deleteAmount, true);
+      console.log(`[DEBUG] Deleted ${deleted?.size || deleteAmount} messages.`);
       await interaction.editReply({ content: `Deleted ${deleted?.size || deleteAmount} messages.` });
     }
   } catch (err) {

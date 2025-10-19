@@ -206,359 +206,68 @@ client.on('interactionCreate', async interaction => {
   // Handle autocomplete interactions
   if (interaction.isAutocomplete()) {
     const command = client.commands.get(interaction.commandName);
-    if (!command || !command.autocomplete) return;
-    try {
-      await command.autocomplete(interaction);
-    } catch (error) {
-      console.error(`❌ Error with autocomplete for ${interaction.commandName}:`, error);
-    }
-    return;
-  }
-
-  // Handle select menu interactions
-  if (interaction.isStringSelectMenu()) {
-    let interactionHandler = client.interactions.get(interaction.customId);
-    if (!interactionHandler) {
-      console.error(`❌ No interaction handler matching ${interaction.customId} was found.`);
-      return;
-    }
-    try {
-      await interactionHandler.execute(interaction);
-    } catch (error) {
-      console.error(`❌ Error executing interaction ${interaction.customId}:`, error);
+    if (command && typeof command.autocomplete === 'function') {
       try {
-        if (interaction.replied || interaction.deferred) {
-          await interaction.editReply({ content: 'There was an error while executing this interaction!' });
-        } else {
-          await interaction.reply({ content: 'There was an error while executing this interaction!', flags: 64 });
-        }
-      } catch (replyError) {
-        console.error('❌ Failed to send error message:', replyError);
+        await command.autocomplete(interaction);
+      } catch (err) {
+        console.error(`[Autocomplete] Error executing autocomplete for ${interaction.commandName}:`, err);
       }
     }
     return;
   }
 
-  // Handle slash command interactions (TOP LEVEL)
-  if (interaction.isChatInputCommand()) {
+  // Handle slash command interactions
+  if (interaction.isCommand()) {
     const command = client.commands.get(interaction.commandName);
     if (!command) {
-      console.error(`❌ No command matching ${interaction.commandName} was found.`);
+      await interaction.reply({ content: 'Command not found.', ephemeral: true });
       return;
     }
     try {
-      console.log(`[DEBUG] Executing command: ${interaction.commandName}`);
       await command.execute(interaction);
-      console.log(`[DEBUG] Finished executing command: ${interaction.commandName}`);
-    } catch (error) {
-      console.error(`❌ Error executing ${interaction.commandName}:`, error);
+    } catch (err) {
+      console.error(`[Command] Error executing ${interaction.commandName}:`, err);
       try {
         if (interaction.replied || interaction.deferred) {
           await interaction.editReply({ content: 'There was an error while executing this command!' });
         } else {
-          await interaction.reply({ content: 'There was an error while executing this command!', flags: 64 });
+          await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
         }
       } catch (replyError) {
-        console.error('❌ Failed to send error message:', replyError);
+        console.error('❌ Failed to send error message for command:', replyError);
       }
     }
     return;
   }
 
-
-  // Handle button interactions (including trade flow)
-  if (interaction.isButton()) {
-    // Trade submission modal
-    if (interaction.customId === 'trade_submit_button') {
-      const modal = new ModalBuilder()
-        .setCustomId('trade_modal')
-        .setTitle('Submit Trade Proposal')
-        .addComponents(
-          new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-              .setCustomId('your_team')
-              .setLabel('Your Team (name or keyword)')
-              .setStyle(TextInputStyle.Short)
-              .setRequired(true)
-              .setPlaceholder('e.g. Celtics, Boston Celtics, Lakers, Timberwolves')
-          ),
-          new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-              .setCustomId('other_team')
-              .setLabel('Other Team (name or keyword)')
-              .setStyle(TextInputStyle.Short)
-              .setRequired(true)
-              .setPlaceholder('e.g. Lakers, Los Angeles Lakers, Bulls, Timberwolves')
-          ),
-          new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-              .setCustomId('assets_sent')
-              .setLabel('Assets Sent')
-              .setStyle(TextInputStyle.Paragraph)
-              .setRequired(true)
-              .setPlaceholder('e.g. Jayson Tatum, 2026 1st Round Pick')
-          ),
-          new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-              .setCustomId('assets_received')
-              .setLabel('Assets Received')
-              .setStyle(TextInputStyle.Paragraph)
-              .setRequired(true)
-              .setPlaceholder('e.g. Anthony Davis, 2027 2nd Round Pick')
-          ),
-          new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-              .setCustomId('notes')
-              .setLabel('Notes (optional)')
-              .setStyle(TextInputStyle.Paragraph)
-              .setRequired(false)
-              .setPlaceholder('e.g. Salary matching, future considerations, etc.')
-          )
-        );
-      await interaction.showModal(modal);
-      return;
-    }
-
-    // Trade approval/deny buttons in DM
-    if (interaction.customId === 'approve_trade_button' || interaction.customId === 'deny_trade_button') {
-      const trade = client.pendingTrades && client.pendingTrades[interaction.user.id];
-      if (!trade) {
-        await interaction.reply({ content: 'No pending trade found for you.', ephemeral: true });
-        return;
-      }
-      if (interaction.customId === 'approve_trade_button') {
-        // Only the non-submitting coach needs to approve
-        const committeeChannel = await client.channels.fetch('1425555499440410812');
-        if (!committeeChannel || !committeeChannel.isTextBased()) {
-          await interaction.reply({ content: 'Failed to find the committee channel.', ephemeral: true });
-          return;
-        }
-        const embed = {
-          title: 'Trade Proposal (Committee Vote Required)',
-          description: `Trade between **${trade.yourTeam}** and **${trade.otherTeam}** (submitted by <@${trade.submitterId}>, approved by <@${interaction.user.id}>)`,
-          fields: [
-            { name: 'Team 1', value: trade.yourTeam, inline: true },
-            { name: 'Team 2', value: trade.otherTeam, inline: true },
-            { name: 'Assets Sent', value: trade.assetsSent },
-            { name: 'Assets Received', value: trade.assetsReceived },
-            ...(trade.notes ? [{ name: 'Notes', value: trade.notes }] : [])
-          ],
-          color: 0xFFD700,
-          footer: { text: 'Committee has 48 hours to vote.' }
-        };
-        const approveBtn = new ButtonBuilder().setCustomId('committee_approve_trade').setLabel('Approve').setStyle(ButtonStyle.Success);
-        const denyBtn = new ButtonBuilder().setCustomId('committee_deny_trade').setLabel('Deny').setStyle(ButtonStyle.Danger);
-        const row = new ActionRowBuilder().addComponents(approveBtn, denyBtn);
-        const msg = await committeeChannel.send({ content: '<@&1428100787225235526>', embeds: [embed], components: [row] });
-        // Store vote state
-        client.committeeVotes = client.committeeVotes || {};
-        client.committeeVotes[msg.id] = {
-          trade,
-          votes: {},
-          createdAt: Date.now(),
-          timeout: setTimeout(async () => {
-            // Tally votes after 48 hours
-            const voteData = client.committeeVotes[msg.id];
-            if (!voteData) return;
-            const approveCount = Object.values(voteData.votes).filter(v => v === 'approve').length;
-            const denyCount = Object.values(voteData.votes).filter(v => v === 'deny').length;
-            let resultMsg, resultChannelId;
-            if (approveCount > denyCount) {
-              resultMsg = 'Trade approved by committee.';
-              resultChannelId = '1425555422063890443'; // approved channel
-            } else {
-              resultMsg = 'Trade denied by committee.';
-              resultChannelId = '1425567560241254520'; // denied channel
-            }
-            try {
-              const resultChannel = await committeeChannel.guild.channels.fetch(resultChannelId);
-              if (resultChannel && resultChannel.isTextBased()) {
-                await resultChannel.send({ content: resultMsg + ` (A:${approveCount} D:${denyCount})` });
-              } else {
-                await committeeChannel.send({ content: resultMsg + ` (A:${approveCount} D:${denyCount})` });
-              }
-            } catch (err) {
-              await committeeChannel.send({ content: resultMsg + ` (A:${approveCount} D:${denyCount})` });
-            }
-            delete client.committeeVotes[msg.id];
-          }, 48 * 60 * 60 * 1000) // 48 hours
-        };
-        await interaction.reply({ content: 'Trade approved and sent to committee for 48-hour vote.', ephemeral: true });
-        // Remove from pending
-        delete client.pendingTrades[interaction.user.id];
-      } else if (interaction.customId === 'deny_trade_button') {
-        // Notify both coaches
-        try {
-          const submitterUser = await client.users.fetch(trade.submitterId);
-          await submitterUser.send(`Your trade proposal with **${trade.otherTeam}** was denied by the other coach.`);
-        } catch { }
-        try {
-          await interaction.user.send('You have denied the trade proposal. The other coach has been notified.');
-        } catch { }
-        await interaction.reply({ content: 'Trade denied. Both coaches have been notified.', ephemeral: true });
-        // Remove from pending
-        delete client.pendingTrades[interaction.user.id];
-      }
-      return;
-    }
-
-    // Committee voting buttons (must be top-level)
-    if (interaction.isButton() && (interaction.customId === 'committee_approve_trade' || interaction.customId === 'committee_deny_trade')) {
-      const msgId = interaction.message.id;
-      client.committeeVotes = client.committeeVotes || {};
-      const voteData = client.committeeVotes[msgId];
-      if (!voteData) {
-        await interaction.reply({ content: 'Voting for this trade has ended or is invalid.', ephemeral: true });
-        return;
-      }
-      // Only allow one vote per user
-      voteData.votes[interaction.user.id] = interaction.customId === 'committee_approve_trade' ? 'approve' : 'deny';
-      // Tally votes
-      const approveCount = Object.values(voteData.votes).filter(v => v === 'approve').length;
-      const denyCount = Object.values(voteData.votes).filter(v => v === 'deny').length;
-      await interaction.reply({ content: `Your vote has been recorded. Approve: ${approveCount}, Deny: ${denyCount}`, ephemeral: true });
-      // End early if majority reached (3 out of 5)
-      const majority = 3;
-      if (approveCount >= majority || denyCount >= majority) {
-        const trade = voteData.trade;
-        const coachTags = `<@${trade.submitterId}> <@${trade.otherCoachId}>`;
-        const embed = {
-          title: approveCount >= majority ? 'Trade Approved by Committee' : 'Trade Denied by Committee',
-          description: `Trade between **${trade.yourTeam}** and **${trade.otherTeam}**\n${coachTags}`,
-          fields: [
-            { name: 'Team 1', value: trade.yourTeam, inline: true },
-            { name: 'Team 2', value: trade.otherTeam, inline: true },
-            { name: 'Assets Sent', value: trade.assetsSent },
-            { name: 'Assets Received', value: trade.assetsReceived },
-            ...(trade.notes ? [{ name: 'Notes', value: trade.notes }] : [])
-          ],
-          color: approveCount >= majority ? 0x43B581 : 0xED4245 // green for approve, red for deny
-        };
-        let resultChannelId = approveCount >= majority ? '1425555422063890443' : '1425567560241254520';
-        try {
-          const committeeChannel = interaction.channel;
-          const resultChannel = await committeeChannel.guild.channels.fetch(resultChannelId);
-          if (resultChannel && resultChannel.isTextBased()) {
-            await resultChannel.send({ embeds: [embed] });
-          } else {
-            await committeeChannel.send({ embeds: [embed] });
-          }
-        } catch (err) {
-          await interaction.channel.send({ embeds: [embed] });
-        }
-        // Clear timeout and delete vote data
-        if (voteData.timeout) clearTimeout(voteData.timeout);
-        delete client.committeeVotes[msgId];
+  // Handle button interactions (including trade flow and regex customId)
+  let interactionHandler = client.interactions.get(interaction.customId);
+  // If not found, try regex match
+  if (!interactionHandler) {
+    for (const [key, handler] of client.interactions.entries()) {
+      if (key instanceof RegExp && key.test(interaction.customId)) {
+        interactionHandler = handler;
+        break;
       }
     }
   }
-
-  // Handle trade modal submission (DM flow)
-  if (interaction.isModalSubmit() && interaction.customId === 'trade_modal') {
-    console.log('[DEBUG] trade_modal submitted');
+  if (interactionHandler && typeof interactionHandler.execute === 'function') {
     try {
-      const yourTeam = interaction.fields.getTextInputValue('your_team');
-      const otherTeam = interaction.fields.getTextInputValue('other_team');
-      const assetsSent = interaction.fields.getTextInputValue('assets_sent');
-      const assetsReceived = interaction.fields.getTextInputValue('assets_received');
-      const notes = interaction.fields.getTextInputValue('notes');
-      console.log('[DEBUG] Modal values:', { yourTeam, otherTeam, assetsSent, assetsReceived, notes });
-
-      // Find the submitting user and the other coach by team name (loose match)
-
-      const guild = await client.guilds.fetch(interaction.guildId);
-      console.log('[DEBUG] Fetched guild:', guild.id);
-      // Use coachRoleMap for loose team name search
-      const lowerOtherTeam = otherTeam.toLowerCase();
-      let matchedTeam = null;
-      for (const teamName of Object.keys(coachRoleMap)) {
-        if (teamName.toLowerCase().includes(lowerOtherTeam) || lowerOtherTeam.includes(teamName.toLowerCase())) {
-          matchedTeam = teamName;
-          break;
-        }
-      }
-      let otherCoach = null;
-      if (matchedTeam) {
-        const roleId = coachRoleMap[matchedTeam];
-        const role = guild.roles.cache.get(roleId);
-        if (role) {
-          // Find a member with this role
-          otherCoach = guild.members.cache.find(m => m.roles.cache.has(roleId));
-          if (!otherCoach && guild.members.search) {
-            try {
-              const found = await guild.members.search({ query: matchedTeam.split(' ')[0], limit: 10 });
-              otherCoach = found.find(m => m.roles.cache.has(roleId));
-            } catch (err) {
-              console.error('[ERROR] guild.members.search for role failed:', err);
-            }
-          }
-        }
-        console.log('[DEBUG] Found otherCoach by role:', otherCoach ? otherCoach.user.tag : null, 'for team:', matchedTeam);
-      } else {
-        console.log('[DEBUG] No team matched in coachRoleMap for:', otherTeam);
-      }
-      const submitter = interaction.user;
-
-      if (!otherCoach) {
-        await interaction.reply({ content: `Could not find a coach for team: ${otherTeam}. Please check the team name.`, ephemeral: true });
-        console.log('[DEBUG] No coach found for:', otherTeam);
-        return;
-      }
-
-      // DM the other coach for approval (reverse assets for their perspective)
-      const dmEmbed = {
-        title: 'Trade Proposal Approval',
-        description: `You have a pending trade proposal from **${yourTeam}** (submitted by <@${submitter.id}>):`,
-        fields: [
-          { name: 'Your Team', value: otherTeam, inline: true },
-          { name: 'Other Team', value: yourTeam, inline: true },
-          { name: 'Assets Sent', value: assetsReceived },
-          { name: 'Assets Received', value: assetsSent },
-          ...(notes ? [{ name: 'Notes', value: notes }] : [])
-        ],
-        color: 0x1E90FF
-      };
-      const approveButton = new ButtonBuilder()
-        .setCustomId('approve_trade_button')
-        .setLabel('Approve Trade')
-        .setStyle(ButtonStyle.Success);
-      const denyButton = new ButtonBuilder()
-        .setCustomId('deny_trade_button')
-        .setLabel('Deny Trade')
-        .setStyle(ButtonStyle.Danger);
-      const row = new ActionRowBuilder().addComponents(approveButton, denyButton);
-      try {
-        await otherCoach.user.send({ embeds: [dmEmbed], components: [row] });
-        await interaction.reply({ content: `Trade proposal sent to ${otherCoach.user.tag} for approval via DM.`, ephemeral: true });
-        console.log('[DEBUG] DM sent to:', otherCoach.user.tag);
-      } catch (err) {
-        await interaction.reply({ content: `Failed to DM the other coach. They may have DMs disabled.`, ephemeral: true });
-        console.error('[ERROR] Failed to DM other coach:', err);
-        return;
-      }
-
-      // Store trade details in memory for approval (in production, use a DB or file)
-      client.pendingTrades = client.pendingTrades || {};
-      client.pendingTrades[otherCoach.id] = {
-        yourTeam,
-        otherTeam,
-        assetsSent,
-        assetsReceived,
-        notes,
-        submitterId: submitter.id,
-        otherCoachId: otherCoach.id
-      };
-      console.log('[DEBUG] Trade stored for approval:', client.pendingTrades[otherCoach.id]);
-      return;
+      await interactionHandler.execute(interaction);
     } catch (err) {
-      console.error('[ERROR] Exception in trade_modal handler:', err);
+      console.error(`[Button Interaction] Error executing handler for customId ${interaction.customId}:`, err);
       try {
-        await interaction.reply({ content: 'An error occurred while processing your trade proposal.', ephemeral: true });
-      } catch { }
-      return;
+        if (interaction.replied || interaction.deferred) {
+          await interaction.editReply({ content: 'There was an error while executing this button interaction!' });
+        } else {
+          await interaction.reply({ content: 'There was an error while executing this button interaction!', flags: 64 });
+        }
+      } catch (replyError) {
+        console.error('❌ Failed to send error message for button interaction:', replyError);
+      }
     }
+    return;
   }
-
 }); // end interactionCreate
 
 console.log('Bot is starting...');

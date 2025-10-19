@@ -85,7 +85,8 @@ export async function execute(interaction) {
             .setTitle('Big Board')
             .setColor(0x1e90ff)
             .setDescription(allPlayers.map((p, idx) => `${idx + 1}: ${p.position_1} ${p.name} - ${p.team}`).join('\n'))
-            .setFooter({ text: `You have ${userData.weeklyPoints[`week_${currentWeek}`]} scouting points left this week.` });
+            .setFooter({ text: `You have ${userData.weeklyPoints[`week_${currentWeek}`]} scouting points left this week.` })
+            .setThumbnail('https://cdn.discordapp.com/icons/1153432333259530240/leaguebuddy_logo.png');
 
         if (deferred) await interaction.editReply({ embeds: [embed], components });
     } catch (err) {

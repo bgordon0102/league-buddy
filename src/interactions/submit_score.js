@@ -35,6 +35,7 @@ export async function handleForceWin(interaction) {
     const modal = new ModalBuilder()
         .setCustomId('force_win_modal')
         .setTitle('Force Win: Enter Result');
+    console.log('[DEBUG] Showing modal with customId:', modal.data.custom_id);
     const teamA = new TextInputBuilder()
         .setCustomId('team_a')
         .setLabel('Team A')
@@ -706,6 +707,7 @@ export async function handleButton(interaction) {
                 new ActionRowBuilder().addComponents(weekInput)
             );
 
+            console.log('[DEBUG] Showing modal with customId:', modal.data.custom_id);
             await interaction.showModal(modal);
             // After opening the modal we return; do not perform any further message updates here.
             return;

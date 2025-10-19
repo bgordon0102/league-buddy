@@ -33,12 +33,15 @@ function writeJSON(file, data) {
 }
 
 // Extracted season reset logic (no Discord interaction)
+// NOTE: This function should NEVER respond to any Discord interaction object.
 export function resetSeasonData(seasonno, guild, caller = 'unknown') {
+    console.log('[resetSeasonData] STARTED for seasonno:', seasonno, 'guild:', guild?.id, 'caller:', caller);
     // Load coachRoleMap from file at the very top
     let coachRoleMap = {};
     try {
         const data = fs.readFileSync(COACHROLEMAP_FILE, 'utf8');
         coachRoleMap = JSON.parse(data);
+        console.log('[resetSeasonData] Loaded coachRoleMap.json');
     } catch (err) {
         console.error(`[resetSeasonData] Failed to load coachRoleMap.json:`, err);
     }
@@ -212,14 +215,27 @@ export const data = new SlashCommandBuilder()
 import { DataManager } from '../../utils/dataManager.js';
 
 export async function execute(interaction) {
-    await interaction.deferReply({ ephemeral: true });
+    // Only handle valid slash commands
+    if (!interaction.isChatInputCommand()) {
+        console.warn('[startseason] Ignored non-slash command interaction');
+        return;
+    }
+    // Debug log for every execution
+    console.log(`[startseason] execute called for interaction ID: ${interaction.id}, user: ${interaction.user?.tag || interaction.user?.id}`);
+    try {
+        await interaction.deferReply({ ephemeral: true });
+    } catch (err) {
+        console.error('[startseason] Error during deferReply:', err);
+        return;
+    }
+    // ...existing code...
     const dataManager = new DataManager();
     // fs and path are already imported at the top as ES modules
     const SEASON_FILE = path.join(process.cwd(), 'data', 'season.json');
     try {
         // --- Unpin old standings/playoff messages and pin new reset ones ---
         const standingsChannelId = '1428159168904167535';
-        const playoffChannelId = '1428159324341141576';
+        const playoffChannelId = '1428159168904167535';
         const guild = interaction.guild;
         async function resetPinnedEmbed(channelId, embedArr, envKey = null) {
             try {
@@ -298,8 +314,7 @@ export async function execute(interaction) {
             );
             await interaction.editReply({
                 content: 'Season data already exists. Are you sure you want to reset everything?',
-                components: [row],
-                ephemeral: true
+                components: [row]
             });
             return;
         }
@@ -364,6 +379,10 @@ export async function execute(interaction) {
         await interaction.editReply({ content: `Season ${seasonData.seasonNo} started! All data initialized.` });
     } catch (err) {
         console.error('[startseason] Error:', err);
-        await interaction.editReply({ content: 'Error starting season.' });
+        try {
+            await interaction.editReply({ content: 'Error starting season.' });
+        } catch (e) {
+            // If interaction already acknowledged, do nothing
+        }
     }
 }

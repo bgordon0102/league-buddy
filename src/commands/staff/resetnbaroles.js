@@ -6,7 +6,7 @@ const NBA_TEAMS = [
   'Pelicans', 'Knicks', 'Thunder', 'Magic', '76ers', 'Suns', 'Trail Blazers', 'Kings', 'Spurs', 'Raptors', 'Jazz', 'Wizards'
 ];
 
-const STAFF_ROLES = ['Commish', 'Schedule Tracker', 'Gameplay Mod', 'Trade Committee'];
+const STAFF_ROLES = ['Commish', 'Schedule Tracker', 'Gameplay Mod'];
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

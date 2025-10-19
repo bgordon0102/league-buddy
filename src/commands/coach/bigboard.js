@@ -62,7 +62,8 @@ export async function execute(interaction) {
         const embed = new EmbedBuilder()
             .setTitle('📋 Big Board')
             .setColor(0x1f8b4c)
-            .setDescription(playerLines.length ? playerLines.join('\n') : 'No players available');
+            .setDescription(playerLines.length ? playerLines.join('\n') : 'No players available')
+            .setThumbnail('https://cdn.discordapp.com/icons/1153432333259530240/leaguebuddy_logo.png');
         await interaction.editReply({ embeds: [embed], components });
     } catch (err) {
         console.error('bigboard.js error:', err && err.stack ? err.stack : err);
