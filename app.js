@@ -5,13 +5,26 @@ import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join } from 'path';
 import { readdirSync, createWriteStream } from 'fs';
 // Node.js v22+ compatibility: use fs.readFileSync for JSON import
+// Persistent storage for pending trades
+const pendingTradesPath = './data/pendingTrades.json';
+function loadPendingTrades() {
+  try {
+    return JSON.parse(fs.readFileSync(pendingTradesPath, 'utf8'));
+  } catch {
+    return {};
+  }
+}
+function savePendingTrades(trades) {
+  fs.writeFileSync(pendingTradesPath, JSON.stringify(trades, null, 2));
+}
+let persistentPendingTrades = loadPendingTrades();
 import fs from 'fs';
-let coachRoleMap;
+let teamRoleMap;
 try {
-  coachRoleMap = JSON.parse(fs.readFileSync('./data/coachRoleMap.json', 'utf8'));
+  teamRoleMap = JSON.parse(fs.readFileSync('./data/teamRoleMap.json', 'utf8'));
 } catch (e) {
-  console.error('Failed to load coachRoleMap.json:', e);
-  coachRoleMap = {};
+  console.error('Failed to load teamRoleMap.json:', e);
+  teamRoleMap = {};
 }
 
 // Reduce log spam: only log startup and critical errors in production
@@ -51,20 +64,20 @@ function normalizeTeamName(input) {
   if (!input) return null;
   let cleaned = input.trim().toLowerCase();
   cleaned = cleaned.replace(/ coach$/, '').replace(/[^a-z0-9 ]/gi, '');
-  // Try exact full name match
-  for (const fullName of Object.keys(coachRoleMap)) {
+  // 1. Try exact full name match
+  for (const fullName of Object.keys(teamRoleMap)) {
     if (cleaned === fullName.trim().toLowerCase().replace(/[^a-z0-9 ]/gi, '')) return fullName;
   }
-  // Try partial match (substring)
-  for (const fullName of Object.keys(coachRoleMap)) {
+  // 2. Try prefix or suffix match (e.g. 'mavericks' matches 'dallas mavericks', but not 'oklahoma city thunder')
+  for (const fullName of Object.keys(teamRoleMap)) {
     const normalized = fullName.trim().toLowerCase().replace(/[^a-z0-9 ]/gi, '');
-    if (cleaned.includes(normalized) || normalized.includes(cleaned)) return fullName;
+    if (normalized.startsWith(cleaned) || normalized.endsWith(cleaned)) return fullName;
   }
-  // Try each word in input
-  for (const fullName of Object.keys(coachRoleMap)) {
+  // 3. Try each word in input as prefix/suffix only
+  for (const fullName of Object.keys(teamRoleMap)) {
     const normalized = fullName.trim().toLowerCase().replace(/[^a-z0-9 ]/gi, '');
     for (const word of cleaned.split(' ')) {
-      if (word && normalized.includes(word)) return fullName;
+      if (word && (normalized.startsWith(word) || normalized.endsWith(word))) return fullName;
     }
   }
   return null;
@@ -78,7 +91,8 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
   ]
 });
 
@@ -308,7 +322,6 @@ client.on('interactionCreate', async interaction => {
   if (interaction.isButton()) {
     // --- TRADE BUTTONS: handle these with direct string match, do not change ---
     if (interaction.customId === 'trade_submit_button') {
-      // ...existing code for trade_submit_button...
       const modal = new ModalBuilder()
         .setCustomId('trade_modal')
         .setTitle('Submit Trade Proposal')
@@ -526,6 +539,14 @@ client.on('interactionCreate', async interaction => {
   // Handle trade modal submission (DM flow)
   if (interaction.isModalSubmit() && interaction.customId === 'trade_modal') {
     console.log('[DEBUG] trade_modal submitted');
+    let replied = false;
+    try {
+      await interaction.deferReply({ ephemeral: true });
+      replied = true;
+    } catch (err) {
+      // Already replied or deferred
+      console.error('[ERROR] Could not defer trade modal interaction:', err);
+    }
     try {
       const yourTeam = interaction.fields.getTextInputValue('your_team');
       const otherTeam = interaction.fields.getTextInputValue('other_team');
@@ -534,48 +555,70 @@ client.on('interactionCreate', async interaction => {
       const notes = interaction.fields.getTextInputValue('notes');
       console.log('[DEBUG] Modal values:', { yourTeam, otherTeam, assetsSent, assetsReceived, notes });
 
-      // Find the submitting user and the other coach by team name (loose match)
-
+      // Find the submitting user and the other coach by team name (robust, roleId-based, no full fetch)
       const guild = await client.guilds.fetch(interaction.guildId);
-      console.log('[DEBUG] Fetched guild:', guild.id);
-      // Use coachRoleMap for loose team name search
       let matchedTeam = normalizeTeamName(otherTeam);
-      console.log(`[DIAG] Trade Modal: Input team='${otherTeam}', Matched team='${matchedTeam}'`);
       let otherCoach = null;
-      if (matchedTeam) {
-        console.log(`[DIAG] Trade Modal: Using roleId='${coachRoleMap[matchedTeam]}' for team='${matchedTeam}'`);
-        const roleId = coachRoleMap[matchedTeam];
-        const role = guild.roles.cache.get(roleId);
-        if (role) {
-          console.log(`[DIAG] Trade Modal: Found role object for roleId='${roleId}', role name='${role.name}'`);
-          // Find a member with this role
-          otherCoach = guild.members.cache.find(m => m.roles.cache.has(roleId));
-          console.log(`[DIAG] Trade Modal: Found coach in cache:`, otherCoach ? otherCoach.user.tag : null);
-          if (!otherCoach && guild.members.search) {
-            console.log(`[DIAG] Trade Modal: Searching for coach by name fragment='${matchedTeam.split(' ')[0]}'`);
-            try {
-              const found = await guild.members.search({ query: matchedTeam.split(' ')[0], limit: 10 });
-              otherCoach = found.find(m => m.roles.cache.has(roleId));
-              console.log(`[DIAG] Trade Modal: Found coach via search:`, otherCoach ? otherCoach.user.tag : null);
-            } catch (err) {
-              console.error('[ERROR] guild.members.search for role failed:', err);
-            }
-          }
+      let roleId = matchedTeam ? teamRoleMap[matchedTeam] : null;
+      let role = roleId ? guild.roles.cache.get(roleId) : null;
+      const adminRoleNames = ['Admin', 'Commish', 'Commissioner'];
+      let adminRoleIds = guild.roles.cache.filter(r => adminRoleNames.includes(r.name)).map(r => r.id);
+      console.log(`[TRADE DEBUG] Input team: '${otherTeam}', Matched team: '${matchedTeam}', RoleId: '${roleId}'`);
+      if (role) {
+        // Always fetch all members to ensure role.members is up to date
+        try {
+          await guild.members.fetch();
+        } catch (err) {
+          console.error('[TRADE DEBUG] Failed to fetch all members:', err);
         }
-        console.log('[DEBUG] Found otherCoach by role:', otherCoach ? otherCoach.user.tag : null, 'for team:', matchedTeam);
-        console.log(`[DIAG] Trade Modal: Final coach found:`, otherCoach ? otherCoach.user.tag : null);
-      } else {
-        console.log('[DEBUG] No team matched in coachRoleMap for:', otherTeam);
+        let allCandidates = Array.from(role.members.values());
+        if (allCandidates.length === 0) {
+          const msg = `No coach assigned to team: ${matchedTeam}`;
+          if (replied) {
+            await interaction.editReply({ content: msg });
+          } else {
+            await interaction.reply({ content: msg, ephemeral: true });
+          }
+          console.log(`[TRADE DEBUG] No members have the team role for '${matchedTeam}'.`);
+          return;
+        }
+        // Prefer non-admin/commish, else fallback to first
+        let nonStaff = allCandidates.filter(m => !m.roles.cache.some(r => adminRoleIds.includes(r)));
+        if (nonStaff.length > 0) {
+          otherCoach = nonStaff[0];
+          console.log(`[TRADE DEBUG] Found coach for '${matchedTeam}': ${otherCoach.user.tag} (${otherCoach.id}) (non-staff)`);
+        } else {
+          otherCoach = allCandidates[0];
+          console.log(`[TRADE DEBUG] All coaches for '${matchedTeam}' are staff; picking: ${otherCoach.user.tag} (${otherCoach.id})`);
+        }
       }
-      const submitter = interaction.user;
-
+      // Only fallback to global coach if NO team match at all
+      if (!otherCoach && !matchedTeam) {
+        const globalCoachRoleId = '1428119680572325929';
+        let globalRole = guild.roles.cache.get(globalCoachRoleId);
+        let globalCoaches = globalRole ? Array.from(globalRole.members.values()) : [];
+        // Filter out admins/commish
+        let filtered = globalCoaches.filter(m => !m.roles.cache.some(r => adminRoleIds.includes(r)));
+        if (filtered.length === 1) {
+          otherCoach = filtered[0];
+          console.log(`[TRADE DEBUG] Fallback to single global coach: ${otherCoach.user.tag} (${otherCoach.id})`);
+        } else if (filtered.length > 1) {
+          console.log('[TRADE DEBUG] Multiple users have the global coach role, refusing to DM all.');
+          otherCoach = null;
+        }
+      }
       if (!otherCoach) {
-        await interaction.reply({ content: `Could not find a coach for team: ${otherTeam}. Please check the team name.`, flags: 64 });
+        const msg = `Could not find a coach for team: ${otherTeam}. Please check the team name or coach assignment.`;
+        if (replied) {
+          await interaction.editReply({ content: msg });
+        } else {
+          await interaction.reply({ content: msg, ephemeral: true });
+        }
         console.log('[DEBUG] No coach found for:', otherTeam);
         return;
       }
-
       // DM the other coach for approval (reverse assets for their perspective)
+      const submitter = interaction.user;
       const dmEmbed = {
         title: 'Trade Proposal Approval',
         description: `You have a pending trade proposal from **${yourTeam}** (submitted by <@${submitter.id}>):`,
@@ -597,19 +640,16 @@ client.on('interactionCreate', async interaction => {
         .setLabel('Deny Trade')
         .setStyle(ButtonStyle.Danger);
       const row = new ActionRowBuilder().addComponents(approveButton, denyButton);
+      let dmSuccess = false;
       try {
         await otherCoach.user.send({ embeds: [dmEmbed], components: [row] });
-        await interaction.reply({ content: `Trade proposal sent to ${otherCoach.user.tag} for approval via DM.`, flags: 64 });
-        console.log('[DEBUG] DM sent to:', otherCoach.user.tag);
+        dmSuccess = true;
       } catch (err) {
-        await interaction.reply({ content: `Failed to DM the other coach. They may have DMs disabled.`, flags: 64 });
         console.error('[ERROR] Failed to DM other coach:', err);
-        return;
       }
-
-      // Store trade details in memory for approval (in production, use a DB or file)
+      // Store trade details in memory and persistent JSON
       client.pendingTrades = client.pendingTrades || {};
-      client.pendingTrades[otherCoach.id] = {
+      const tradeObj = {
         yourTeam,
         otherTeam,
         assetsSent,
@@ -618,12 +658,33 @@ client.on('interactionCreate', async interaction => {
         submitterId: submitter.id,
         otherCoachId: otherCoach.id
       };
-      console.log('[DEBUG] Trade stored for approval:', client.pendingTrades[otherCoach.id]);
-      return;
+      client.pendingTrades[otherCoach.id] = tradeObj;
+      persistentPendingTrades[otherCoach.id] = tradeObj;
+      savePendingTrades(persistentPendingTrades);
+      console.log('[DEBUG] Trade stored for approval:', tradeObj, 'for user:', otherCoach.id);
+      // Always reply or editReply
+      if (dmSuccess) {
+        if (replied) {
+          await interaction.editReply({ content: `Trade proposal sent to ${otherCoach.user.tag} for approval via DM.` });
+        } else {
+          await interaction.reply({ content: `Trade proposal sent to ${otherCoach.user.tag} for approval via DM.`, ephemeral: true });
+        }
+      } else {
+        if (replied) {
+          await interaction.editReply({ content: `Trade stored, but failed to DM the other coach (DMs disabled).` });
+        } else {
+          await interaction.reply({ content: `Trade stored, but failed to DM the other coach (DMs disabled).`, ephemeral: true });
+        }
+      }
     } catch (err) {
       console.error('[ERROR] Exception in trade_modal handler:', err);
+      const msg = 'An error occurred while processing your trade proposal.';
       try {
-        await interaction.reply({ content: 'An error occurred while processing your trade proposal.', flags: 64 });
+        if (replied) {
+          await interaction.editReply({ content: msg });
+        } else {
+          await interaction.reply({ content: msg, ephemeral: true });
+        }
       } catch { }
       return;
     }
