@@ -361,14 +361,14 @@ client.on('interactionCreate', async interaction => {
       // ...existing code for approve/deny trade buttons...
       const trade = client.pendingTrades && client.pendingTrades[interaction.user.id];
       if (!trade) {
-        await interaction.reply({ content: 'No pending trade found for you.', ephemeral: true });
+        await interaction.reply({ content: 'No pending trade found for you.', flags: 64 });
         return;
       }
       if (interaction.customId === 'approve_trade_button') {
         // Only the non-submitting coach needs to approve
         const committeeChannel = await client.channels.fetch('1425555499440410812');
         if (!committeeChannel || !committeeChannel.isTextBased()) {
-          await interaction.reply({ content: 'Failed to find the committee channel.', ephemeral: true });
+          await interaction.reply({ content: 'Failed to find the committee channel.', flags: 64 });
           return;
         }
         const embed = {
@@ -421,7 +421,7 @@ client.on('interactionCreate', async interaction => {
             delete client.committeeVotes[msg.id];
           }, 48 * 60 * 60 * 1000) // 48 hours
         };
-        await interaction.reply({ content: 'Trade approved and sent to committee for 48-hour vote.', ephemeral: true });
+        await interaction.reply({ content: 'Trade approved and sent to committee for 48-hour vote.', flags: 64 });
         // Remove from pending
         delete client.pendingTrades[interaction.user.id];
       } else if (interaction.customId === 'deny_trade_button') {
@@ -433,7 +433,7 @@ client.on('interactionCreate', async interaction => {
         try {
           await interaction.user.send('You have denied the trade proposal. The other coach has been notified.');
         } catch { }
-        await interaction.reply({ content: 'Trade denied. Both coaches have been notified.', ephemeral: true });
+        await interaction.reply({ content: 'Trade denied. Both coaches have been notified.', flags: 64 });
         // Remove from pending
         delete client.pendingTrades[interaction.user.id];
       }
@@ -446,7 +446,7 @@ client.on('interactionCreate', async interaction => {
       client.committeeVotes = client.committeeVotes || {};
       const voteData = client.committeeVotes[msgId];
       if (!voteData) {
-        await interaction.reply({ content: 'Voting for this trade has ended or is invalid.', ephemeral: true });
+        await interaction.reply({ content: 'Voting for this trade has ended or is invalid.', flags: 64 });
         return;
       }
       // Only allow one vote per user
@@ -454,7 +454,7 @@ client.on('interactionCreate', async interaction => {
       // Tally votes
       const approveCount = Object.values(voteData.votes).filter(v => v === 'approve').length;
       const denyCount = Object.values(voteData.votes).filter(v => v === 'deny').length;
-      await interaction.reply({ content: `Your vote has been recorded. Approve: ${approveCount}, Deny: ${denyCount}`, ephemeral: true });
+      await interaction.reply({ content: `Your vote has been recorded. Approve: ${approveCount}, Deny: ${denyCount}`, flags: 64 });
       // End early if majority reached (3 out of 5)
       const majority = 3;
       if (approveCount >= majority || denyCount >= majority) {
@@ -540,30 +540,37 @@ client.on('interactionCreate', async interaction => {
       console.log('[DEBUG] Fetched guild:', guild.id);
       // Use coachRoleMap for loose team name search
       let matchedTeam = normalizeTeamName(otherTeam);
+      console.log(`[DIAG] Trade Modal: Input team='${otherTeam}', Matched team='${matchedTeam}'`);
       let otherCoach = null;
       if (matchedTeam) {
+        console.log(`[DIAG] Trade Modal: Using roleId='${coachRoleMap[matchedTeam]}' for team='${matchedTeam}'`);
         const roleId = coachRoleMap[matchedTeam];
         const role = guild.roles.cache.get(roleId);
         if (role) {
+          console.log(`[DIAG] Trade Modal: Found role object for roleId='${roleId}', role name='${role.name}'`);
           // Find a member with this role
           otherCoach = guild.members.cache.find(m => m.roles.cache.has(roleId));
+          console.log(`[DIAG] Trade Modal: Found coach in cache:`, otherCoach ? otherCoach.user.tag : null);
           if (!otherCoach && guild.members.search) {
+            console.log(`[DIAG] Trade Modal: Searching for coach by name fragment='${matchedTeam.split(' ')[0]}'`);
             try {
               const found = await guild.members.search({ query: matchedTeam.split(' ')[0], limit: 10 });
               otherCoach = found.find(m => m.roles.cache.has(roleId));
+              console.log(`[DIAG] Trade Modal: Found coach via search:`, otherCoach ? otherCoach.user.tag : null);
             } catch (err) {
               console.error('[ERROR] guild.members.search for role failed:', err);
             }
           }
         }
         console.log('[DEBUG] Found otherCoach by role:', otherCoach ? otherCoach.user.tag : null, 'for team:', matchedTeam);
+        console.log(`[DIAG] Trade Modal: Final coach found:`, otherCoach ? otherCoach.user.tag : null);
       } else {
         console.log('[DEBUG] No team matched in coachRoleMap for:', otherTeam);
       }
       const submitter = interaction.user;
 
       if (!otherCoach) {
-        await interaction.reply({ content: `Could not find a coach for team: ${otherTeam}. Please check the team name.`, ephemeral: true });
+        await interaction.reply({ content: `Could not find a coach for team: ${otherTeam}. Please check the team name.`, flags: 64 });
         console.log('[DEBUG] No coach found for:', otherTeam);
         return;
       }
@@ -592,10 +599,10 @@ client.on('interactionCreate', async interaction => {
       const row = new ActionRowBuilder().addComponents(approveButton, denyButton);
       try {
         await otherCoach.user.send({ embeds: [dmEmbed], components: [row] });
-        await interaction.reply({ content: `Trade proposal sent to ${otherCoach.user.tag} for approval via DM.`, ephemeral: true });
+        await interaction.reply({ content: `Trade proposal sent to ${otherCoach.user.tag} for approval via DM.`, flags: 64 });
         console.log('[DEBUG] DM sent to:', otherCoach.user.tag);
       } catch (err) {
-        await interaction.reply({ content: `Failed to DM the other coach. They may have DMs disabled.`, ephemeral: true });
+        await interaction.reply({ content: `Failed to DM the other coach. They may have DMs disabled.`, flags: 64 });
         console.error('[ERROR] Failed to DM other coach:', err);
         return;
       }
@@ -616,7 +623,7 @@ client.on('interactionCreate', async interaction => {
     } catch (err) {
       console.error('[ERROR] Exception in trade_modal handler:', err);
       try {
-        await interaction.reply({ content: 'An error occurred while processing your trade proposal.', ephemeral: true });
+        await interaction.reply({ content: 'An error occurred while processing your trade proposal.', flags: 64 });
       } catch { }
       return;
     }
