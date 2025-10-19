@@ -34,12 +34,14 @@ function writeJSON(file, data) {
 
 // Extracted season reset logic (no Discord interaction)
 // NOTE: This function should NEVER respond to any Discord interaction object.
-export function resetSeasonData(seasonno, guild, caller = 'unknown') {
+// NEVER modify or overwrite coachRoleMap.json or any trade-related state in this function.
+// Only read coachRoleMap.json to snapshot for the new season. The trade system relies on the persistent file.
+export async function resetSeasonData(seasonno, guild, caller = 'unknown') {
     console.log('[resetSeasonData] STARTED for seasonno:', seasonno, 'guild:', guild?.id, 'caller:', caller);
     // Load coachRoleMap from file at the very top
     let coachRoleMap = {};
     try {
-        const data = fs.readFileSync(COACHROLEMAP_FILE, 'utf8');
+        const data = await fsPromises.readFile(COACHROLEMAP_FILE, 'utf8');
         coachRoleMap = JSON.parse(data);
         console.log('[resetSeasonData] Loaded coachRoleMap.json');
     } catch (err) {
@@ -223,7 +225,8 @@ export async function execute(interaction) {
     // Debug log for every execution
     console.log(`[startseason] execute called for interaction ID: ${interaction.id}, user: ${interaction.user?.tag || interaction.user?.id}`);
     try {
-        await interaction.deferReply({ ephemeral: true });
+        // Use flags for ephemeral reply to avoid deprecation warning
+        await interaction.deferReply({ flags: 64 }); // 64 = EPHEMERAL
     } catch (err) {
         console.error('[startseason] Error during deferReply:', err);
         return;
@@ -241,12 +244,19 @@ export async function execute(interaction) {
             try {
                 const channel = await guild.channels.fetch(channelId);
                 if (!channel) return;
-                const pins = await channel.messages.fetchPinned();
-                for (const msg of pins.values()) {
-                    if (msg.author.id === guild.client.user.id) {
-                        await msg.unpin();
-                        await msg.delete();
-                    }
+                // Use fetchPins() and iterate with forEach for compatibility
+                const pins = await channel.messages.fetchPins();
+                if (pins && typeof pins.forEach === 'function') {
+                    pins.forEach(async (msg) => {
+                        if (msg.author && msg.author.id === guild.client.user.id) {
+                            try {
+                                await msg.unpin();
+                                await msg.delete();
+                            } catch (err) {
+                                console.error('Failed to unpin/delete message:', err);
+                            }
+                        }
+                    });
                 }
                 const sentMsg = await channel.send({ embeds: embedArr });
                 await sentMsg.pin();
@@ -266,7 +276,13 @@ export async function execute(interaction) {
                     await fsPromises.writeFile(envPath, envContent, 'utf8');
                 }
             } catch (err) {
-                console.error('Failed to reset pinned message in channel', channelId, err);
+                if (err && err.stack) {
+                    console.error('Failed to reset pinned message in channel', channelId, err.stack);
+                } else if (err && err.message) {
+                    console.error('Failed to reset pinned message in channel', channelId, err.message);
+                } else {
+                    console.error('Failed to reset pinned message in channel', channelId, err);
+                }
             }
         }
         // Blank/reset standings embed
@@ -279,24 +295,6 @@ export async function execute(interaction) {
             .setColor(0x1D428A)
             .setFooter({ text: 'W-L | Win% | Games Behind (GB)' });
         await resetPinnedEmbed(standingsChannelId, [blankStandingsEmbed], 'STANDINGS_PINNED_MESSAGE_ID');
-        // Blank/reset playoff picture embeds
-        const blankEastEmbed = new (await import('discord.js')).EmbedBuilder()
-            .setTitle('🏆 Eastern Conference Playoff Bracket')
-            .addFields(
-                { name: 'Playoff Matchups', value: 'No games played', inline: false },
-                { name: 'Play-In Matchups', value: 'No games played', inline: false }
-            )
-            .setColor(0x1D428A)
-            .setFooter({ text: 'Top 6: Playoff | 7-10: Play-In' });
-        const blankWestEmbed = new (await import('discord.js')).EmbedBuilder()
-            .setTitle('🏆 Western Conference Playoff Bracket')
-            .addFields(
-                { name: 'Playoff Matchups', value: 'No games played', inline: false },
-                { name: 'Play-In Matchups', value: 'No games played', inline: false }
-            )
-            .setColor(0xE03A3E)
-            .setFooter({ text: 'Top 6: Playoff | 7-10: Play-In' });
-        await resetPinnedEmbed(playoffChannelId, [blankEastEmbed, blankWestEmbed]);
         // Check if season.json exists and is non-empty
         let seasonExists = false;
         try {

@@ -4,20 +4,48 @@ import { Client, GatewayIntentBits, Collection, ModalBuilder, ActionRowBuilder, 
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join } from 'path';
 import { readdirSync, createWriteStream } from 'fs';
-import coachRoleMap from './data/coachRoleMap.json' assert { type: 'json' };
+// Node.js v22+ compatibility: use fs.readFileSync for JSON import
+import fs from 'fs';
+let coachRoleMap;
+try {
+  coachRoleMap = JSON.parse(fs.readFileSync('./data/coachRoleMap.json', 'utf8'));
+} catch (e) {
+  console.error('Failed to load coachRoleMap.json:', e);
+  coachRoleMap = {};
+}
 
-// Redirect console.log and console.error to both console and bot.log
+// Reduce log spam: only log startup and critical errors in production
 const logStream = createWriteStream('bot.log', { flags: 'a' });
 const origLog = console.log;
 const origErr = console.error;
-console.log = (...args) => {
-  origLog(...args);
-  try { logStream.write(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch { }
-};
-console.error = (...args) => {
-  origErr(...args);
-  try { logStream.write('[ERROR] ' + args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch { }
-};
+if (process.env.NODE_ENV !== 'production') {
+  console.log = (...args) => {
+    origLog(...args);
+    try { logStream.write(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch { }
+  };
+  console.error = (...args) => {
+    origErr(...args);
+    try { logStream.write('[ERROR] ' + args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch { }
+  };
+} else {
+  // In production, only log startup and critical errors
+  console.log = (...args) => {
+    if (typeof args[0] === 'string' && (
+      args[0].includes('LEAGUEbuddy is online!') ||
+      args[0].includes('Logged in as') ||
+      args[0].includes('Serving') ||
+      args[0].includes('Loaded') ||
+      args[0].includes('ENVIRONMENT:')
+    )) {
+      origLog(...args);
+      try { logStream.write(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch { }
+    }
+  };
+  console.error = (...args) => {
+    origErr(...args);
+    try { logStream.write('[ERROR] ' + args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch { }
+  };
+}
 
 function normalizeTeamName(input) {
   if (!input) return null;
@@ -96,15 +124,17 @@ async function loadInteractions() {
 
     try {
       const interaction = await import(fileURL);
-
+      // Log the file and its exports for debugging
+      console.log(`[INTERACTION LOADER] File: ${filePath}`);
+      console.log(`[INTERACTION LOADER] Exports:`, Object.keys(interaction));
       if ('customId' in interaction && 'execute' in interaction) {
         client.interactions.set(interaction.customId, interaction);
-        console.log(`✅ Loaded interaction: ${interaction.customId}`);
+        console.log(`✅ Loaded interaction:`, interaction.customId);
       } else {
         console.log(`⚠️  Interaction at ${filePath} is missing required "customId" or "execute" property.`);
       }
     } catch (error) {
-      console.error(`❌ Error loading interaction ${file}:`, error);
+      console.error(`❌ Error loading interaction ${file}:`, error && error.stack ? error.stack : error);
     }
   }
 }
@@ -268,8 +298,9 @@ client.on('interactionCreate', async interaction => {
 
   // Handle button interactions (including trade flow)
   if (interaction.isButton()) {
-    // Trade submission modal
+    // --- TRADE BUTTONS: handle these with direct string match, do not change ---
     if (interaction.customId === 'trade_submit_button') {
+      // ...existing code for trade_submit_button...
       const modal = new ModalBuilder()
         .setCustomId('trade_modal')
         .setTitle('Submit Trade Proposal')
@@ -318,9 +349,8 @@ client.on('interactionCreate', async interaction => {
       await interaction.showModal(modal);
       return;
     }
-
-    // Trade approval/deny buttons in DM
     if (interaction.customId === 'approve_trade_button' || interaction.customId === 'deny_trade_button') {
+      // ...existing code for approve/deny trade buttons...
       const trade = client.pendingTrades && client.pendingTrades[interaction.user.id];
       if (!trade) {
         await interaction.reply({ content: 'No pending trade found for you.', ephemeral: true });
@@ -401,9 +431,9 @@ client.on('interactionCreate', async interaction => {
       }
       return;
     }
-
     // Committee voting buttons (must be top-level)
     if (interaction.isButton() && (interaction.customId === 'committee_approve_trade' || interaction.customId === 'committee_deny_trade')) {
+      // ...existing code for committee voting buttons...
       const msgId = interaction.message.id;
       client.committeeVotes = client.committeeVotes || {};
       const voteData = client.committeeVotes[msgId];
@@ -452,6 +482,37 @@ client.on('interactionCreate', async interaction => {
         delete client.committeeVotes[msgId];
       }
     }
+
+    // --- REGEX/GENERIC BUTTONS: try string match, then regex match ---
+    let interactionHandler = client.interactions.get(interaction.customId);
+    if (!interactionHandler) {
+      // Try regex match for customId
+      for (const [key, handler] of client.interactions.entries()) {
+        if (key instanceof RegExp && key.test(interaction.customId)) {
+          interactionHandler = handler;
+          break;
+        }
+      }
+    }
+    if (!interactionHandler) {
+      console.error(`❌ No interaction handler matching ${interaction.customId} was found.`);
+      return;
+    }
+    try {
+      await interactionHandler.execute(interaction);
+    } catch (error) {
+      console.error(`❌ Error executing interaction ${interaction.customId}:`, error);
+      try {
+        if (interaction.replied || interaction.deferred) {
+          await interaction.editReply({ content: 'There was an error while executing this interaction!' });
+        } else {
+          await interaction.reply({ content: 'There was an error while executing this interaction!', flags: 64 });
+        }
+      } catch (replyError) {
+        console.error('❌ Failed to send error message:', replyError);
+      }
+    }
+    return;
   }
 
   // Handle trade modal submission (DM flow)
