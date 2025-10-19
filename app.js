@@ -19,7 +19,7 @@ function saveProgressionRequests(reqs) {
 }
 let progressionRequests = loadProgressionRequests();
 
-const STAFF_ROLE_IDS = ['1428100777229942895', '1427896861934485575']; // - Ghost Paradise Co-Commish, Paradise Commish
+const STAFF_ROLE_IDS = ['1428100777229942895', '1427896861934485575']; // Schedule Tracker, Paradise Commish
 
 
 // Node.js v22+ compatibility: use fs.readFileSync for JSON import
@@ -951,7 +951,8 @@ client.on('interactionCreate', async interaction => {
           let regressListStr = `-1 to **${skillset}**`;
           // Find team role ID for tagging
           let teamRoleId = teamRoleMap && teamRoleMap[team] ? teamRoleMap[team] : null;
-          let teamTag = teamRoleId ? `<@&${teamRoleId}>` : team;
+          // Only tag Paradise Commish role (ID: 1427896861934485575)
+          let teamTag = '<@&1427896861934485575>';
           // Post regression embed in regression channel
           try {
             const regressionChannel = await interaction.client.channels.fetch('1428097711436992704');

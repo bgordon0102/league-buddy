@@ -20,7 +20,7 @@ export async function execute(interaction) {
     try {
         await interaction.deferReply({ ephemeral: true });
         // Staff role names
-        const staffRoles = ['Admin', 'Commish', '- Ghost Paradise Co-Commish', 'Gameplay Mod'];
+        const staffRoles = ['Admin', 'Commish', 'Schedule Tracker', 'Gameplay Mod'];
         const hasStaffRole = member.roles.cache.some(role => staffRoles.includes(role.name));
         let embed;
         if (hasStaffRole) {
