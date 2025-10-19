@@ -49,15 +49,23 @@ if (process.env.NODE_ENV !== 'production') {
 
 function normalizeTeamName(input) {
   if (!input) return null;
-  const cleaned = input.trim().toLowerCase();
-  // Try full name first (case-insensitive)
+  let cleaned = input.trim().toLowerCase();
+  cleaned = cleaned.replace(/ coach$/, '').replace(/[^a-z0-9 ]/gi, '');
+  // Try exact full name match
   for (const fullName of Object.keys(coachRoleMap)) {
-    if (cleaned === fullName.trim().toLowerCase()) return fullName;
+    if (cleaned === fullName.trim().toLowerCase().replace(/[^a-z0-9 ]/gi, '')) return fullName;
   }
-  // Try short name (case-insensitive)
-  for (const [short, full] of Object.entries(teamShortNames)) {
-    if (cleaned === short.toLowerCase()) return full;
-    if (cleaned.includes(short.toLowerCase())) return full;
+  // Try partial match (substring)
+  for (const fullName of Object.keys(coachRoleMap)) {
+    const normalized = fullName.trim().toLowerCase().replace(/[^a-z0-9 ]/gi, '');
+    if (cleaned.includes(normalized) || normalized.includes(cleaned)) return fullName;
+  }
+  // Try each word in input
+  for (const fullName of Object.keys(coachRoleMap)) {
+    const normalized = fullName.trim().toLowerCase().replace(/[^a-z0-9 ]/gi, '');
+    for (const word of cleaned.split(' ')) {
+      if (word && normalized.includes(word)) return fullName;
+    }
   }
   return null;
 }
@@ -531,14 +539,7 @@ client.on('interactionCreate', async interaction => {
       const guild = await client.guilds.fetch(interaction.guildId);
       console.log('[DEBUG] Fetched guild:', guild.id);
       // Use coachRoleMap for loose team name search
-      const lowerOtherTeam = otherTeam.toLowerCase();
-      let matchedTeam = null;
-      for (const teamName of Object.keys(coachRoleMap)) {
-        if (teamName.toLowerCase().includes(lowerOtherTeam) || lowerOtherTeam.includes(teamName.toLowerCase())) {
-          matchedTeam = teamName;
-          break;
-        }
-      }
+      let matchedTeam = normalizeTeamName(otherTeam);
       let otherCoach = null;
       if (matchedTeam) {
         const roleId = coachRoleMap[matchedTeam];
