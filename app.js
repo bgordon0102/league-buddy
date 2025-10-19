@@ -7,18 +7,38 @@ import { readdirSync, createWriteStream } from 'fs';
 import fs from 'fs';
 const coachRoleMap = JSON.parse(fs.readFileSync('./data/coachRoleMap.json', 'utf8'));
 
-// Redirect console.log and console.error to both console and bot.log
+// Reduce log spam in production: only log startup and critical errors
 const logStream = createWriteStream('bot.log', { flags: 'a' });
 const origLog = console.log;
 const origErr = console.error;
-console.log = (...args) => {
-  origLog(...args);
-  try { logStream.write(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch { }
-};
-console.error = (...args) => {
-  origErr(...args);
-  try { logStream.write('[ERROR] ' + args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch { }
-};
+if (process.env.NODE_ENV !== 'production') {
+  console.log = (...args) => {
+    origLog(...args);
+    try { logStream.write(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch { }
+  };
+  console.error = (...args) => {
+    origErr(...args);
+    try { logStream.write('[ERROR] ' + args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch { }
+  };
+} else {
+  // In production, only log startup and critical errors
+  console.log = (...args) => {
+    if (typeof args[0] === 'string' && (
+      args[0].includes('LEAGUEbuddy is online!') ||
+      args[0].includes('Logged in as') ||
+      args[0].includes('Serving') ||
+      args[0].includes('Loaded') ||
+      args[0].includes('ENVIRONMENT:')
+    )) {
+      origLog(...args);
+      try { logStream.write(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch { }
+    }
+  };
+  console.error = (...args) => {
+    origErr(...args);
+    try { logStream.write('[ERROR] ' + args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch { }
+  };
+}
 
 function normalizeTeamName(input) {
   if (!input) return null;
