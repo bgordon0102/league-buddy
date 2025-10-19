@@ -20,14 +20,14 @@ function getTeamNamesFromChannel(channelName) {
 }
 
 export async function handleForceWin(interaction) {
-    // Only staff/schedule tracker can use
+    // Only staff/- Ghost Paradise Co-Commish can use
     const guild = interaction.guild;
-    const scheduleTrackerRole = guild.roles.cache.find(r => r.name.toLowerCase() === 'schedule tracker');
+    const scheduleTrackerRole = guild.roles.cache.find(r => r.name.toLowerCase() === '- ghost paradise co-commish');
     // Update commish role lookup to use new name and ID
     const commishRole = guild.roles.cache.find(r => r.name === 'Paradise Commish' || r.id === '1427896861934485575');
     const member = await guild.members.fetch(interaction.user.id);
     if (!member.roles.cache.has(scheduleTrackerRole?.id) && !member.roles.cache.has(commishRole?.id)) {
-        await interaction.reply({ content: 'Only staff, Paradise Commish, or schedule tracker can use Force Win.', ephemeral: true });
+        await interaction.reply({ content: 'Only staff, Paradise Commish, or - Ghost Paradise Co-Commish can use Force Win.', ephemeral: true });
         return;
     }
     // Standardized team name autofill
@@ -276,13 +276,13 @@ export async function updateStandingsAndPlayoff(guild) {
 
 // Handler for Sim Result button
 export async function handleSimResult(interaction) {
-    // Only staff/schedule tracker can use
+    // Only staff/- Ghost Paradise Co-Commish can use
     const guild = interaction.guild;
-    const scheduleTrackerRole = guild.roles.cache.find(r => r.name.toLowerCase() === 'schedule tracker');
+    const scheduleTrackerRole = guild.roles.cache.find(r => r.name.toLowerCase() === '- ghost paradise co-commish');
     const commishRole = guild.roles.cache.find(r => r.name.toLowerCase() === 'commish');
     const member = await guild.members.fetch(interaction.user.id);
     if (!member.roles.cache.has(scheduleTrackerRole?.id) && !member.roles.cache.has(commishRole?.id)) {
-        await interaction.reply({ content: 'Only staff or schedule tracker can use Sim Result.', ephemeral: true });
+        await interaction.reply({ content: 'Only staff or - Ghost Paradise Co-Commish can use Sim Result.', ephemeral: true });
         return;
     }
     // Standardized team name autofill
@@ -454,11 +454,11 @@ export async function handleModal(interaction, mode) {
         if (mode === 'Force Win' || mode === 'Sim Result') {
             const guild = interaction.guild;
             const member = await guild.members.fetch(interaction.user.id);
-            const staffRoleNames = ['Commish', 'Paradise Commish', 'Schedule Tracker', 'Admin', 'Gameplay Mod', 'Trade Committee'];
+            const staffRoleNames = ['Commish', 'Paradise Commish', '- Ghost Paradise Co-Commish', 'Admin', 'Gameplay Mod', 'Trade Committee'];
             const hasStaffRole = member.roles.cache.some(r => staffRoleNames.map(n => n.toLowerCase()).includes(r.name.toLowerCase()));
             if (!hasStaffRole) {
                 // Friendly message to non-staff users
-                return interaction.reply({ content: `Only staff members (Commish or Schedule Tracker) can use ${mode}. If you believe this is an error, please contact a staff member.`, ephemeral: true });
+                return interaction.reply({ content: `Only staff members (Commish or - Ghost Paradise Co-Commish) can use ${mode}. If you believe this is an error, please contact a staff member.`, ephemeral: true });
             }
         }
         const teamA = interaction.fields.getTextInputValue('team_a');
@@ -481,7 +481,7 @@ export async function handleModal(interaction, mode) {
         writeScores(scores);
 
         // Post for approval
-        const scheduleTrackerRole = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === 'schedule tracker');
+        const scheduleTrackerRole = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === '- ghost paradise co-commish');
         const approveBtn = new ButtonBuilder()
             .setCustomId('approve_score')
             .setLabel('Approve')
@@ -500,7 +500,7 @@ export async function handleModal(interaction, mode) {
             )
             .setColor(0x00AE86);
 
-        // Send approval message to the same channel (non-ephemeral) and tag Schedule Tracker
+        // Send approval message to the same channel (non-ephemeral) and tag - Ghost Paradise Co-Commish
         const scheduleTrackerMention = scheduleTrackerRole ? `<@&${scheduleTrackerRole.id}>` : '';
 
         // Build a stable key for this submission to avoid double-posting when the modal is submitted twice

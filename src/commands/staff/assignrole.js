@@ -1,7 +1,7 @@
 // Role name to ID mapping for reliable assignment
 const ROLE_ID_MAP = {
     "Commish": "1428100771513237654",
-    "Schedule Tracker": "1428100777229942895",
+    "- Ghost Paradise Co-Commish": "1428100777229942895",
     "Gameplay Mod": "1428100782246330398",
     // "Trade Committee": "1428100787225235526", // removed
     "Ghost Paradise": "1428119680572325929",
@@ -44,7 +44,7 @@ const NBA_TEAMS = [
     'Pelicans', 'Knicks', 'Thunder', 'Magic', '76ers', 'Suns', 'Trail Blazers', 'Kings', 'Spurs', 'Raptors', 'Jazz', 'Wizards'
 ];
 
-const STAFF_ROLES = ['Commish', 'Schedule Tracker', 'Gameplay Mod', 'Ghost Paradise'];
+const STAFF_ROLES = ['Commish', '- Ghost Paradise Co-Commish', 'Gameplay Mod', 'Ghost Paradise'];
 
 export const data = new SlashCommandBuilder()
     .setName('assignrole')
