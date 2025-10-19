@@ -4,7 +4,8 @@ import { Client, GatewayIntentBits, Collection, ModalBuilder, ActionRowBuilder, 
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join } from 'path';
 import { readdirSync, createWriteStream } from 'fs';
-import coachRoleMap from './data/coachRoleMap.json' assert { type: 'json' };
+import fs from 'fs';
+const coachRoleMap = JSON.parse(fs.readFileSync('./data/coachRoleMap.json', 'utf8'));
 
 // Redirect console.log and console.error to both console and bot.log
 const logStream = createWriteStream('bot.log', { flags: 'a' });
