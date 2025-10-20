@@ -1,3 +1,75 @@
+import fs from 'fs';
+import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionFlagsBits, ChannelType, InteractionType } from 'discord.js';
+// Handler for Set Game Info button
+export async function handleSetGameInfo(interaction) {
+    // Only allow the home coach or staff to set game info
+    // (You can add more robust checks if needed)
+    try {
+        const modal = new ModalBuilder()
+            .setCustomId('set_game_info_modal')
+            .setTitle('Set Game Info');
+        const weekInput = new TextInputBuilder()
+            .setCustomId('week')
+            .setLabel('Week Number')
+            .setPlaceholder('e.g. 1')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+        const dateInput = new TextInputBuilder()
+            .setCustomId('date')
+            .setLabel('In-Game Date')
+            .setPlaceholder('e.g. Oct 20, 10/20, October 20')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(weekInput),
+            new ActionRowBuilder().addComponents(dateInput)
+        );
+        await interaction.showModal(modal);
+    } catch (err) {
+        console.error('[handleSetGameInfo] Error showing modal:', err);
+        try {
+            await interaction.reply({ content: 'An error occurred while showing the modal. Please contact an admin.', ephemeral: true });
+        } catch (replyErr) {
+            console.error('[handleSetGameInfo] Error sending error reply:', replyErr);
+        }
+    }
+}
+
+// Modal submit handler for Set Game Info
+export async function handleSetGameInfoModal(interaction) {
+    try {
+        const week = interaction.fields.getTextInputValue('week');
+        const date = interaction.fields.getTextInputValue('date');
+        // Save to gameInfo.json
+        let gameInfo = {};
+        try {
+            gameInfo = JSON.parse(fs.readFileSync('./data/gameInfo.json', 'utf8'));
+        } catch (err) { gameInfo = {}; }
+        gameInfo[interaction.channel.id] = { week, date };
+        fs.writeFileSync('./data/gameInfo.json', JSON.stringify(gameInfo, null, 2));
+        // Edit the pin message to show the 3 buttons and bolded game info
+        // (For simplicity, just send a new message; you can implement editing if needed)
+        await sendWelcomeAndButton(interaction.channel, interaction.channel.id, gameInfo);
+        // Tag Paradise Commish & Schedule Tracker roles (update IDs as needed)
+        const paradiseCommishRoleId = '1427896861934485575';
+        const scheduleTrackerRoleId = '1428100777229942895';
+        await interaction.reply({
+            content: `Game info set! <@&${paradiseCommishRoleId}> <@&${scheduleTrackerRoleId}>`,
+            ephemeral: false
+        });
+    } catch (err) {
+        console.error('[handleSetGameInfoModal] Error handling modal submit:', err);
+        try {
+            await interaction.reply({ content: 'An error occurred while saving game info. Please contact an admin.', ephemeral: true });
+        } catch (replyErr) {
+            console.error('[handleSetGameInfoModal] Error sending error reply:', replyErr);
+        }
+    }
+}
+// Register the button and modal handlers in your main interaction handler
+// Example (add to your main handler):
+// if (interaction.isButton() && interaction.customId === 'set_game_info') return handleSetGameInfo(interaction);
+// if (interaction.isModalSubmit() && interaction.customId === 'set_game_info_modal') return handleSetGameInfoModal(interaction);
 // Required for Discord interaction loader
 export const customId = 'submit_score';
 export const execute = handleButton;
@@ -326,8 +398,6 @@ export async function handleSimResult(interaction) {
     );
     await interaction.showModal(modal);
 }
-import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionFlagsBits, ChannelType, InteractionType } from 'discord.js';
-import fs from 'fs';
 
 const SEASON_FILE = './data/season.json';
 const SCORES_FILE = './data/scores.json';
@@ -344,7 +414,7 @@ function writeScores(scores) {
     fs.writeFileSync(SCORES_FILE, JSON.stringify(scores, null, 2));
 }
 
-export async function sendWelcomeAndButton(channel, week, seasonNo) {
+export async function sendWelcomeAndButton(channel, threadId, gameInfo) {
     // Tag both coach roles using coachRoleMap.json and full team names
     let coachTags = [];
     try {
@@ -408,6 +478,10 @@ export async function sendWelcomeAndButton(channel, week, seasonNo) {
             console.log('[sendWelcomeAndButton] Final coachTags:', coachTags);
         }
     } catch (err) { console.error('[sendWelcomeAndButton] Error:', err); }
+    const setGameInfoBtn = new ButtonBuilder()
+        .setCustomId('set_game_info')
+        .setLabel('Set Game Info')
+        .setStyle(ButtonStyle.Primary);
     const submitBtn = new ButtonBuilder()
         .setCustomId('submit_score')
         .setLabel('Submit Score')
@@ -436,15 +510,41 @@ export async function sendWelcomeAndButton(channel, week, seasonNo) {
     content += '  - **Sim Result:** Used if both teams fail to play or agree to a sim.\n';
     content += '- No postponements or deferrals.\n';
     content += '- Repeated inactivity may lead to removal.\n';
-    content += '- All force and sim results are final and logged.\n\n';
-    content += `:alarm_clock: **Score must be submitted within <t:${deadline}:R> (<t:${deadline}:f>)**`;
+    content += '- All force and sim results are final and logged.\n';
+    content += '\n:alarm_clock: **Score must be submitted within <t:' + deadline + ':R> (<t:' + deadline + ':f>)**';
+    content += '\n\n**Note:** The **home coach** is responsible for setting the game info. If you are matched up against the CPU, the user coach should still set the game info.';
     try {
-        // Only include tags once: content already contains a welcome line when coachTags exist
-        await channel.send({
-            content: `${content}`.trim(),
-            components: [new ActionRowBuilder().addComponents(submitBtn, forceWinBtn, simResultBtn)]
-        });
-    } catch (err) { }
+        // Only show Set Game Info button if game info is not set for this thread
+        let components;
+        let newContent = '';
+        if (!gameInfo || !gameInfo[threadId]) {
+            components = [new ActionRowBuilder().addComponents(setGameInfoBtn)];
+            newContent = `${content}`.trim();
+        } else {
+            components = [new ActionRowBuilder().addComponents(submitBtn, forceWinBtn, simResultBtn)];
+            // Compose bolded game info for staff
+            const info = gameInfo[threadId];
+            let gameInfoLine = '';
+            if (info) {
+                // Example: **WEEK 3 — 10/20/2025 — Lakers vs Celtics**
+                const week = info.week ? `WEEK ${info.week}` : '';
+                const date = info.date ? `— ${info.date}` : '';
+                const matchup = info.matchup ? `— ${info.matchup}` : '';
+                gameInfoLine = `**${[week, date, matchup].filter(Boolean).join(' ')}**\n`;
+            }
+            newContent = `${gameInfoLine}${content}`.trim();
+        }
+
+        // Find the bot's pinned message in this channel/thread
+        const pins = await channel.messages.fetchPinned();
+        let pinnedMsg = pins.find(m => m.author?.id === channel.client.user.id);
+        if (pinnedMsg) {
+            await pinnedMsg.edit({ content: newContent, components });
+        } else {
+            const sentMsg = await channel.send({ content: newContent, components });
+            await sentMsg.pin();
+        }
+    } catch (err) { console.error('[sendWelcomeAndButton] Error editing or sending pin:', err); }
 }
 
 // Modal submit handler

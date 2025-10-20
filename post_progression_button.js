@@ -27,7 +27,7 @@ client.once('ready', async () => {
             '• **Shooting:** Mid-Range, 3PT, Free Throw\n' +
             '• **Inside Defense:** Interior D, Block, Help IQ\n' +
             '• **Perimeter Defense:** Perimeter D, Steal, Pass Perception\n' +
-            '• **Playmaking:** Passing, Ball Handle, Vision\n' +
+            '• **Playmaking:** Ball Handling, Speed w/ Ball, Hands, Pass, Pass IQ, Vision\n' +
             '• **Rebounding:** Offensive/Defensive Rebounds\n' +
             '• **IQ:** Offensive/Defensive Consistency, Shot IQ, Draw Foul\n\n' +
             '**Special Options (One-Time Perks):**\n' +

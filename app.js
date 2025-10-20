@@ -2,6 +2,7 @@ console.log('LEAGUEbuddy: Script started.');
 import dotenv from 'dotenv';
 import fs, { readdirSync, createWriteStream } from 'fs';
 import { Client, GatewayIntentBits, Collection, ModalBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import * as submitScore from './src/interactions/submit_score.js';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join } from 'path';
 
@@ -191,26 +192,15 @@ async function loadInteractions() {
 // Register bigboard_move interaction
 
 
-// Register submit_score button/modal/approval handlers
-import * as submitScore from './src/interactions/submit_score.js';
 client.interactions.set('submit_score', submitScore);
 client.interactions.set('force_win_modal', { execute: (interaction) => submitScore.handleModal(interaction, 'Force Win') });
 client.interactions.set('sim_result_modal', { execute: (interaction) => submitScore.handleModal(interaction, 'Sim Result') });
 client.interactions.set('approve_score', { execute: i => submitScore.handleApproval(i, true) });
 client.interactions.set('deny_score', { execute: i => submitScore.handleApproval(i, false) });
-
-// Register force_win and sim_result button handlers
-import * as submitScoreButtons from './src/interactions/submit_score.js';
-client.interactions.set('force_win', {
-  execute: async (interaction) => {
-    await submitScoreButtons.handleForceWin(interaction);
-  }
-});
-client.interactions.set('sim_result', {
-  execute: async (interaction) => {
-    await submitScoreButtons.handleSimResult(interaction);
-  }
-});
+client.interactions.set('force_win', { execute: async (interaction) => { await submitScore.handleForceWin(interaction); } });
+client.interactions.set('sim_result', { execute: async (interaction) => { await submitScore.handleSimResult(interaction); } });
+client.interactions.set('set_game_info', { execute: async (interaction) => { await submitScore.handleSetGameInfo(interaction); } });
+client.interactions.set('set_game_info_modal', { execute: async (interaction) => { await submitScore.handleSetGameInfoModal(interaction); } });
 
 // Register progression button handler
 client.interactions.set('submit_progression_button', {
@@ -343,13 +333,30 @@ client.interactions.set('sim_result_react', {
 
 // Handle interactions (commands and autocomplete)
 client.on('interactionCreate', async interaction => {
-  // DEBUG: Log every interaction
-  console.log('[DEBUG] interactionCreate event fired:', {
-    type: interaction.type,
-    commandName: interaction.commandName,
-    customId: interaction.customId,
-    user: interaction.user?.tag || interaction.user?.id
-  });
+  // Handle Set Game Info button and modal directly for safety
+  if (interaction.isButton() && interaction.customId === 'set_game_info') {
+    return submitScore.handleSetGameInfo(interaction);
+  }
+  if (interaction.isModalSubmit() && interaction.customId === 'set_game_info_modal') {
+    return submitScore.handleSetGameInfoModal(interaction);
+  }
+  // Handle Set Game Info button and modal
+  if (interaction.isButton() && interaction.customId === 'set_game_info') {
+    return submitScore.handleSetGameInfo(interaction);
+  }
+  if (interaction.isModalSubmit() && interaction.customId === 'set_game_info_modal') {
+    return submitScore.handleSetGameInfoModal(interaction);
+  }
+  // Improved logging: log every command usage with user and result
+  if (interaction.isChatInputCommand()) {
+    console.log(`[COMMAND] /${interaction.commandName} used by ${interaction.user?.tag || interaction.user?.id}`);
+  } else if (interaction.isButton()) {
+    console.log(`[BUTTON] ${interaction.customId} clicked by ${interaction.user?.tag || interaction.user?.id}`);
+  } else if (interaction.isStringSelectMenu()) {
+    console.log(`[SELECT] ${interaction.customId} used by ${interaction.user?.tag || interaction.user?.id}`);
+  } else if (interaction.isAutocomplete()) {
+    console.log(`[AUTOCOMPLETE] /${interaction.commandName} by ${interaction.user?.tag || interaction.user?.id}`);
+  }
 
 
   // Handle autocomplete interactions
@@ -401,11 +408,10 @@ client.on('interactionCreate', async interaction => {
       return;
     }
     try {
-      console.log(`[DEBUG] Executing command: ${interaction.commandName}`);
       await command.execute(interaction);
-      console.log(`[DEBUG] Finished executing command: ${interaction.commandName}`);
+      console.log(`[SUCCESS] /${interaction.commandName} executed for ${interaction.user?.tag || interaction.user?.id}`);
     } catch (error) {
-      console.error(`❌ Error executing ${interaction.commandName}:`, error);
+      console.error(`[FAIL] /${interaction.commandName} failed for ${interaction.user?.tag || interaction.user?.id}:`, error);
       try {
         if (interaction.replied || interaction.deferred) {
           await interaction.editReply({ content: 'There was an error while executing this command!' });
@@ -888,114 +894,128 @@ client.on('interactionCreate', async interaction => {
       const teamMatch = embed.description.match(/\*\*Team:\*\* (.*)/);
       const playerMatch = embed.description.match(/\*\*Player:\*\* (.*)/);
       const skillsetMatch = embed.description.match(/\*\*Skill Set:\*\* (.*)/);
-      const upgradesMatch = embed.description.match(/\*\*Upgrades:\*\* (.*)/);
+      const upgradesFieldMatch = embed.description.match(/\*\*Upgrades:\*\* (.*)/);
       const ovrMatch = embed.description.match(/\*\*Current OVR:\*\* (.*)/);
       const submitterTag = embed.footer?.text?.replace('Submitted by ', '') || '';
 
       const team = teamMatch ? teamMatch[1].split('\n')[0] : '';
       const player = playerMatch ? playerMatch[1].split('\n')[0] : '';
       const skillset = skillsetMatch ? skillsetMatch[1].split('\n')[0] : '';
-      const upgrades = upgradesMatch ? upgradesMatch[1].split('\n')[0] : '';
+      const upgradesField = upgradesFieldMatch ? upgradesFieldMatch[1].split('\n')[0] : '';
       const ovr = ovrMatch ? ovrMatch[1].split('\n')[0] : '';
-      console.log('[DEBUG] Parsed embed details:', { team, player, skillset, upgrades, ovr });
+      console.log('[DEBUG] Parsed embed details:', { team, player, skillset, upgrades: upgradesField, ovr });
 
       // Find the submitter by tag in progressionRequests
-      const req = progressionRequests.find(r => r.team === team && r.player === player && r.skillset === skillset && r.attributes === upgrades && r.ovr === ovr && r.status === 'pending');
+      function normalize(str) {
+        return (str || '').replace(/\s+/g, '').toLowerCase();
+      }
+      function upgradesMatch(jsonUpgrades, embedUpgrades) {
+        // Remove whitespace and line breaks, check if embedUpgrades is a substring of jsonUpgrades
+        const normJson = normalize(jsonUpgrades.replace(/\n/g, ''));
+        const normEmbed = normalize(embedUpgrades.replace(/\n/g, ''));
+        return normJson.includes(normEmbed) || normEmbed.includes(normJson);
+      }
+      const req = progressionRequests.find(r =>
+        normalize(r.team) === normalize(team) &&
+        normalize(r.player) === normalize(player) &&
+        normalize(r.skillset) === normalize(skillset) &&
+        upgradesMatch(r.attributes, upgradesField) &&
+        normalize(r.ovr) === normalize(ovr) &&
+        r.status === 'pending'
+      );
       console.log('[DEBUG] Matched progression request:', req);
-      if (!req) {
-        const errEmbed = new EmbedBuilder()
-          .setColor(0xED4245)
-          .setDescription('Could not find the original progression request in storage.');
-        if (!interaction.replied && !interaction.deferred) {
-          await interaction.reply({ embeds: [errEmbed], flags: 1 << 6 });
+      // Always run regression logic if approving, even if req is not found
+      if (interaction.customId === 'progression_approve') {
+        // --- REGRESSION LOGIC (final: -1 per upgrade, from highest attribute) ---
+        // Parse upgrades/attributes into a list of { attr, value }
+        let upgradeList = [];
+        let upgradesForRegression = req ? req.attributes : upgradesField;
+        if (upgradesForRegression) {
+          const parts = upgradesForRegression.includes(',') ? upgradesForRegression.split(',') : upgradesForRegression.split('\n');
+          upgradeList = parts.map(s => {
+            const match = s.trim().match(/(.+?)\s*\+([0-9]+)/i);
+            if (match) {
+              return { attr: match[1].trim(), value: parseInt(match[2], 10) };
+            } else if (s.trim()) {
+              // For special skill sets, just show the string
+              return { attr: s.trim(), value: null };
+            }
+            return null;
+          }).filter(Boolean);
         }
-        console.log('[DEBUG] No matching progression request found in storage.');
-        return;
+        // Sort by value descending (highest upgraded first), then as listed
+        const sortedUpgrades = upgradeList
+          .filter(u => typeof u.value === 'number')
+          .sort((a, b) => b.value - a.value || 0)
+          .concat(upgradeList.filter(u => typeof u.value !== 'number'));
+        const numProgressions = 1; // Always 1 per submission
+        const regression = -1;
+        let regressListStr = `-1 to **${skillset}**`;
+        // Find team role ID for tagging
+        let teamRoleId = teamRoleMap && teamRoleMap[team] ? teamRoleMap[team] : null;
+        // Tag both the submitting coach's team role and Paradise Commish role
+        let teamTag = teamRoleId ? `<@&${teamRoleId}>` : '';
+        let commishTag = '<@&1427896861934485575>';
+        let tagString = `${teamTag} ${commishTag}`.trim();
+        // Post regression embed in regression channel
+        try {
+          const regressionChannel = await interaction.client.channels.fetch('1428097711436992704');
+          if (regressionChannel && regressionChannel.isTextBased()) {
+            const regressionEmbed = new EmbedBuilder()
+              .setTitle('Player Regression Notice')
+              .setColor(0xED4245)
+              .setDescription(
+                `**Team:** ${team}\n` +
+                `**Player:** ${player}\n` +
+                `**Skill Set:** ${skillset}\n` +
+                `**Regression:** -1 to **${skillset}**`
+              )
+              .setFooter({ text: 'Regression is -1 per upgrade.' });
+            await regressionChannel.send({ content: `${tagString} regression update:`, embeds: [regressionEmbed] });
+          }
+        } catch (regErr) {
+          console.error('❌ Failed to post regression update:', regErr);
+        }
       }
 
-      // Update status
-      req.status = interaction.customId === 'progression_approve' ? 'approved' : 'denied';
-      req.reviewedBy = interaction.user.tag;
-      req.reviewedAt = new Date().toISOString();
-      saveProgressionRequests(progressionRequests);
-      console.log('[DEBUG] Updated progression request status and saved.');
+      // If we found the request, update status and DM
+      if (req) {
+        req.status = interaction.customId === 'progression_approve' ? 'approved' : 'denied';
+        req.reviewedBy = interaction.user.tag;
+        req.reviewedAt = new Date().toISOString();
+        saveProgressionRequests(progressionRequests);
+        console.log('[DEBUG] Updated progression request status and saved.');
 
-      // DM the submitter as an embed
-      try {
-        const user = await interaction.client.users.fetch(req.submitterId);
-        let dmEmbed;
-        if (interaction.customId === 'progression_approve') {
-          // --- REGRESSION LOGIC (final: -1 per upgrade, from highest attribute) ---
-          // Parse upgrades/attributes into a list of { attr, value }
-          let upgradeList = [];
-          if (upgrades) {
-            const parts = upgrades.includes(',') ? upgrades.split(',') : upgrades.split('\n');
-            upgradeList = parts.map(s => {
-              const match = s.trim().match(/(.+?)\s*\+([0-9]+)/i);
-              if (match) {
-                return { attr: match[1].trim(), value: parseInt(match[2], 10) };
-              } else if (s.trim()) {
-                // For special skill sets, just show the string
-                return { attr: s.trim(), value: null };
-              }
-              return null;
-            }).filter(Boolean);
+        // DM the submitter as an embed
+        try {
+          const user = await interaction.client.users.fetch(req.submitterId);
+          let dmEmbed;
+          if (interaction.customId === 'progression_approve') {
+            dmEmbed = new EmbedBuilder()
+              .setColor(0x43B581)
+              .setTitle('✅ Progression Request Approved')
+              .setDescription(`Your progression request for **${player}** (${team}) has been approved!`)
+              .addFields(
+                { name: 'Skill Set', value: skillset, inline: false },
+                { name: 'Upgrades', value: upgradesField, inline: false },
+                { name: 'Current OVR', value: ovr, inline: false }
+              );
+          } else {
+            dmEmbed = new EmbedBuilder()
+              .setColor(0xED4245)
+              .setTitle('❌ Progression Request Denied')
+              .setDescription(`Your progression request for **${player}** (${team}) has been denied.`)
+              .addFields(
+                { name: 'Skill Set', value: skillset, inline: false },
+                { name: 'Upgrades', value: upgradesField, inline: false },
+                { name: 'Current OVR', value: ovr, inline: false }
+              );
           }
-          // Sort by value descending (highest upgraded first), then as listed
-          const sortedUpgrades = upgradeList
-            .filter(u => typeof u.value === 'number')
-            .sort((a, b) => b.value - a.value || 0)
-            .concat(upgradeList.filter(u => typeof u.value !== 'number'));
-          const numProgressions = 1; // Always 1 per submission
-          const regression = -1;
-          let regressListStr = `-1 to **${skillset}**`;
-          // Find team role ID for tagging
-          let teamRoleId = teamRoleMap && teamRoleMap[team] ? teamRoleMap[team] : null;
-          // Only tag Paradise Commish role (ID: 1427896861934485575)
-          let teamTag = '<@&1427896861934485575>';
-          // Post regression embed in regression channel
-          try {
-            const regressionChannel = await interaction.client.channels.fetch('1428097711436992704');
-            if (regressionChannel && regressionChannel.isTextBased()) {
-              const regressionEmbed = new EmbedBuilder()
-                .setTitle('Player Regression Notice')
-                .setColor(0xED4245)
-                .setDescription(
-                  `**Team:** ${team}\n` +
-                  `**Player:** ${player}\n` +
-                  `**Skill Set:** ${skillset}\n` +
-                  `**Regression:** -1 to **${skillset}**`
-                )
-                .setFooter({ text: 'Regression is -1 per upgrade.' });
-              await regressionChannel.send({ content: `${teamTag} regression update:`, embeds: [regressionEmbed] });
-            }
-          } catch (regErr) {
-            console.error('❌ Failed to post regression update:', regErr);
-          }
-          dmEmbed = new EmbedBuilder()
-            .setColor(0x43B581)
-            .setTitle('✅ Progression Request Approved')
-            .setDescription(`Your progression request for **${player}** (${team}) has been approved!`)
-            .addFields(
-              { name: 'Skill Set', value: skillset, inline: false },
-              { name: 'Upgrades', value: upgrades, inline: false },
-              { name: 'Current OVR', value: ovr, inline: false }
-            );
-        } else {
-          dmEmbed = new EmbedBuilder()
-            .setColor(0xED4245)
-            .setTitle('❌ Progression Request Denied')
-            .setDescription(`Your progression request for **${player}** (${team}) has been denied.`)
-            .addFields(
-              { name: 'Skill Set', value: skillset, inline: false },
-              { name: 'Upgrades', value: upgrades, inline: false },
-              { name: 'Current OVR', value: ovr, inline: false }
-            );
+          await user.send({ embeds: [dmEmbed] });
+          console.log('[DEBUG] DM sent to submitter:', req.submitterId);
+        } catch (dmErr) {
+          console.error('❌ Failed to DM progression submitter:', dmErr);
         }
-        await user.send({ embeds: [dmEmbed] });
-        console.log('[DEBUG] DM sent to submitter:', req.submitterId);
-      } catch (dmErr) {
-        console.error('❌ Failed to DM progression submitter:', dmErr);
       }
 
       // Update the embed in the channel

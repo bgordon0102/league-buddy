@@ -3,6 +3,7 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import { DataManager } from '../../utils/dataManager.js';
 import { sendWelcomeAndButton, updateStandingsAndPlayoff } from '../../interactions/submit_score.js';
+import fs from 'fs';
 
 export const data = new SlashCommandBuilder()
     .setName('advanceweek')
@@ -47,6 +48,11 @@ export async function execute(interaction) {
         return;
     }
     let createdThreads = [];
+    // Load gameInfo.json once
+    let gameInfo = {};
+    try {
+        gameInfo = JSON.parse(fs.readFileSync('./data/gameInfo.json', 'utf8'));
+    } catch (err) { gameInfo = {}; }
     for (const matchup of matchups) {
         // Use short team names for thread names to match coach role naming
         const team1Short = matchup.team1.name.replace('Milwaukee ', '').replace('Portland ', '').replace('Los Angeles ', '').replace('Golden State ', '').replace('New York ', '').replace('San Antonio ', '').replace('Oklahoma City ', '').replace('Charlotte ', '').replace('Philadelphia ', '').replace('Minnesota ', '').replace('Cleveland ', '').replace('Indiana ', '').replace('Sacramento ', '').replace('Toronto ', '').replace('New Orleans ', '').replace('Washington ', '').replace('Atlanta ', '').replace('Brooklyn ', '').replace('Chicago ', '').replace('Dallas ', '').replace('Denver ', '').replace('Detroit ', '').replace('Houston ', '').replace('LA ', '').replace('Memphis ', '').replace('Miami ', '').replace('Orlando ', '').replace('Phoenix ', '').replace('Utah ', '').replace('Boston ', '').replace('Clippers', 'Clippers').replace('Lakers', 'Lakers').replace('Trail Blazers', 'Trail Blazers').replace('Thunder', 'Thunder').replace('Spurs', 'Spurs').replace('Jazz', 'Jazz').replace('Wizards', 'Wizards').replace('Raptors', 'Raptors').replace('Kings', 'Kings').replace('Suns', 'Suns').replace('Magic', 'Magic').replace('Heat', 'Heat').replace('Grizzlies', 'Grizzlies').replace('Bucks', 'Bucks').replace('Mavericks', 'Mavericks').replace('Nuggets', 'Nuggets').replace('Pistons', 'Pistons').replace('Rockets', 'Rockets').replace('Pacers', 'Pacers').replace('Cavaliers', 'Cavaliers').replace('Timberwolves', 'Timberwolves').replace('76ers', '76ers').replace('Hornets', 'Hornets').replace('Bulls', 'Bulls').replace('Nets', 'Nets').replace('Hawks', 'Hawks').replace('Celtics', 'Celtics');
@@ -59,7 +65,7 @@ export async function execute(interaction) {
                 reason: `Game thread for ${threadName} (Week ${weekNum})`
             });
             createdThreads.push(threadName);
-            await sendWelcomeAndButton(thread, weekNum, season.seasonNo);
+            await sendWelcomeAndButton(thread, thread.id, gameInfo);
         } catch (err) {
             console.error(`[advanceweek] Error creating thread:`, err);
         }

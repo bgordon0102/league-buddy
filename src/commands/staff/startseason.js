@@ -37,6 +37,13 @@ function writeJSON(file, data) {
 // NEVER modify or overwrite coachRoleMap.json or any trade-related state in this function.
 // Only read coachRoleMap.json to snapshot for the new season. The trade system relies on the persistent file.
 export async function resetSeasonData(seasonno, guild, caller = 'unknown') {
+    // Clear gameInfo.json for new season
+    try {
+        fs.writeFileSync(path.join(DATA_DIR, 'gameInfo.json'), '{}');
+        console.log('[resetSeasonData] Cleared gameInfo.json for new season');
+    } catch (err) {
+        console.error('[resetSeasonData] Failed to clear gameInfo.json:', err);
+    }
     console.log('[resetSeasonData] STARTED for seasonno:', seasonno, 'guild:', guild?.id, 'caller:', caller);
     // Load coachRoleMap from file at the very top
     let coachRoleMap = {};

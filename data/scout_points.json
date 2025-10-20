@@ -1,1 +1,29 @@
-{}
+{
+  "1076243288056664234": {
+    "playersScouted": {
+      "Jaylen Summers": [
+        "build",
+        "draft_score"
+      ],
+      "Nicola Mancini": [
+        "build"
+      ],
+      "Trey James": [
+        "build"
+      ]
+    },
+    "weeklyPoints": {
+      "week_1": 0
+    }
+  },
+  "315639796422934530": {
+    "playersScouted": {
+      "Saúl Segura": [
+        "build"
+      ]
+    },
+    "weeklyPoints": {
+      "week_1": 30
+    }
+  }
+}

@@ -23,13 +23,24 @@ client.once('ready', async () => {
         .setLabel('Submit Trade')
         .setStyle(ButtonStyle.Primary);
     const row = new ActionRowBuilder().addComponents(submitButton);
-    // Send the message
-    const msg = await channel.send({
-        content: ':pushpin: Use the button below to submit a trade proposal.',
-        components: [row]
-    });
+    // Create the embed
+    const embed = {
+        color: 0x1E90FF,
+        title: '📌 Trade Submission',
+        description:
+            '**To propose a trade:**\n' +
+            '• Click the button below and fill out the form.\n' +
+            '• Both coaches must approve the trade via DM.\n' +
+            '• Approved trades are sent to the committee for final review.\n\n' +
+            '💡 Example:\n' +
+            'Team A sends: Player X, 1st Round Pick\n' +
+            'Team B sends: Player Y, 2nd Round Pick',
+        footer: { text: 'Trades require approval from both coaches and the committee.' }
+    };
+    // Send the embed and button
+    const msg = await channel.send({ embeds: [embed], components: [row] });
     await msg.pin();
-    console.log('Trade submission message sent and pinned.');
+    console.log('Trade submission embed sent and pinned.');
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
