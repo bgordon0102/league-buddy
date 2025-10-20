@@ -65,7 +65,12 @@ export async function execute(interaction) {
         }
     }
     season.currentWeek = weekNum;
-    dataManager.writeData('season', season);
+    const writeSuccess = dataManager.writeData('season', season);
+    if (writeSuccess) {
+        console.log(`[advanceweek] Successfully wrote currentWeek=${weekNum} to season.json`);
+    } else {
+        console.error(`[advanceweek] FAILED to write currentWeek=${weekNum} to season.json`);
+    }
     // After advancing week, update standings
     try {
         await updateStandingsAndPlayoff(interaction.guild);
