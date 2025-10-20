@@ -15,10 +15,42 @@ client.once('ready', async () => {
         .setCustomId('submit_progression_button')
         .setLabel('Submit Progression')
         .setStyle(ButtonStyle.Primary);
-    const msg = await channel.send({
-        content: `📌 **PLAYER PROGRESSION SYSTEM**\n\nFor every 5 games played, you earn upgrade points to use on up to 2 players.\n\n**Key Rules:**\n• Max **+3** to any single attribute per upgrade (you cannot apply all your points to one attribute)\n• Max 2 upgrades per player per season\n• Eligible players must play 15+ minutes per game\n• Player OVR cannot exceed their potential rating\n• Players age 30+ must finish top 3 in award voting to qualify\n• Commissioners verify all stats using league data\n\n**Upgrade Tiers:**\n• Tier 1: 3 points\n• Tier 2: 4 points\n• Tier 3: 5 points\n• Tier 4: 6 points\n• Tier 5: 7 points\n\n📤 **How to Submit:**\nUse the button below and fill out the form. All new users get a tier-based upgrade to apply to a skill set!`,
-        components: [new ActionRowBuilder().addComponents(button)]
-    });
+    const embed = {
+        color: 0x5865F2,
+        title: '📌 Player Progression System',
+        description:
+            '**Player Progression System**\n' +
+            'Submit your player progression using the button below.\n\n' +
+            'Select a skill set below to apply your tier-based upgrade to.\n\n' +
+            '**Skill-Sets (Groups of Attributes):**\n' +
+            '• **Inside Scoring:** Close Shot, Layup, Dunks, Post Control\n' +
+            '• **Shooting:** Mid-Range, 3PT, Free Throw\n' +
+            '• **Inside Defense:** Interior D, Block, Help IQ\n' +
+            '• **Perimeter Defense:** Perimeter D, Steal, Pass Perception\n' +
+            '• **Playmaking:** Passing, Ball Handle, Vision\n' +
+            '• **Rebounding:** Offensive/Defensive Rebounds\n' +
+            '• **IQ:** Offensive/Defensive Consistency, Shot IQ, Draw Foul\n\n' +
+            '**Special Options (One-Time Perks):**\n' +
+            '• **Conditioning:** +5 to use on Speed, Accel, Agility, Vertical, Stamina\n' +
+            '• **Weight Room:** +3 Strength, +8 lbs, -1 Speed, Accel, Vertical\n' +
+            '• **Shooting Mechanics:** Adjust Shot Timing\n' +
+            '• **Distributor:** Enables Play Initiator (80+ Ball Handle)\n' +
+            '• **X-Factor:** +3 Potential\n\n' +
+            '**Tier Values (per team):**\n' +
+            '• Tier 1: 3 points\n' +
+            '• Tier 2: 4 points\n' +
+            '• Tier 3: 5 points\n' +
+            '• Tier 4: 6 points\n' +
+            '• Tier 5: 7 points\n\n' +
+            '**Example:**\n' +
+            'Tier 3 team = 5 pts. You choose Shooting.\n' +
+            '+3 to 3PT, +2 to Free Throw\n\n' +
+            '✨ New users start with 1 free tier-based upgrade!',
+        footer: {
+            text: '➡️ Submit using the button below'
+        }
+    };
+    const msg = await channel.send({ embeds: [embed], components: [new ActionRowBuilder().addComponents(button)] });
     await msg.pin();
     console.log('Progression button posted and pinned!');
     process.exit(0);
