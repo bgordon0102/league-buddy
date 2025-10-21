@@ -491,10 +491,10 @@ client.on('interactionCreate', async interaction => {
         try {
           const submitterUser = await client.users.fetch(trade.submitterId);
           await submitterUser.send(`Your trade proposal with **${trade.otherTeam}** has expired (over 24 hours). Please resubmit if you still want to trade.`);
-        } catch {}
+        } catch { }
         try {
           await interaction.user.send('This trade proposal has expired (over 24 hours). Please ask the other coach to resubmit.');
-        } catch {}
+        } catch { }
         await interaction.reply({ content: 'This trade proposal has expired (over 24 hours). Please resubmit if you still want to trade.', flags: 64 });
         // Remove from pending
         delete client.pendingTrades[interaction.user.id];
@@ -510,7 +510,7 @@ client.on('interactionCreate', async interaction => {
         }
         const embed = {
           title: 'Trade Proposal (Committee Vote Required)',
-          description: `Trade between **${trade.yourTeam}** and **${trade.otherTeam}** (submitted by <@${trade.submitterId}>, approved by <@${interaction.user.id}>)`,
+          description: `Trade between **${trade.yourTeam}** and **${trade.otherTeam}** (submitted by <@${trade.submitterId}>, approved by <@${interaction.user.id}>)\n\n:hourglass: **You have 24 hours to accept or deny this trade.**`,
           fields: [
             { name: 'Team 1', value: trade.yourTeam, inline: true },
             { name: 'Team 2', value: trade.otherTeam, inline: true },
