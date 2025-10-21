@@ -25,5 +25,43 @@
     "weeklyPoints": {
       "week_1": 30
     }
+  },
+  "374745206840492034": {
+    "playersScouted": {
+      "Kason Smith": [
+        "build"
+      ],
+      "Saúl Segura": [
+        "build"
+      ],
+      "Niklas Helm": [
+        "build"
+      ],
+      "Jaylen Summers": [
+        "build"
+      ]
+    },
+    "weeklyPoints": {
+      "week_1": 0
+    }
+  },
+  "1195843329477328978": {
+    "playersScouted": {
+      "Taji Anikulapo-Kuti": [
+        "build"
+      ],
+      "Xavion Booker": [
+        "build"
+      ],
+      "Jaylen Summers": [
+        "build"
+      ],
+      "Trey James": [
+        "build"
+      ]
+    },
+    "weeklyPoints": {
+      "week_1": 0
+    }
   }
 }

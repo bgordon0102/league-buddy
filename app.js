@@ -1,6 +1,7 @@
 console.log('LEAGUEbuddy: Script started.');
 import dotenv from 'dotenv';
 import fs, { readdirSync, createWriteStream } from 'fs';
+import { loadCommitteeVotes, saveCommitteeVotes } from './src/utils/committeeVotes.js';
 import { Client, GatewayIntentBits, Collection, ModalBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import * as submitScore from './src/interactions/submit_score.js';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -25,6 +26,7 @@ const STAFF_ROLE_IDS = ['1428100777229942895', '1427896861934485575']; // Schedu
 
 // Node.js v22+ compatibility: use fs.readFileSync for JSON import
 // Persistent storage for pending trades
+
 const pendingTradesPath = './data/pendingTrades.json';
 function loadPendingTrades() {
   try {
@@ -36,7 +38,7 @@ function loadPendingTrades() {
 function savePendingTrades(trades) {
   fs.writeFileSync(pendingTradesPath, JSON.stringify(trades, null, 2));
 }
-let persistentPendingTrades = loadPendingTrades();
+// client.pendingTrades will be assigned after client is created
 
 let teamRoleMap;
 try {
@@ -111,6 +113,7 @@ dotenv.config();
 
 // Create Discord client
 const client = new Client({
+
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
@@ -119,9 +122,16 @@ const client = new Client({
   ]
 });
 
+// Persistent pending trades (MUST be after client is created)
+client.pendingTrades = loadPendingTrades();
+
 // Initialize commands and interactions collections
 client.commands = new Collection();
 client.interactions = new Collection();
+
+// Persistent committee votes
+const committeeVotesPath = './data/committeeVotes.json';
+client.committeeVotes = loadCommitteeVotes();
 
 // Get current directory path
 const __filename = fileURLToPath(import.meta.url);
@@ -527,6 +537,7 @@ client.on('interactionCreate', async interaction => {
         const msg = await committeeChannel.send({ content: '<@&1428100787225235526>', embeds: [embed], components: [row] });
         // Store vote state
         client.committeeVotes = client.committeeVotes || {};
+        console.log(`[COMMITTEE VOTE] Creating vote for message ID: ${msg.id}`);
         client.committeeVotes[msg.id] = {
           trade,
           votes: {},
@@ -556,8 +567,10 @@ client.on('interactionCreate', async interaction => {
               await committeeChannel.send({ content: resultMsg + ` (A:${approveCount} D:${denyCount})` });
             }
             delete client.committeeVotes[msg.id];
+            saveCommitteeVotes(client.committeeVotes);
           }, 48 * 60 * 60 * 1000) // 48 hours
         };
+        saveCommitteeVotes(client.committeeVotes);
         await interaction.reply({ content: 'Trade approved and sent to committee for 48-hour vote.', flags: 64 });
         // Remove from pending
         delete client.pendingTrades[interaction.user.id];
@@ -581,13 +594,17 @@ client.on('interactionCreate', async interaction => {
       // ...existing code for committee voting buttons...
       const msgId = interaction.message.id;
       client.committeeVotes = client.committeeVotes || {};
+      console.log(`[COMMITTEE VOTE] Attempting to find vote for message ID: ${msgId}`);
       const voteData = client.committeeVotes[msgId];
       if (!voteData) {
+        console.error(`[COMMITTEE VOTE] No vote data found for message ID: ${msgId}. Current votes:`, Object.keys(client.committeeVotes));
         await interaction.reply({ content: 'Voting for this trade has ended or is invalid.', flags: 64 });
         return;
       }
       // Only allow one vote per user
       voteData.votes[interaction.user.id] = interaction.customId === 'committee_approve_trade' ? 'approve' : 'deny';
+      console.log(`[COMMITTEE VOTE] ${interaction.user.tag} (${interaction.user.id}) voted '${voteData.votes[interaction.user.id]}' for message ID: ${msgId}`);
+      saveCommitteeVotes(client.committeeVotes);
       // Tally votes
       const approveCount = Object.values(voteData.votes).filter(v => v === 'approve').length;
       const denyCount = Object.values(voteData.votes).filter(v => v === 'deny').length;
@@ -625,6 +642,7 @@ client.on('interactionCreate', async interaction => {
         // Clear timeout and delete vote data
         if (voteData.timeout) clearTimeout(voteData.timeout);
         delete client.committeeVotes[msgId];
+        saveCommitteeVotes(client.committeeVotes);
       }
     }
 
@@ -747,9 +765,12 @@ client.on('interactionCreate', async interaction => {
       }
       // DM the other coach for approval (reverse assets for their perspective)
       const submitter = interaction.user;
+      // Calculate expiration timestamp (24 hours from now)
+      const createdAt = Date.now();
+      const expiresAt = Math.floor((createdAt + 24 * 60 * 60 * 1000) / 1000); // unix timestamp in seconds
       const dmEmbed = {
         title: 'Trade Proposal Approval',
-        description: `You have a pending trade proposal from **${yourTeam}** (submitted by <@${submitter.id}>):`,
+        description: `You have a pending trade proposal from **${yourTeam}** (submitted by <@${submitter.id}>):\n\n:hourglass: **You have until <t:${expiresAt}:R> to approve or deny this trade.**\n\nExpires <t:${expiresAt}:R> (<t:${expiresAt}:f>)`,
         fields: [
           { name: 'Your Team', value: otherTeam, inline: true },
           { name: 'Other Team', value: yourTeam, inline: true },
@@ -787,8 +808,7 @@ client.on('interactionCreate', async interaction => {
         otherCoachId: otherCoach.id
       };
       client.pendingTrades[otherCoach.id] = tradeObj;
-      persistentPendingTrades[otherCoach.id] = tradeObj;
-      savePendingTrades(persistentPendingTrades);
+      savePendingTrades(client.pendingTrades);
       console.log('[DEBUG] Trade stored for approval:', tradeObj, 'for user:', otherCoach.id);
       // Always reply or editReply
       if (dmSuccess) {

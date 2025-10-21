@@ -1,0 +1,19 @@
+{
+  "1430323465768144946": {
+    "trade": {
+      "yourTeam": "Cavaliers",
+      "otherTeam": "Thunder",
+      "assetsSent": "test",
+      "assetsReceived": "test",
+      "notes": "",
+      "submitterId": "1076243288056664234",
+      "otherCoachId": "1195843329477328978",
+      "createdAt": 1761086088047
+    },
+    "votes": {
+      "1076243288056664234": "approve",
+      "1195843329477328978": "approve"
+    },
+    "createdAt": 1761086088513
+  }
+}

@@ -1,47 +1,21 @@
 {
   "1195843329477328978": {
     "yourTeam": "Cavaliers",
-    "otherTeam": "Mavericks",
-    "assetsSent": "2nd rnd pick",
-    "assetsReceived": "Cooper Flagg",
-    "notes": "test",
-    "submitterId": "1076243288056664234",
-    "otherCoachId": "1195843329477328978"
-  },
-  "1065136576595759194": {
-    "yourTeam": "Cavaliers",
-    "otherTeam": "Mavericks",
-    "assetsSent": "26' 2nd round pick",
-    "assetsReceived": "SF Cooper Flagg, PF Anthony Davis",
-    "notes": "test",
-    "submitterId": "1076243288056664234",
-    "otherCoachId": "1065136576595759194"
-  },
-  "1113562162716229794": {
-    "yourTeam": "Cavaliers",
-    "otherTeam": "Magic",
-    "assetsSent": "PG Darius Garland, C Jarrett Allen",
-    "assetsReceived": "PG Jalen Suggs, PF Jonathan Isaac, 2026 Top 3 protected 1st round pick",
+    "otherTeam": "Thunder",
+    "assetsSent": "test",
+    "assetsReceived": "test",
     "notes": "",
     "submitterId": "1076243288056664234",
-    "otherCoachId": "1113562162716229794"
+    "otherCoachId": "1195843329477328978",
+    "createdAt": 1761086088047
   },
-  "315639796422934530": {
-    "yourTeam": "Cavaliers",
-    "otherTeam": "Grizzlies",
-    "assetsSent": "PG Darius Garland",
-    "assetsReceived": "PG Ja Morant",
-    "notes": "",
-    "submitterId": "1076243288056664234",
-    "otherCoachId": "315639796422934530"
-  },
-  "1326282175275864156": {
-    "yourTeam": "Cavaliers",
-    "otherTeam": "Warriors",
-    "assetsSent": "C Jarret Allen",
-    "assetsReceived": "PG Ben Simmons, SG Buddy Hield, 2026 top 10 protected 1st round pick",
-    "notes": "Had to add buddy to match salaries",
-    "submitterId": "1076243288056664234",
-    "otherCoachId": "1326282175275864156"
+  "1076243288056664234": {
+    "yourTeam": "Thunder",
+    "otherTeam": "Cavaliers",
+    "assetsSent": "Jimmy Wet Wet",
+    "assetsReceived": "Johnny Clamps",
+    "notes": "Test",
+    "submitterId": "1195843329477328978",
+    "otherCoachId": "1076243288056664234"
   }
 }
