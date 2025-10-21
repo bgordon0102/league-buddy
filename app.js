@@ -478,6 +478,29 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ content: 'No pending trade found for you.', flags: 64 });
         return;
       }
+      // 24-hour expiration check
+      const now = Date.now();
+      if (!trade.createdAt) {
+        trade.createdAt = now;
+        savePendingTrades(client.pendingTrades);
+      }
+      const ageMs = now - trade.createdAt;
+      const maxAgeMs = 24 * 60 * 60 * 1000; // 24 hours
+      if (ageMs > maxAgeMs) {
+        // Notify both coaches
+        try {
+          const submitterUser = await client.users.fetch(trade.submitterId);
+          await submitterUser.send(`Your trade proposal with **${trade.otherTeam}** has expired (over 24 hours). Please resubmit if you still want to trade.`);
+        } catch {}
+        try {
+          await interaction.user.send('This trade proposal has expired (over 24 hours). Please ask the other coach to resubmit.');
+        } catch {}
+        await interaction.reply({ content: 'This trade proposal has expired (over 24 hours). Please resubmit if you still want to trade.', flags: 64 });
+        // Remove from pending
+        delete client.pendingTrades[interaction.user.id];
+        savePendingTrades(client.pendingTrades);
+        return;
+      }
       if (interaction.customId === 'approve_trade_button') {
         // Only the non-submitting coach needs to approve
         const committeeChannel = await client.channels.fetch('1425555499440410812');
