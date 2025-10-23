@@ -1,4 +1,4 @@
-# Ignore environment files
+.env# Ignore environment files
 .env
 # Environment variables
 .env

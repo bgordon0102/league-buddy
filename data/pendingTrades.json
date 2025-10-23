@@ -17,5 +17,15 @@
     "notes": "Test",
     "submitterId": "1195843329477328978",
     "otherCoachId": "1076243288056664234"
+  },
+  "793968380696199179": {
+    "yourTeam": "Cavaliers",
+    "otherTeam": "Hawks",
+    "assetsSent": "C Jarrett Allen, PG Lonzo Ball, 2027 2nd round pick",
+    "assetsReceived": "C Onyeka Okongwu, SG Nickeil Alexander-Walker, 2027 1st round pick top 10 protected",
+    "notes": "",
+    "submitterId": "1076243288056664234",
+    "otherCoachId": "793968380696199179",
+    "createdAt": 1761154363324
   }
 }
