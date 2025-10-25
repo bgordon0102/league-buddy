@@ -9,7 +9,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction) {
     try {
         await interaction.deferReply({ ephemeral: true });
-        const dashboardUrl = process.env.DASHBOARD_URL || 'https://leaguebuddy.app';
+        const dashboardUrl = process.env.DASHBOARD_URL || 'https://league-buddy-production.up.railway.app';
         const registrationLink = `${dashboardUrl}/api/auth/discord`;
         const embed = new EmbedBuilder()
             .setColor(0xFFD700)
@@ -17,7 +17,7 @@ export async function execute(interaction) {
             .setDescription('Please register your coach/staff account using the link below:')
             .setURL(registrationLink)
             .addFields({ name: 'Registration Link', value: `[Click here to register](${registrationLink})` })
-            .setThumbnail('https://leaguebuddy.app/dashboard/logo-new.png');
+            .setThumbnail(`${dashboardUrl}/logo-new.png`);
         await interaction.editReply({ embeds: [embed] });
     } catch (err) {
         await interaction.editReply({ content: 'Error generating registration link. Please contact staff.' });
