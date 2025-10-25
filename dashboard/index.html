@@ -147,7 +147,7 @@
 
 <body>
     <div id="user-profile-bar"
-        style="width:100vw;background:#23242a;padding:10px 0;display:flex;align-items:center;justify-content:center;">
+        style="width:100vw;background:#23242a;padding:10px 0;display:flex;align-items:center;justify-content:center;z-index:1000;">
         <div id="user-profile-content" style="display:flex;align-items:center;gap:16px;"></div>
     </div>
     <div class="dashboard-container">
@@ -428,7 +428,7 @@
                         <div><strong>OVR:</strong> ${p.ovr || ''}</div>
                         <div><strong>Salary:</strong> ${p.salary || ''}</div>
                         <div><strong>Archetype:</strong> ${p.archetype || ''}</div>
-                        <div><strong>Age:</strong> ${p.birthdate ? (() => { const dob = new Date(p.birthdate); const now = new Date('2025-10-25'); let age = now.getFullYear() - dob.getFullYear(); const m = now.getMonth() - dob.getMonth(); if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) { age--; } return age; })() : ''}</div>
+                        <div><strong>Age:</strong> ${p.birthdate ? (() => { const dob = new Date(p.birthdate); const now = new Date('2025-10-25'); let age = now.getFullYear() - dob.getFullYear(); const m = now.getMonth() - dob.getFullYear(); if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) { age--; } return age; })() : ''}</div>
                         ${p.tradeBlock ? "<span class='trade-block'>TRADE BLOCK</span>" : ''}
                     `;
                     card.onclick = () => {
@@ -911,44 +911,28 @@
     <script>
         function renderUserProfileBar() {
             var bar = document.getElementById('user-profile-content');
-            var barContainer = document.getElementById('user-profile-bar');
-            if (!bar || !barContainer) {
-                console.warn('User profile bar element missing');
-                return;
-            }
-            bar.innerHTML = '<div style="color:#ffd600;font-weight:700;">Loading user...</div>';
-            barContainer.style.display = '';
+            bar.innerHTML = '<span style="color:#ffd600;">Loading...</span>';
             fetch('/api/me', { credentials: 'include' })
-                .then(function (res) {
-                    if (!res.ok) throw new Error('Not logged in');
-                    return res.json();
-                })
-                .then(function (user) {
-                    if (!user || !user.id || !user.username) {
-                        bar.innerHTML = '<div style="color:#ffd600;font-weight:700;">Not logged in</div>';
-                        return;
+                .then(res => res.ok ? res.json() : null)
+                .then(user => {
+                    if (user && user.id && user.username) {
+                        var avatarUrl = user.avatar
+                            ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
+                            : 'https://cdn.discordapp.com/embed/avatars/0.png';
+                        bar.innerHTML = `
+            <img src="${avatarUrl}" alt="avatar" style="width:32px;height:32px;border-radius:50%;border:2px solid #ffd600;object-fit:cover;">
+            <span style="color:#ffd600;font-weight:700;">${user.username}</span>
+            <a href="/api/auth/discord" style="margin-left:16px;color:#ffd600;">Switch User</a>
+          `;
+                    } else {
+                        bar.innerHTML = `<a href="/api/auth/discord" style="color:#ffd600;font-weight:700;">Login with Discord</a>`;
                     }
-                    var avatarUrl = user.avatar
-                        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
-                        : 'https://cdn.discordapp.com/embed/avatars/0.png';
-                    bar.innerHTML = `
-                        <img src="${avatarUrl}" alt="avatar" style="width:40px;height:40px;border-radius:50%;border:2px solid #ffd600;object-fit:cover;">
-                        <div>
-                            <div style="font-weight:700;">${user.username}</div>
-                            <div style="font-size:0.95rem;color:#ffd600;">Logged in</div>
-                        </div>
-                        <a href="/api/auth/discord" style="margin-left:24px;color:#ffd600;font-weight:700;text-decoration:none;">Switch User</a>
-                    `;
                 })
-                .catch(function (err) {
-                    bar.innerHTML = '<div style="color:#ffd600;font-weight:700;">Not logged in</div>';
-                    console.error('User info fetch failed:', err);
+                .catch(() => {
+                    bar.innerHTML = `<a href="/api/auth/discord" style="color:#ffd600;font-weight:700;">Login with Discord</a>`;
                 });
         }
-        document.addEventListener('DOMContentLoaded', function () {
-            renderUserProfileBar();
-        });
-        window.renderUserProfileBar = renderUserProfileBar;
+        document.addEventListener('DOMContentLoaded', renderUserProfileBar);
     </script>
     <script>
         function hideDashboardTabs() {
