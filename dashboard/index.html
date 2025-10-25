@@ -189,20 +189,33 @@
     <div id="user-profile-bar">
         <div id="user-profile-content" style="display:flex;align-items:center;gap:12px;"></div>
     </div>
-    <div class="dashboard-container">
+    <div id="welcome-login" style="display:none;">
+        <div class="welcome">
+            <img src="logo-new.png" alt="LEAGUEbuddy Logo" class="main-logo">
+            <h1>Welcome to LEAGUEbuddy Dashboard!</h1>
+        </div>
+        <div style="text-align:center;margin:32px 0;">
+            <a href="/api/auth/discord" class="discord-login-btn"
+                style="background:#5865F2;color:#fff;padding:12px 32px;border-radius:8px;font-size:1.2rem;font-weight:700;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.10);display:inline-block;">Login
+                with Discord</a>
+        </div>
+    </div>
+    <div class="dashboard-container" id="dashboard-main" style="display:block;">
         <aside class="sidebar">
-            <div class="sidebar-logo">
-                <img src="logo-new.png" alt="LEAGUEbuddy Logo">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button id="hamburger-menu" aria-label="Open navigation"
+                    style="display:none;background:none;border:none;padding:8px;cursor:pointer;">
+                    <span
+                        style="display:block;width:28px;height:4px;background:#ffd600;margin:6px 0;border-radius:2px;"></span>
+                    <span
+                        style="display:block;width:28px;height:4px;background:#ffd600;margin:6px 0;border-radius:2px;"></span>
+                    <span
+                        style="display:block;width:28px;height:4px;background:#ffd600;margin:6px 0;border-radius:2px;"></span>
+                </button>
+                <div class="sidebar-logo">
+                    <img src="logo-new.png" alt="LEAGUEbuddy Logo">
+                </div>
             </div>
-            <button id="hamburger-menu" aria-label="Open navigation"
-                style="display:none;background:none;border:none;padding:8px;cursor:pointer;">
-                <span
-                    style="display:block;width:28px;height:4px;background:#ffd600;margin:6px 0;border-radius:2px;"></span>
-                <span
-                    style="display:block;width:28px;height:4px;background:#ffd600;margin:6px 0;border-radius:2px;"></span>
-                <span
-                    style="display:block;width:28px;height:4px;background:#ffd600;margin:6px 0;border-radius:2px;"></span>
-            </button>
             <nav class="sidebar-nav">
                 <ul id="sidebar-links">
                     <li class="sidebar-link active" data-section="home">Home</li>
@@ -320,6 +333,22 @@
         </main>
     </div>
     <script>
+        // Mobile: show only welcome/login until authenticated
+        function mobileWelcomeLogin() {
+            function isMobile() { return window.innerWidth <= 600; }
+            fetch('/api/me', { credentials: 'include' })
+                .then(res => res.ok ? res.json() : null)
+                .then(user => {
+                    if (isMobile() && (!user || !user.id)) {
+                        document.getElementById('welcome-login').style.display = 'block';
+                        document.getElementById('dashboard-main').style.display = 'none';
+                    } else {
+                        document.getElementById('welcome-login').style.display = 'none';
+                        document.getElementById('dashboard-main').style.display = 'block';
+                    }
+                });
+        }
+        document.addEventListener('DOMContentLoaded', mobileWelcomeLogin);
         // Hamburger menu for mobile navigation
         function setupMobileNav() {
             const hamburger = document.getElementById('hamburger-menu');
