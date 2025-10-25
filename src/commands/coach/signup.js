@@ -9,14 +9,13 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction) {
     try {
         await interaction.deferReply({ ephemeral: true });
-        const dashboardUrl = process.env.DASHBOARD_URL || 'https://league-buddy-production.up.railway.app';
-        const registrationLink = `${dashboardUrl}/api/auth/discord`;
+        const dashboardUrl = 'https://league-buddy-production.up.railway.app';
         const embed = new EmbedBuilder()
             .setColor(0xFFD700)
             .setTitle('Welcome to LEAGUEbuddy!')
-            .setDescription('Please register your coach/staff account using the link below:')
-            .setURL(registrationLink)
-            .addFields({ name: 'Registration Link', value: `[Click here to register](${registrationLink})` })
+            .setDescription('Please register your coach/staff account using the dashboard link below:')
+            .setURL(dashboardUrl)
+            .addFields({ name: 'Dashboard Link', value: `[Click here to open the dashboard](${dashboardUrl})` })
             .setThumbnail(`${dashboardUrl}/logo-new.png`);
         await interaction.editReply({ embeds: [embed] });
     } catch (err) {
