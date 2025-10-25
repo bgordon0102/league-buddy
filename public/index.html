@@ -5,12 +5,100 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LEAGUEbuddy Dashboard</title>
-    <link rel="stylesheet" href="/dashboard/style.css">
-    <!-- ...rest of head... -->
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <!-- ...rest of body... -->
+    <div id="user-profile-bar">
+        <div id="user-profile-content"></div>
+    </div>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <img src="logo-new.png" alt="LEAGUEbuddy Logo">
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="sidebar-link active" data-section="home">Home</li>
+                    <li class="sidebar-link" data-section="league-info">League Info</li>
+                    <li class="sidebar-link" data-section="standings">Standings</li>
+                    <li class="sidebar-link" data-section="rosters">Rosters</li>
+                    <li class="sidebar-link" data-section="schedule">Schedule</li>
+                    <li class="sidebar-link" data-section="trades">Trades</li>
+                    <li class="sidebar-link" data-section="recruiting">Recruiting</li>
+                    <li class="sidebar-link" data-section="playoffs">Playoffs</li>
+                    <li class="sidebar-link" data-section="scout-points">Scout Points</li>
+                    <li class="sidebar-link" data-section="staff">Staff</li>
+                    <li class="sidebar-link" data-section="settings">Settings</li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <div id="home" class="section active">
+                <div class="welcome">
+                    <img src="logo-new.png" alt="LEAGUEbuddy Logo" class="main-logo">
+                    <h1>Welcome to LEAGUEbuddy Dashboard!</h1>
+                </div>
+                <div style="text-align:center;margin:32px 0;">
+                    <a href="/api/auth/discord" class="discord-login-btn"
+                        style="background:#5865F2;color:#fff;padding:12px 32px;border-radius:8px;font-size:1.2rem;font-weight:700;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.10);display:inline-block;">Login
+                        with Discord</a>
+                </div>
+            </div>
+            <div id="league-info" class="section">
+                <h2 style="color:#ffd600;">League Info</h2>
+                <div class="league-info-card" id="league-info-card">
+                    <p>Loading...</p>
+                </div>
+            </div>
+            <div id="trades" class="section">
+                <h2 style="color:#ffd600;">Trade Builder</h2>
+                <div class="trade-builder-sleeper" style="display:flex;gap:32px;justify-content:center;">
+                    <div class="trade-team-col">
+                        <label for="from-team" style="color:#ffd600;font-weight:700;">Your Team</label>
+                        <select id="from-team" style="margin-bottom:16px;"></select>
+                        <div style="margin-bottom:8px;font-weight:600;color:#ffd600;">Players</div>
+                        <div id="from-assets" class="trade-assets" style="flex-wrap:wrap;margin-bottom:16px;"></div>
+                        <div style="margin-bottom:8px;font-weight:600;color:#ffd600;">Picks</div>
+                        <div id="from-picks" class="trade-assets" style="flex-wrap:wrap;"></div>
+                    </div>
+                    <div class="trade-team-col">
+                        <label for="to-team" style="color:#ffd600;font-weight:700;">Other Team</label>
+                        <select id="to-team" style="margin-bottom:16px;"></select>
+                        <div style="margin-bottom:8px;font-weight:600;color:#ffd600;">Players</div>
+                        <div id="to-assets" class="trade-assets" style="flex-wrap:wrap;margin-bottom:16px;"></div>
+                        <div style="margin-bottom:8px;font-weight:600;color:#ffd600;">Picks</div>
+                        <div id="to-picks" class="trade-assets" style="flex-wrap:wrap;"></div>
+                    </div>
+                </div>
+                <div class="trade-summary-bar"
+                    style="margin-top:32px;padding:24px 0 0 0;border-top:2px solid #ffd600;text-align:center;">
+                    <div id="trade-summary-details" style="font-size:1.1rem;margin-bottom:12px;"></div>
+                    <div id="salary-feedback" style="margin-bottom:16px;font-weight:700;"></div>
+                    <button id="submit-trade"
+                        style="background:#ffd600;color:#23242a;font-weight:700;padding:12px 32px;border:none;border-radius:24px;cursor:pointer;font-size:1.1rem;">Submit
+                        Trade</button>
+                </div>
+                <hr style="margin:32px 0;border-color:#ffd600;">
+
+            </div>
+            <div id="rosters" class="section">
+                <h2 style="color:#ffd600;">Team Rosters</h2>
+                <div style="margin-bottom:24px;">
+                    <input id="team-search" type="text" placeholder="Search team..."
+                        style="width:300px;padding:8px 16px;font-size:1.1rem;border-radius:8px;border:1px solid #ffd600;">
+                    <select id="team-select"
+                        style="width:220px;padding:8px 16px;font-size:1.1rem;border-radius:8px;border:1px solid #ffd600;margin-left:12px;"></select>
+                </div>
+                <div id="rosters-team-title" style="font-size:1.4rem;font-weight:700;color:#ffd600;margin-bottom:16px;">
+                </div>
+                <div id="rosters-team-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;"></div>
+            </div>
+        </main>
+    </div>
+    <script>
+        // ...dashboard JS code from dashboard/index.html...
+    </script>
 </body>
 
 </html>
