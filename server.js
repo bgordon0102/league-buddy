@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -11,6 +12,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+// CORS setup for frontend-backend cookies
+app.use(cors({
+    origin: 'https://league-buddy-production.up.railway.app', // frontend URL
+    credentials: true
+}));
+// Session middleware (must come before static and API routes)
+app.use(session({
+    secret: 'your_secret',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        secure: true,        // Use true if your app is served over HTTPS
+        sameSite: 'none'     // Allow cross-site cookies for frontend/backend on different domains
+    }
+}));
 // Serve /data directory as static files
 app.use('/data', express.static(path.join(__dirname, 'data')));
 // API: Get Discord user by role ID
@@ -93,13 +109,6 @@ app.use(express.static(path.join(__dirname, 'public'), {
 
 // --- Pending Trades API ---
 // API: Get logged-in Discord user info
-app.get('/api/me', (req, res) => {
-    if (req.session && req.session.user) {
-        res.json(req.session.user);
-    } else {
-        res.status(401).json({ error: 'Not logged in' });
-    }
-});
 const pendingTradesFile = path.join(__dirname, 'data', 'pendingTrades.json');
 
 function readPendingTrades() {
@@ -144,8 +153,13 @@ app.get('/api/pending-trades', (req, res) => {
 });
 
 // Endpoint to get logged-in user info
+// API: Get logged-in Discord user info
 app.get('/api/me', (req, res) => {
-    res.json(req.session.user || null);
+    if (req.session && req.session.user) {
+        res.json(req.session.user);
+    } else {
+        res.status(401).json({ error: 'Not logged in' });
+    }
 });
 
 // Middleware to require staff role
