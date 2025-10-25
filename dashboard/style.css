@@ -1,4 +1,16 @@
 @media (max-width: 600px) {
+
+    body.mobile-login #dashboard-main,
+    body.mobile-login .sidebar {
+        display: none !important;
+    }
+
+    body.mobile-login #welcome-login {
+        display: block !important;
+    }
+}
+
+@media (max-width: 600px) {
     body {
         padding: 0;
         margin: 0;
