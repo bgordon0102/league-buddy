@@ -748,7 +748,7 @@
             updateTradeSummary();
         });
         // Check login and roles for UI
-        fetch('/api/me').then(res => res.json()).then(user => {
+        fetch('/api/me', { credentials: 'include' }).then(res => res.json()).then(user => {
             window.currentUser = user;
             if (user && user.roles && user.roles.includes('YOUR_STAFF_ROLE_ID')) {
                 document.body.classList.add('is-staff');
@@ -765,7 +765,7 @@
         }
         // Fetch and display logged-in Discord user info
         function renderUserProfileBar() {
-            fetch('/api/me').then(res => {
+            fetch('/api/me', { credentials: 'include' }).then(res => {
                 if (!res.ok) throw new Error('Not logged in');
                 return res.json();
             }).then(user => {
@@ -833,7 +833,7 @@
             return null;
         }
         function setupTradeBuilderForCoach() {
-            fetch('/api/me').then(res => res.json()).then(user => {
+            fetch('/api/me', { credentials: 'include' }).then(res => res.json()).then(user => {
                 if (!user || !user.roles) return;
                 const coachTeamKey = getTeamFromRole(user.roles);
                 if (!coachTeamKey) return;
