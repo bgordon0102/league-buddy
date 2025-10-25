@@ -333,18 +333,16 @@
         </main>
     </div>
     <script>
-        // Mobile: show only welcome/login until authenticated
+        // Mobile: show only welcome/login until authenticated, using body class
         function mobileWelcomeLogin() {
             function isMobile() { return window.innerWidth <= 600; }
             fetch('/api/me', { credentials: 'include' })
                 .then(res => res.ok ? res.json() : null)
                 .then(user => {
                     if (isMobile() && (!user || !user.id)) {
-                        document.getElementById('welcome-login').style.display = 'block';
-                        document.getElementById('dashboard-main').style.display = 'none';
+                        document.body.classList.add('mobile-login');
                     } else {
-                        document.getElementById('welcome-login').style.display = 'none';
-                        document.getElementById('dashboard-main').style.display = 'block';
+                        document.body.classList.remove('mobile-login');
                     }
                 });
         }
