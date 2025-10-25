@@ -1,3 +1,88 @@
+@media (max-width: 600px) {
+    body {
+        padding: 0;
+        margin: 0;
+        background: #23242a;
+    }
+
+    .dashboard-container {
+        flex-direction: column;
+        padding: 0;
+    }
+
+    .sidebar {
+        width: 100vw;
+        min-width: unset;
+        position: static;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0 8px 0;
+        background: #181818;
+        border-radius: 0;
+    }
+
+    .sidebar-logo {
+        margin: 0 12px;
+    }
+
+    .sidebar-nav ul {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+    }
+
+    .sidebar-link {
+        padding: 8px 12px;
+        font-size: 1rem;
+    }
+
+    #user-profile-bar {
+        position: static;
+        width: 100vw;
+        height: 40px;
+        padding: 0 8px;
+        margin-bottom: 8px;
+        justify-content: flex-end;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .main-content {
+        padding: 12px;
+    }
+
+    .trade-builder-sleeper {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .trade-team-col {
+        min-width: unset;
+        width: 100%;
+        margin-bottom: 12px;
+    }
+
+    .trade-summary-bar {
+        padding: 16px 0 0 0;
+    }
+
+    button,
+    .discord-login-btn {
+        width: 100%;
+        font-size: 1.1rem;
+        padding: 16px 0;
+        border-radius: 16px;
+    }
+
+    .welcome {
+        margin-top: 16px;
+    }
+}
+
 /* LEAGUEbuddy Dashboard Theme: Yellow, Black, Gray, White */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
 
