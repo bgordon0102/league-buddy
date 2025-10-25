@@ -18,7 +18,15 @@ app.use('/data', express.static(path.join(__dirname, 'data')));
 const PORT = 3001;
 
 // Session middleware
-app.use(session({ secret: 'your_secret', resave: false, saveUninitialized: true }));
+app.use(session({
+    secret: 'your_secret',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        secure: true,        // Use true if your app is served over HTTPS
+        sameSite: 'none'     // Allow cross-site cookies for frontend/backend on different domains
+    }
+}));
 
 // Discord OAuth2 login route
 app.get('/api/auth/discord', (req, res) => {
