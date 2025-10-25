@@ -186,6 +186,12 @@
 </head>
 
 <body>
+    <script>
+        // Set mobile-login class immediately for mobile
+        if (window.innerWidth <= 600) {
+            document.body.classList.add('mobile-login');
+        }
+    </script>
     <div id="user-profile-bar">
         <div id="user-profile-content" style="display:flex;align-items:center;gap:12px;"></div>
     </div>
@@ -339,9 +345,7 @@
             fetch('/api/me', { credentials: 'include' })
                 .then(res => res.ok ? res.json() : null)
                 .then(user => {
-                    if (isMobile() && (!user || !user.id)) {
-                        document.body.classList.add('mobile-login');
-                    } else {
+                    if (isMobile() && user && user.id) {
                         document.body.classList.remove('mobile-login');
                     }
                 });
