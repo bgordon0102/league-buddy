@@ -12,6 +12,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+// Trust proxy for correct cookie handling behind Railway/Heroku/Cloudflare
+app.set('trust proxy', 1);
 // CORS setup for frontend-backend cookies
 app.use(cors({
     origin: 'https://league-buddy-production.up.railway.app', // frontend URL
@@ -24,9 +26,17 @@ app.use(session({
     saveUninitialized: true,
     cookie: {
         secure: true,        // Use true if your app is served over HTTPS
-        sameSite: 'none'     // Allow cross-site cookies for frontend/backend on different domains
+        sameSite: 'none',    // Allow cross-site cookies for frontend/backend on different domains
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
     }
 }));
+
+// Debug: log session and cookies for every request
+app.use((req, res, next) => {
+    console.log('Session:', req.session);
+    console.log('Cookies:', req.headers.cookie);
+    next();
+});
 // Serve /data directory as static files
 app.use('/data', express.static(path.join(__dirname, 'data')));
 // API: Get Discord user by role ID
