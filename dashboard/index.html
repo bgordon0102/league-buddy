@@ -1,136 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
+[!-- Dashboard files have moved to /public. --]
+}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LEAGUEbuddy Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .trade-team-col {
-            background: #23242a;
-            border-radius: 16px;
-            padding: 24px;
-            min-width: 260px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
-        }
+.trade-card .trade-team {
+font-size: 0.85rem;
+color: #bbb;
+margin-bottom: 2px;
+}
 
-        .trade-assets {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
+.trade-card .trade-age {
+font-size: 0.85rem;
+color: #bbb;
+margin-top: 2px;
+}
 
-        .trade-card {
-            background: #2e2f36;
-            border-radius: 12px;
-            padding: 16px 18px;
-            color: #fff;
-            font-weight: 600;
-            min-width: 120px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: border 0.2s, background 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
+.trade-card .trade-salary {
+font-size: 0.9rem;
+color: #ffd600;
+margin-top: 2px;
+}
 
-        .trade-card.selected {
-            border: 2px solid #ffd600;
-            background: #181818;
-            color: #ffd600;
-        }
+#user-profile-bar {
+position: fixed;
+top: 0;
+right: 0;
+width: 320px;
+height: 64px;
+background: #181818;
+color: #fff;
+display: flex;
+align-items: center;
+justify-content: flex-end;
+z-index: 1000;
+padding: 0 32px;
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+font-size: 1.1rem;
+}
 
-        .trade-card .trade-block {
-            background: #ffd600;
-            color: #23242a;
-            font-size: 0.85rem;
-            font-weight: 700;
-            border-radius: 6px;
-            padding: 2px 8px;
-            margin-top: 6px;
-        }
+#user-profile-content {
+display: flex;
+align-items: center;
+gap: 16px;
+}
 
-        .trade-card .trade-pos {
-            font-size: 0.95rem;
-            color: #ffd600;
-            font-weight: 700;
-            margin-bottom: 2px;
-        }
+#user-profile-content img {
+width: 40px;
+height: 40px;
+border-radius: 50%;
+border: 2px solid #ffd600;
+object-fit: cover;
+}
 
-        .trade-card .trade-team {
-            font-size: 0.85rem;
-            color: #bbb;
-            margin-bottom: 2px;
-        }
+#user-profile-content div {
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+}
 
-        .trade-card .trade-age {
-            font-size: 0.85rem;
-            color: #bbb;
-            margin-top: 2px;
-        }
+#user-profile-content div div {
+font-weight: 700;
+}
 
-        .trade-card .trade-salary {
-            font-size: 0.9rem;
-            color: #ffd600;
-            margin-top: 2px;
-        }
+#user-profile-content div div:last-child {
+font-size: 0.95rem;
+color: #ffd600;
+}
 
-        #user-profile-bar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 320px;
-            height: 64px;
-            background: #181818;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            z-index: 1000;
-            padding: 0 32px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
-            font-size: 1.1rem;
-        }
-
-        #user-profile-content {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        #user-profile-content img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid #ffd600;
-            object-fit: cover;
-        }
-
-        #user-profile-content div {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        #user-profile-content div div {
-            font-weight: 700;
-        }
-
-        #user-profile-content div div:last-child {
-            font-size: 0.95rem;
-            color: #ffd600;
-        }
-
-        #user-profile-content a {
-            margin-left: 24px;
-            color: #ffd600;
-            font-weight: 700;
-            text-decoration: none;
-        }
-    </style>
+#user-profile-content a {
+margin-left: 24px;
+color: #ffd600;
+font-weight: 700;
+text-decoration: none;
+}
+</style>
 </head>
 
 <body>
