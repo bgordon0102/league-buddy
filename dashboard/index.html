@@ -147,7 +147,7 @@
 
 <body>
     <div id="user-profile-bar"
-        style="width:100vw;max-width:100%;background:#23242a;padding:10px 0;display:flex;align-items:center;justify-content:center;z-index:1000;">
+        style="width:100vw;background:#23242a;padding:10px 0;display:flex;align-items:center;justify-content:center;">
         <div id="user-profile-content" style="display:flex;align-items:center;gap:16px;"></div>
     </div>
     <div class="dashboard-container">
@@ -863,7 +863,7 @@
                 if (!user || !user.roles) return;
                 const coachTeamKey = getTeamFromRole(user.roles);
                 if (!coachTeamKey) return;
-                fetch('/api/teams').then(res => res.json()).then(teams => {
+                fetch('/api/teams').then res => res.json()).then(teams => {
                     const fromSelect = document.getElementById('from-team');
                     const toSelect = document.getElementById('to-team');
                     fromSelect.innerHTML = '';
@@ -904,7 +904,7 @@
                         loadRostersAndPicks();
                     }
                 });
-            });
+        });
         }
         // ...existing code...
     </script>
