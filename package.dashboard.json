@@ -1,0 +1,20 @@
+{
+    "name": "leaguebuddy-dashboard",
+    "version": "1.0.0",
+    "description": "Express dashboard/API for LEAGUEbuddy",
+    "main": "server.js",
+    "type": "module",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "axios": "^1.12.2",
+        "dotenv": "^16.6.1",
+        "dotenv-cli": "^10.0.0",
+        "express": "^5.1.0",
+        "express-session": "^1.18.2"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}
