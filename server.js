@@ -186,7 +186,7 @@ app.use('/api', (req, res) => {
 
 // Serve dashboard index.html
 app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'dashboard', 'index.html'));
 });
 
 app.listen(PORT, () => {
