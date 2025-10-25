@@ -84,6 +84,14 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 
 // --- Pending Trades API ---
+// API: Get logged-in Discord user info
+app.get('/api/me', (req, res) => {
+    if (req.session && req.session.user) {
+        res.json(req.session.user);
+    } else {
+        res.status(401).json({ error: 'Not logged in' });
+    }
+});
 const pendingTradesFile = path.join(__dirname, 'data', 'pendingTrades.json');
 
 function readPendingTrades() {
