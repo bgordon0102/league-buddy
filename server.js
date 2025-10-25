@@ -75,7 +75,7 @@ app.get('/api/auth/discord/callback', async (req, res) => {
 });
 
 // Serve static files FIRST so API routes are not blocked
-app.use(express.static(path.join(__dirname, 'dashboard'), {
+app.use(express.static(path.join(__dirname, 'public'), {
     etag: false,
     lastModified: false,
     setHeaders: (res, path) => {
@@ -155,7 +155,7 @@ app.use('/api', (req, res) => {
 
 // Serve dashboard index.html
 app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dashboard', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
