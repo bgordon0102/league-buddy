@@ -733,37 +733,29 @@
         }
         // Fetch and display logged-in Discord user info
         function renderUserProfileBar() {
-            const bar = document.getElementById('user-profile-content');
-            bar.innerHTML = '<div style="color:#ffd600;font-weight:700;">Loading user...</div>';
-            document.getElementById('user-profile-bar').style.display = '';
+            var bar = document.getElementById('user-profile-content');
+            bar.innerHTML = '<span style="color:#ffd600;">Loading...</span>';
             fetch('/api/me', { credentials: 'include' })
-                .then(res => {
-                    if (!res.ok) throw new Error('Not logged in');
-                    return res.json();
-                })
+                .then(res => res.ok ? res.json() : null)
                 .then(user => {
-                    if (!user || !user.id || !user.username) {
-                        bar.innerHTML = '<div style="color:#ffd600;font-weight:700;">Not logged in</div>';
-                        return;
+                    if (user && user.id && user.username) {
+                        var avatarUrl = user.avatar
+                            ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
+                            : 'https://cdn.discordapp.com/embed/avatars/0.png';
+                        bar.innerHTML = `
+                          <img src="${avatarUrl}" alt="avatar" style="width:32px;height:32px;border-radius:50%;border:2px solid #ffd600;object-fit:cover;">
+                          <span style="color:#ffd600;font-weight:700;">${user.username}</span>
+                          <a href="/api/auth/discord" style="margin-left:16px;color:#ffd600;">Switch User</a>
+                        `;
+                    } else {
+                        bar.innerHTML = `<a href="/api/auth/discord" style="color:#ffd600;font-weight:700;">Login with Discord</a>`;
                     }
-                    let avatarUrl = user.avatar
-                        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
-                        : 'https://cdn.discordapp.com/embed/avatars/0.png';
-                    bar.innerHTML = `
-                        <img src="${avatarUrl}" alt="avatar" style="width:40px;height:40px;border-radius:50%;border:2px solid #ffd600;object-fit:cover;">
-                        <div>
-                            <div style="font-weight:700;">${user.username}</div>
-                            <div style="font-size:0.95rem;color:#ffd600;">Logged in</div>
-                        </div>
-                        <a href="/api/auth/discord" style="margin-left:24px;color:#ffd600;font-weight:700;text-decoration:none;">Switch User</a>
-                    `;
                 })
                 .catch(() => {
-                    bar.innerHTML = '<div style="color:#ffd600;font-weight:700;">Not logged in</div>';
+                    bar.innerHTML = `<a href="/api/auth/discord" style="color:#ffd600;font-weight:700;">Login with Discord</a>`;
                 });
         }
         document.addEventListener('DOMContentLoaded', renderUserProfileBar);
-        window.renderUserProfileBar = renderUserProfileBar;
     </script>
     <script>
         // Always fetch and show Discord user info for all users/devices
