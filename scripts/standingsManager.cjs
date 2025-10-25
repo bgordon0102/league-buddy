@@ -2,6 +2,7 @@
 // Usage: node scripts/standingsManager.js
 // This script recalculates standings, prints a debug summary, and updates the Discord standings pin message.
 
+require('dotenv').config();
 const fs = require('fs');
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 

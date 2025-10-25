@@ -23,6 +23,8 @@ export async function autocomplete(interaction) {
         if (fs.existsSync(teamsPath)) {
             try {
                 teams = JSON.parse(fs.readFileSync(teamsPath, "utf8"));
+                // Always sort full list alphabetically
+                teams.sort((a, b) => a.name.localeCompare(b.name));
                 console.log(`[autocomplete] Loaded teams from teams.json:`, teams);
             } catch (e) {
                 console.error('[autocomplete] Failed to parse teams.json:', e);
@@ -30,7 +32,14 @@ export async function autocomplete(interaction) {
         } else {
             console.error('[autocomplete] teams.json does not exist at', teamsPath);
         }
-        const filtered = teams.filter(team => team.name && team.name.toLowerCase().includes(focusedValue.toLowerCase()));
+        let filtered;
+        if (!focusedValue) {
+            // No filter: show all teams in ABC order
+            filtered = teams;
+        } else {
+            filtered = teams.filter(team => team.name && team.name.toLowerCase().includes(focusedValue.toLowerCase()));
+        }
+        // filtered is now always in ABC order
         console.log(`[autocomplete] Focused value: '${focusedValue}', Filtered:`, filtered);
         await interaction.respond(
             filtered.map(team => ({ name: team.name, value: team.name })).slice(0, 25)

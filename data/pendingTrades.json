@@ -1,31 +1,217 @@
-{
-  "1195843329477328978": {
-    "yourTeam": "Cavaliers",
-    "otherTeam": "Thunder",
-    "assetsSent": "test",
-    "assetsReceived": "test",
-    "notes": "",
-    "submitterId": "1076243288056664234",
-    "otherCoachId": "1195843329477328978",
-    "createdAt": 1761086088047
+[
+  {
+    "status": "pending",
+    "createdAt": 1761417333672,
+    "expiresAt": 1761503733672
   },
-  "1076243288056664234": {
-    "yourTeam": "Thunder",
-    "otherTeam": "Cavaliers",
-    "assetsSent": "Jimmy Wet Wet",
-    "assetsReceived": "Johnny Clamps",
-    "notes": "Test",
-    "submitterId": "1195843329477328978",
-    "otherCoachId": "1076243288056664234"
+  {
+    "status": "pending",
+    "createdAt": 1761417472120,
+    "expiresAt": 1761503872120
   },
-  "793968380696199179": {
-    "yourTeam": "Cavaliers",
-    "otherTeam": "Hawks",
-    "assetsSent": "C Jarrett Allen, PG Lonzo Ball, 2027 2nd round pick",
-    "assetsReceived": "C Onyeka Okongwu, SG Nickeil Alexander-Walker, 2027 1st round pick top 10 protected",
-    "notes": "",
-    "submitterId": "1076243288056664234",
-    "otherCoachId": "793968380696199179",
-    "createdAt": 1761154363324
+  {
+    "status": "pending",
+    "createdAt": 1761417492204,
+    "expiresAt": 1761503892204
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761417555153,
+    "expiresAt": 1761503955153
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761417799569,
+    "expiresAt": 1761504199569
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761417802851,
+    "expiresAt": 1761504202851
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761417813102,
+    "expiresAt": 1761504213102
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418096667,
+    "expiresAt": 1761504496667
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418098837,
+    "expiresAt": 1761504498837
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418106751,
+    "expiresAt": 1761504506751
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418109249,
+    "expiresAt": 1761504509249
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418109497,
+    "expiresAt": 1761504509497
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418109698,
+    "expiresAt": 1761504509698
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418109880,
+    "expiresAt": 1761504509880
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418110048,
+    "expiresAt": 1761504510048
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418110215,
+    "expiresAt": 1761504510215
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418110415,
+    "expiresAt": 1761504510415
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418110549,
+    "expiresAt": 1761504510549
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418110764,
+    "expiresAt": 1761504510764
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418251617,
+    "expiresAt": 1761504651617
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418260384,
+    "expiresAt": 1761504660384
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418261015,
+    "expiresAt": 1761504661015
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418261198,
+    "expiresAt": 1761504661198
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418263996,
+    "expiresAt": 1761504663996
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418264194,
+    "expiresAt": 1761504664194
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418264399,
+    "expiresAt": 1761504664399
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418264564,
+    "expiresAt": 1761504664564
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418264765,
+    "expiresAt": 1761504664765
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418264961,
+    "expiresAt": 1761504664961
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418405148,
+    "expiresAt": 1761504805148
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418412615,
+    "expiresAt": 1761504812615
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418413412,
+    "expiresAt": 1761504813412
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418413630,
+    "expiresAt": 1761504813630
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418413810,
+    "expiresAt": 1761504813810
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418414048,
+    "expiresAt": 1761504814048
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418586401,
+    "expiresAt": 1761504986401
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418712132,
+    "expiresAt": 1761505112132
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761418865199,
+    "expiresAt": 1761505265199
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761419005249,
+    "expiresAt": 1761505405249
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761419455025,
+    "expiresAt": 1761505855025
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761420358970,
+    "expiresAt": 1761506758970
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761420513190,
+    "expiresAt": 1761506913190
+  },
+  {
+    "status": "pending",
+    "createdAt": 1761420874112,
+    "expiresAt": 1761507274112
   }
-}
+]

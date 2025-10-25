@@ -10,11 +10,11 @@ export function loadCommitteeVotes() {
 }
 
 export function saveCommitteeVotes(votes) {
-    // Remove any non-serializable properties (like timeout) before saving
+    // Only store votes and createdAt, not trade
     const serializableVotes = {};
     for (const [msgId, voteObj] of Object.entries(votes)) {
-        const { trade, votes, createdAt } = voteObj;
-        serializableVotes[msgId] = { trade, votes, createdAt };
+        const { votes, createdAt } = voteObj;
+        serializableVotes[msgId] = { votes, createdAt };
     }
     fs.writeFileSync(VOTES_PATH, JSON.stringify(serializableVotes, null, 2));
 }

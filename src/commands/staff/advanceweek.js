@@ -1,8 +1,6 @@
-
-
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder } from 'discord.js';
 import { DataManager } from '../../utils/dataManager.js';
-import { sendWelcomeAndButton, updateStandingsAndPlayoff } from '../../interactions/submit_score.js';
+// Removed score submitting, pin, welcome, button, modal, OCR, and result logic for rebuild
 import fs from 'fs';
 
 export const data = new SlashCommandBuilder()
@@ -17,6 +15,80 @@ export const data = new SlashCommandBuilder()
 const TOTAL_WEEKS = 29;
 // Updated dedicated channel for weekly game threads
 const DEDICATED_CHANNEL_ID = '1428417230000885830';
+
+async function sendInitialWelcome(thread) {
+    // Extract team names from thread name
+    const threadName = thread.name || '';
+    const parts = threadName.split(/-vs-/i).map(s => s.replace(/-w\d+|-week\d+/i, '').trim());
+    let teamA = parts[0] || 'Team A';
+    let teamB = parts[1] || 'Team B';
+    // Mention coaches using role IDs from coachRoleMap.json
+    let coachRoleMap = {};
+    try {
+        coachRoleMap = JSON.parse(fs.readFileSync('./data/coachRoleMap.json', 'utf8'));
+    } catch (err) { }
+    function normalize(name) {
+        const teamMap = {
+            'Trail Blazers': 'Portland Trail Blazers',
+            'Celtics': 'Boston Celtics',
+            'Warriors': 'Golden State Warriors',
+            'Lakers': 'Los Angeles Lakers',
+            'Knicks': 'New York Knicks',
+            'Nets': 'Brooklyn Nets',
+            'Bulls': 'Chicago Bulls',
+            'Heat': 'Miami Heat',
+            'Suns': 'Phoenix Suns',
+            'Spurs': 'San Antonio Spurs',
+            'Raptors': 'Toronto Raptors',
+            'Jazz': 'Utah Jazz',
+            'Wizards': 'Washington Wizards',
+            'Thunder': 'Oklahoma City Thunder',
+            'Magic': 'Orlando Magic',
+            '76ers': 'Philadelphia 76ers',
+            'Pelicans': 'New Orleans Pelicans',
+            'Grizzlies': 'Memphis Grizzlies',
+            'Mavericks': 'Dallas Mavericks',
+            'Cavaliers': 'Cleveland Cavaliers',
+            'Pistons': 'Detroit Pistons',
+            'Pacers': 'Indiana Pacers',
+            'Rockets': 'Houston Rockets',
+            'Clippers': 'Los Angeles Clippers',
+            'Nuggets': 'Denver Nuggets',
+            'Bucks': 'Milwaukee Bucks',
+            'Hornets': 'Charlotte Hornets',
+            'Kings': 'Sacramento Kings',
+            'Hawks': 'Atlanta Hawks',
+            'Timberwolves': 'Minnesota Timberwolves',
+        };
+        if (!name) return null;
+        name = name.replace(/[^a-zA-Z ]/g, '').trim();
+        return teamMap[name] || name;
+    }
+    teamA = normalize(teamA);
+    teamB = normalize(teamB);
+    const mentions = [];
+    if (coachRoleMap[teamA]) mentions.push(`<@&${coachRoleMap[teamA]}>`);
+    if (coachRoleMap[teamB]) mentions.push(`<@&${coachRoleMap[teamB]}>`);
+    const coachMentions = mentions.join(' & ') || `${teamA} Coach & ${teamB} Coach`;
+    const welcomeMsg = `Welcome ${coachMentions}!
+One coach please set the game info to start your game.`;
+    // Create Set Game Info button
+    const setGameInfoButton = new ButtonBuilder()
+        .setCustomId('set_game_info')
+        .setLabel('Set Game Info')
+        .setStyle(ButtonStyle.Primary);
+    const row = new ActionRowBuilder().addComponents(setGameInfoButton);
+    // Debug logging
+    console.log(`[sendInitialWelcome] Attempting to send welcome message to thread: ${threadName}`);
+    try {
+        const sentMsg = await thread.send({ content: welcomeMsg, components: [row] });
+        console.log(`[sendInitialWelcome] Message sent to thread: ${threadName}, messageId: ${sentMsg.id}`);
+        await sentMsg.pin();
+        console.log(`[sendInitialWelcome] Message pinned in thread: ${threadName}`);
+    } catch (err) {
+        console.error('[sendInitialWelcome] Failed to send or pin welcome message:', err);
+    }
+}
 
 export async function execute(interaction) {
     await interaction.deferReply({ ephemeral: true });
@@ -65,7 +137,7 @@ export async function execute(interaction) {
                 reason: `Game thread for ${threadName} (Week ${weekNum})`
             });
             createdThreads.push(threadName);
-            await sendWelcomeAndButton(thread, thread.id, gameInfo);
+            await sendInitialWelcome(thread);
         } catch (err) {
             console.error(`[advanceweek] Error creating thread:`, err);
         }
@@ -78,11 +150,15 @@ export async function execute(interaction) {
         console.error(`[advanceweek] FAILED to write currentWeek=${weekNum} to season.json`);
     }
     // After advancing week, update standings
-    try {
-        await updateStandingsAndPlayoff(interaction.guild);
-        await interaction.editReply({ content: `Week advanced! Current week is now ${season.currentWeek}. Created ${createdThreads.length}/${matchups.length} threads in the dedicated channel. Standings updated.` });
-    } catch (err) {
-        console.error('[advanceweek] Failed to update standings:', err);
-        await interaction.editReply({ content: `Week advanced! Current week is now ${season.currentWeek}. Created ${createdThreads.length}/${matchups.length} threads in the dedicated channel. (Standings update failed)` });
-    }
+    // Run standingsManager.cjs as a child process to update standings (ESM compatible)
+    const child_process = await import('child_process');
+    child_process.exec('node scripts/standingsManager.cjs', (error, stdout, stderr) => {
+        if (error) {
+            console.error('[advanceweek] Failed to update standings:', error);
+            interaction.editReply({ content: `Week advanced! Current week is now ${season.currentWeek}. Created ${createdThreads.length}/${matchups.length} threads in the dedicated channel. (Standings update failed)` });
+            return;
+        }
+        console.log('[advanceweek] Standings update output:', stdout);
+        interaction.editReply({ content: `Week advanced! Current week is now ${season.currentWeek}. Created ${createdThreads.length}/${matchups.length} threads in the dedicated channel. Standings updated.` });
+    });
 }

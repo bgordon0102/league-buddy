@@ -20,6 +20,48 @@ const SCOUT_POINTS_FILE = path.join(DATA_DIR, 'scout_points.json');
 const SCHEDULE_FILE = path.join(DATA_DIR, 'schedule.json');
 
 // Helper to write JSON
+// Helper to copy all team rosters to backup folder
+function backupAllRosters() {
+    const rostersDir = path.join(process.cwd(), 'data', 'teams_rosters');
+    const backupDir = path.join(process.cwd(), 'data', 'rosters_backup');
+    if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+    const files = fs.readdirSync(rostersDir).filter(f => f.endsWith('.json'));
+    for (const file of files) {
+        const src = path.join(rostersDir, file);
+        const dest = path.join(backupDir, file);
+        fs.copyFileSync(src, dest);
+    }
+    console.log('[startseason] Backed up all team rosters to rosters_backup');
+}
+
+// Helper to restore all team rosters from backup folder
+// Helper to restore all team rosters from master folder
+// Helper to restore team picks from master file
+function restoreTeamPicksFromMaster() {
+    const picksFile = path.join(process.cwd(), 'data', 'team_picks.json');
+    const masterFile = path.join(process.cwd(), 'data', 'team_picks_master.json');
+    if (!fs.existsSync(masterFile)) {
+        console.error('[startseason] No master picks file found to restore team picks.');
+        return;
+    }
+    fs.copyFileSync(masterFile, picksFile);
+    console.log('[startseason] Restored team picks from team_picks_master.json');
+}
+function restoreAllRostersFromMaster() {
+    const rostersDir = path.join(process.cwd(), 'data', 'teams_rosters');
+    const masterDir = path.join(process.cwd(), 'data', 'teams_rosters_master');
+    if (!fs.existsSync(masterDir)) {
+        console.error('[startseason] No master folder found to restore rosters.');
+        return;
+    }
+    const files = fs.readdirSync(masterDir).filter(f => f.endsWith('.json'));
+    for (const file of files) {
+        const src = path.join(masterDir, file);
+        const dest = path.join(rostersDir, file);
+        fs.copyFileSync(src, dest);
+    }
+    console.log('[startseason] Restored all team rosters from teams_rosters_master');
+}
 function writeJSON(file, data) {
     try {
         if (typeof data === 'undefined') {
@@ -37,6 +79,9 @@ function writeJSON(file, data) {
 // NEVER modify or overwrite coachRoleMap.json or any trade-related state in this function.
 // Only read coachRoleMap.json to snapshot for the new season. The trade system relies on the persistent file.
 export async function resetSeasonData(seasonno, guild, caller = 'unknown') {
+    // Restore all rosters and picks from master before reset
+    restoreAllRostersFromMaster();
+    restoreTeamPicksFromMaster();
     // Clear gameInfo.json for new season
     try {
         fs.writeFileSync(path.join(DATA_DIR, 'gameInfo.json'), '{}');
@@ -243,65 +288,6 @@ export async function execute(interaction) {
     // fs and path are already imported at the top as ES modules
     const SEASON_FILE = path.join(process.cwd(), 'data', 'season.json');
     try {
-        // --- Unpin old standings/playoff messages and pin new reset ones ---
-        const standingsChannelId = '1428159168904167535';
-        const playoffChannelId = '1428159168904167535';
-        const guild = interaction.guild;
-        async function resetPinnedEmbed(channelId, embedArr, envKey = null) {
-            try {
-                const channel = await guild.channels.fetch(channelId);
-                if (!channel) return;
-                // Use fetchPins() and iterate with forEach for compatibility
-                const pins = await channel.messages.fetchPins();
-                if (pins && typeof pins.forEach === 'function') {
-                    pins.forEach(async (msg) => {
-                        if (msg.author && msg.author.id === guild.client.user.id) {
-                            try {
-                                await msg.unpin();
-                                await msg.delete();
-                            } catch (err) {
-                                console.error('Failed to unpin/delete message:', err);
-                            }
-                        }
-                    });
-                }
-                const sentMsg = await channel.send({ embeds: embedArr });
-                await sentMsg.pin();
-                // If envKey is provided, update .env with the new message ID
-                if (envKey) {
-                    const envPath = path.resolve(process.cwd(), '.env');
-                    let envContent = '';
-                    try {
-                        envContent = await fsPromises.readFile(envPath, 'utf8');
-                    } catch { }
-                    const regex = new RegExp(`^${envKey}=.*$`, 'm');
-                    if (regex.test(envContent)) {
-                        envContent = envContent.replace(regex, `${envKey}=${sentMsg.id}`);
-                    } else {
-                        envContent += `\n${envKey}=${sentMsg.id}`;
-                    }
-                    await fsPromises.writeFile(envPath, envContent, 'utf8');
-                }
-            } catch (err) {
-                if (err && err.stack) {
-                    console.error('Failed to reset pinned message in channel', channelId, err.stack);
-                } else if (err && err.message) {
-                    console.error('Failed to reset pinned message in channel', channelId, err.message);
-                } else {
-                    console.error('Failed to reset pinned message in channel', channelId, err);
-                }
-            }
-        }
-        // Blank/reset standings embed
-        const blankStandingsEmbed = new (await import('discord.js')).EmbedBuilder()
-            .setTitle('NBA League Standings')
-            .addFields(
-                { name: 'Eastern Conference', value: 'No games played', inline: false },
-                { name: 'Western Conference', value: 'No games played', inline: false }
-            )
-            .setColor(0x1D428A)
-            .setFooter({ text: 'W-L | Win% | Games Behind (GB)' });
-        await resetPinnedEmbed(standingsChannelId, [blankStandingsEmbed], 'STANDINGS_PINNED_MESSAGE_ID');
         // Check if season.json exists and is non-empty
         let seasonExists = false;
         try {

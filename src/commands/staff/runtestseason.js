@@ -29,7 +29,7 @@ export async function execute(interaction) {
         }
         const TOTAL_WEEKS = 29;
         const { DataManager } = await import('../../utils/dataManager.js');
-        const { sendWelcomeAndButton } = await import('../../interactions/submit_score.js');
+        // Removed score submitting, pin, welcome, button, modal, OCR, and result logic for rebuild
         const dataManager = new DataManager();
         const fs = (await import('fs')).default;
         // Load big board from draft class folder
@@ -59,125 +59,9 @@ export async function execute(interaction) {
                 let schedule = dataManager.readData('schedule') || [];
                 const matchups = schedule[week] || [];
                 for (const matchup of matchups) {
-                    // Use short team names for thread names to match coach role naming
-                    const team1Short = matchup.team1.name.replace('Milwaukee ', '').replace('Portland ', '').replace('Los Angeles ', '').replace('Golden State ', '').replace('New York ', '').replace('San Antonio ', '').replace('Oklahoma City ', '').replace('Charlotte ', '').replace('Philadelphia ', '').replace('Minnesota ', '').replace('Cleveland ', '').replace('Indiana ', '').replace('Sacramento ', '').replace('Toronto ', '').replace('New Orleans ', '').replace('Washington ', '').replace('Atlanta ', '').replace('Brooklyn ', '').replace('Chicago ', '').replace('Dallas ', '').replace('Denver ', '').replace('Detroit ', '').replace('Houston ', '').replace('LA ', '').replace('Memphis ', '').replace('Miami ', '').replace('Orlando ', '').replace('Phoenix ', '').replace('Utah ', '').replace('Boston ', '').replace('Clippers', 'Clippers').replace('Lakers', 'Lakers').replace('Trail Blazers', 'Trail Blazers').replace('Thunder', 'Thunder').replace('Spurs', 'Spurs').replace('Jazz', 'Jazz').replace('Wizards', 'Wizards').replace('Raptors', 'Raptors').replace('Kings', 'Kings').replace('Suns', 'Suns').replace('Magic', 'Magic').replace('Heat', 'Heat').replace('Grizzlies', 'Grizzlies').replace('Bucks', 'Bucks').replace('Mavericks', 'Mavericks').replace('Nuggets', 'Nuggets').replace('Pistons', 'Pistons').replace('Rockets', 'Rockets').replace('Pacers', 'Pacers').replace('Cavaliers', 'Cavaliers').replace('Timberwolves', 'Timberwolves').replace('76ers', '76ers').replace('Hornets', 'Hornets').replace('Bulls', 'Bulls').replace('Nets', 'Nets').replace('Hawks', 'Hawks').replace('Celtics', 'Celtics');
-                    const team2Short = matchup.team2.name.replace('Milwaukee ', '').replace('Portland ', '').replace('Los Angeles ', '').replace('Golden State ', '').replace('New York ', '').replace('San Antonio ', '').replace('Oklahoma City ', '').replace('Charlotte ', '').replace('Philadelphia ', '').replace('Minnesota ', '').replace('Cleveland ', '').replace('Indiana ', '').replace('Sacramento ', '').replace('Toronto ', '').replace('New Orleans ', '').replace('Washington ', '').replace('Atlanta ', '').replace('Brooklyn ', '').replace('Chicago ', '').replace('Dallas ', '').replace('Denver ', '').replace('Detroit ', '').replace('Houston ', '').replace('LA ', '').replace('Memphis ', '').replace('Miami ', '').replace('Orlando ', '').replace('Phoenix ', '').replace('Utah ', '').replace('Boston ', '').replace('Clippers', 'Clippers').replace('Lakers', 'Lakers').replace('Trail Blazers', 'Trail Blazers').replace('Thunder', 'Thunder').replace('Spurs', 'Spurs').replace('Jazz', 'Jazz').replace('Wizards', 'Wizards').replace('Raptors', 'Raptors').replace('Kings', 'Kings').replace('Suns', 'Suns').replace('Magic', 'Magic').replace('Heat', 'Heat').replace('Grizzlies', 'Grizzlies').replace('Bucks', 'Bucks').replace('Mavericks', 'Mavericks').replace('Nuggets', 'Nuggets').replace('Pistons', 'Pistons').replace('Rockets', 'Rockets').replace('Pacers', 'Pacers').replace('Cavaliers', 'Cavaliers').replace('Timberwolves', 'Timberwolves').replace('76ers', '76ers').replace('Hornets', 'Hornets').replace('Bulls', 'Bulls').replace('Nets', 'Nets').replace('Hawks', 'Hawks').replace('Celtics', 'Celtics');
-                    const threadName = `${team1Short}-vs-${team2Short}-w${week}`;
-                    const dedicatedChannelId = '1428141604761374792';
-                    const dedicatedChannel = interaction.guild.channels.cache.get(dedicatedChannelId);
-                    if (!dedicatedChannel) throw new Error('Dedicated channel not found');
-                    const thread = await dedicatedChannel.threads.create({
-                        name: threadName,
-                        autoArchiveDuration: 1440,
-                        reason: `Game thread for ${threadName} (Week ${week})`
-                    });
-                    createdThreads.push(threadName);
-                    // Wrap sendWelcomeAndButton to capture which roles are tagged
-                    let taggedRoles = [];
-                    const originalSendWelcomeAndButton = sendWelcomeAndButton;
-                    async function debugSendWelcomeAndButton(thread, week, seasonNo) {
-                        await interaction.followUp({ content: `[Debug] Creating thread: ${thread.name}` });
-                        let sentMsg;
-                        try {
-                            sentMsg = await originalSendWelcomeAndButton(thread, week, seasonNo);
-                        } catch (err) {
-                            await interaction.followUp({ content: `[Debug] Error sending welcome message in thread ${thread.name}: ${err && err.message ? err.message : err}` });
-                            return;
-                        }
-                        let content = sentMsg && sentMsg.content ? sentMsg.content : sentMsg;
-                        if (!content) {
-                            await interaction.followUp({ content: `[Debug] No welcome message content returned for thread ${thread.name}` });
-                            return;
-                        }
-                        // Regex for Discord role mentions: <@&ROLEID>
-                        let roleMentions = [];
-                        try {
-                            roleMentions = content.match(/<@&\d+>/g) || [];
-                        } catch (e) {
-                            await interaction.followUp({ content: `[Debug] Error extracting role mentions: ${e && e.message ? e.message : e}` });
-                        }
-                        taggedRoles = roleMentions;
-                        await interaction.followUp({ content: `[Debug] Welcome message content for thread ${thread.name}: ${content}` });
-                        await interaction.followUp({ content: `[Debug] Tagged roles in welcome message for thread ${thread.name}: ${taggedRoles.join(', ') || 'None'}` });
-                        return sentMsg;
-                    }
-                    await debugSendWelcomeAndButton(thread, week, seasonNo);
-                    // --- Simulate button interactions and modal submissions ---
-                    try {
-                        const { handleButton, handleForceWin, handleSimResult, handleModal } = await import('../../interactions/submit_score.js');
-                        // Simulate Submit Score button
-                        const mockReply = async function (data) { await interaction.followUp({ content: `[Test] Reply: ${typeof data === 'string' ? data : (data && data.content ? data.content : JSON.stringify(data))} for thread: ${threadName}` }); };
-                        const mockSubmitScoreInteraction = {
-                            channel: thread,
-                            guild: interaction.guild,
-                            user: interaction.user,
-                            showModal: async (modal) => { await interaction.followUp({ content: `[Test] Submit Score modal shown for thread: ${threadName}` }); },
-                            reply: mockReply,
-                        };
-                        await handleButton(mockSubmitScoreInteraction);
-                        // Simulate Force Win button
-                        const mockForceWinInteraction = {
-                            channel: thread,
-                            guild: interaction.guild,
-                            user: interaction.user,
-                            showModal: async (modal) => { await interaction.followUp({ content: `[Test] Force Win modal shown for thread: ${threadName}` }); },
-                            reply: mockReply,
-                        };
-                        await handleForceWin(mockForceWinInteraction);
-                        // Simulate Sim Result button and test autofill
-                        let autofillTestResult = '';
-                        const abbrToFull = {
-                            ATL: 'Atlanta Hawks', BOS: 'Boston Celtics', BKN: 'Brooklyn Nets', CHA: 'Charlotte Hornets', CHI: 'Chicago Bulls', CLE: 'Cleveland Cavaliers', DAL: 'Dallas Mavericks', DEN: 'Denver Nuggets', DET: 'Detroit Pistons', GSW: 'Golden State Warriors', HOU: 'Houston Rockets', IND: 'Indiana Pacers', LAC: 'LA Clippers', LAL: 'Los Angeles Lakers', MEM: 'Memphis Grizzlies', MIA: 'Miami Heat', MIL: 'Milwaukee Bucks', MIN: 'Minnesota Timberwolves', NOP: 'New Orleans Pelicans', NYK: 'New York Knicks', OKC: 'Oklahoma City Thunder', ORL: 'Orlando Magic', PHI: 'Philadelphia 76ers', PHX: 'Phoenix Suns', POR: 'Portland Trail Blazers', SAC: 'Sacramento Kings', SAS: 'San Antonio Spurs', TOR: 'Toronto Raptors', UTA: 'Utah Jazz', WAS: 'Washington Wizards'
-                        };
-                        // Simulate autofill extraction as in handleSimResult
-                        const parts = threadName.split('-vs-');
-                        let abbr1 = parts[0].split('-')[0].toUpperCase();
-                        let abbr2 = parts[1].split('-')[0].toUpperCase();
-                        abbr2 = abbr2.split('-')[0];
-                        const expectedA = abbrToFull[abbr1] || abbr1;
-                        const expectedB = abbrToFull[abbr2] || abbr2;
-                        // Simulate what would be autofilled in the modal
-                        const autofilledA = expectedA;
-                        const autofilledB = expectedB;
-                        // Always compare against abbrToFull mapping for expected full names
-                        const expectedFullA = abbrToFull[matchup.team1.abbreviation.toUpperCase()] || matchup.team1.abbreviation;
-                        const expectedFullB = abbrToFull[matchup.team2.abbreviation.toUpperCase()] || matchup.team2.abbreviation;
-                        if (autofilledA === expectedFullA && autofilledB === expectedFullB) {
-                            autofillTestResult = `✅ Autofill PASS for thread: ${threadName} | TeamA: ${autofilledA} | TeamB: ${autofilledB}`;
-                        } else {
-                            autofillTestResult = `❌ Autofill FAIL for thread: ${threadName} | Got: ${autofilledA}, ${autofilledB} | Expected: ${expectedFullA}, ${expectedFullB}`;
-                        }
-                        const mockSimResultInteraction = {
-                            channel: thread,
-                            guild: interaction.guild,
-                            user: interaction.user,
-                            showModal: async (modal) => { await interaction.followUp({ content: `[Test] Sim Result modal shown for thread: ${threadName}` }); },
-                            reply: mockReply,
-                        };
-                        await handleSimResult(mockSimResultInteraction);
-                        await interaction.followUp({ content: autofillTestResult });
-                        // Simulate modal submission for each button (with dummy data)
-                        const mockModalInteraction = {
-                            fields: {
-                                getTextInputValue: (id) => {
-                                    if (id === 'team_a') return matchup.team1.fullName || matchup.team1.abbreviation;
-                                    if (id === 'team_b') return matchup.team2.fullName || matchup.team2.abbreviation;
-                                    if (id === 'score_a') return '100';
-                                    if (id === 'score_b') return '90';
-                                    if (id === 'week') return week.toString();
-                                    return '';
-                                }
-                            },
-                            guild: interaction.guild,
-                            user: interaction.user,
-                            reply: mockReply,
-                        };
-                        await handleModal(mockModalInteraction);
-                    } catch (err) {
-                        await interaction.followUp({ content: `[Test] Error simulating button/modal for thread: ${threadName}: ${err && err.message ? err.message : err}` });
-                    }
+                    // Pin/welcome/score logic removed for rebuild
                 }
-                await interaction.editReply({ content: `✅ Created ${createdThreads.length}/${matchups.length} threads for week ${week} and tested buttons.` });
+                await interaction.editReply({ content: `✅ Created ${createdThreads.length}/${matchups.length} threads for week ${week}.` });
             } catch (err) {
                 await interaction.editReply({ content: `❌ Error creating threads: ${err && err.message ? err.message : err}` });
                 await interaction.editReply({ content: `❌ Test season failed: ${err && err.message ? err.message : err}` });
