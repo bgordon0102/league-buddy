@@ -25,39 +25,51 @@
             background: #2e2f36;
             border-radius: 12px;
             padding: 16px 18px;
-            color: #fff;
-            font-weight: 600;
-            min-width: 120px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: border 0.2s, background 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
+
+            <script>function renderUserProfileBar() {
+                var bar=document.getElementById('user-profile-content');
+                var barContainer=document.getElementById('user-profile-bar');
+
+                if ( !bar || !barContainer) {
+                    console.warn('User profile bar element missing');
+                    return;
+                }
+
+                bar.innerHTML='<div style="color:#ffd600;font-weight:700;">Loading user...</div>';
+                barContainer.style.display='';
+
+                fetch('/api/me', {
+                    credentials: 'include'
+
+                }) .then(function(res) {
+                    if ( !res.ok) throw new Error('Not logged in');
+                    return res.json();
+
+                }) .then(function(user) {
+                    if ( !user || !user.id || !user.username) {
+                        bar.innerHTML='<div style="color:#ffd600;font-weight:700;">Not logged in</div>';
+                        return;
+                    }
+
+                    var avatarUrl=user.avatar ? `https: //cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
+                    : 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+                    bar.innerHTML=` <img src="${avatarUrl}" alt="avatar" style="width:40px;height:40px;border-radius:50%;border:2px solid #ffd600;object-fit:cover;" > <div> <div style="font-weight:700;" >$ {
+                        user.username
+                    }
+
+                    </div> <div style="font-size:0.95rem;color:#ffd600;" >Logged in</div> </div> <a href="/api/auth/discord" style="margin-left:24px;color:#ffd600;font-weight:700;text-decoration:none;" >Switch User</a> `;
+
+                }) .catch(function(err) {
+                    bar.innerHTML='<div style="color:#ffd600;font-weight:700;">Not logged in</div>';
+                    console.error('User info fetch failed:', err);
+                });
         }
 
-        .trade-card.selected {
-            border: 2px solid #ffd600;
-            background: #181818;
-            color: #ffd600;
-        }
-
-        .trade-card .trade-block {
-            background: #ffd600;
-            color: #23242a;
-            font-size: 0.85rem;
-            font-weight: 700;
-            border-radius: 6px;
-            padding: 2px 8px;
-            margin-top: 6px;
-        }
-
-        .trade-card .trade-pos {
-            font-size: 0.95rem;
-            color: #ffd600;
-            font-weight: 700;
-            margin-bottom: 2px;
+        document.addEventListener('DOMContentLoaded', function() {
+                renderUserProfileBar();
+            });
+        window.renderUserProfileBar=renderUserProfileBar;
         }
 
         .trade-card .trade-team {
@@ -894,6 +906,48 @@
             });
         }
         // ...existing code...
+    </script>
+    <script>
+        function renderUserProfileBar() {
+            var bar = document.getElementById('user-profile-content');
+            var barContainer = document.getElementById('user-profile-bar');
+            if (!bar || !barContainer) {
+                console.warn('User profile bar element missing');
+                return;
+            }
+            bar.innerHTML = '<div style="color:#ffd600;font-weight:700;">Loading user...</div>';
+            barContainer.style.display = '';
+            fetch('/api/me', { credentials: 'include' })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('Not logged in');
+                    return res.json();
+                })
+                .then(function (user) {
+                    if (!user || !user.id || !user.username) {
+                        bar.innerHTML = '<div style="color:#ffd600;font-weight:700;">Not logged in</div>';
+                        return;
+                    }
+                    var avatarUrl = user.avatar
+                        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
+                        : 'https://cdn.discordapp.com/embed/avatars/0.png';
+                    bar.innerHTML = `
+                        <img src="${avatarUrl}" alt="avatar" style="width:40px;height:40px;border-radius:50%;border:2px solid #ffd600;object-fit:cover;">
+                        <div>
+                            <div style="font-weight:700;">${user.username}</div>
+                            <div style="font-size:0.95rem;color:#ffd600;">Logged in</div>
+                        </div>
+                        <a href="/api/auth/discord" style="margin-left:24px;color:#ffd600;font-weight:700;text-decoration:none;">Switch User</a>
+                    `;
+                })
+                .catch(function (err) {
+                    bar.innerHTML = '<div style="color:#ffd600;font-weight:700;">Not logged in</div>';
+                    console.error('User info fetch failed:', err);
+                });
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            renderUserProfileBar();
+        });
+        window.renderUserProfileBar = renderUserProfileBar;
     </script>
     <script>
         function hideDashboardTabs() {
