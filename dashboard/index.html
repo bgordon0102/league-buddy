@@ -46,19 +46,17 @@
         }
 
         #user-profile-bar {
-            position: fixed;
+            position: absolute;
             top: 0;
-            right: 0;
-            width: 320px;
+            left: 120px;
             height: 64px;
-            background: #181818;
-            color: #fff;
+            background: transparent;
+            color: #ffd600;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            z-index: 1000;
-            padding: 0 32px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+            justify-content: flex-start;
+            z-index: 10;
+            padding: 0 16px;
             font-size: 1.1rem;
         }
 
@@ -101,9 +99,8 @@
 </head>
 
 <body>
-    <div id="user-profile-bar"
-        style="width:100vw;background:#23242a;padding:10px 0;display:flex;align-items:center;justify-content:center;z-index:1000;">
-        <div id="user-profile-content" style="display:flex;align-items:center;gap:16px;"></div>
+    <div id="user-profile-bar">
+        <div id="user-profile-content" style="display:flex;align-items:center;gap:12px;"></div>
     </div>
     <div class="dashboard-container">
         <aside class="sidebar">
