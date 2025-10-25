@@ -863,57 +863,6 @@
         }
         // ...existing code...
     </script>
-    <script>
-        function renderUserProfileBar() {
-            var bar = document.getElementById('user-profile-content');
-            bar.innerHTML = '<span style="color:#ffd600;">Loading...</span>';
-            fetch('/api/me', { credentials: 'include' })
-                .then(res => res.ok ? res.json() : null)
-                .then(user => {
-                    if (user && user.id && user.username) {
-                        var avatarUrl = user.avatar
-                            ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
-                            : 'https://cdn.discordapp.com/embed/avatars/0.png';
-                        bar.innerHTML = `
-            <img src="${avatarUrl}" alt="avatar" style="width:32px;height:32px;border-radius:50%;border:2px solid #ffd600;object-fit:cover;">
-            <span style="color:#ffd600;font-weight:700;">${user.username}</span>
-            <a href="/api/auth/discord" style="margin-left:16px;color:#ffd600;">Switch User</a>
-          `;
-                    } else {
-                        bar.innerHTML = `<a href="/api/auth/discord" style="color:#ffd600;font-weight:700;">Login with Discord</a>`;
-                    }
-                })
-                .catch(() => {
-                    bar.innerHTML = `<a href="/api/auth/discord" style="color:#ffd600;font-weight:700;">Login with Discord</a>`;
-                });
-        }
-        document.addEventListener('DOMContentLoaded', renderUserProfileBar);
-    </script>
-    <script>
-        function hideDashboardTabs() {
-            document.querySelectorAll('.sidebar-link').forEach(tab => {
-                tab.style.display = 'none';
-            });
-        }
-        function showDashboardTabs() {
-            document.querySelectorAll('.sidebar-link').forEach(tab => {
-                tab.style.display = '';
-            });
-        }
-        function checkLoginAndShowTabs() {
-            fetch('/api/me').then(res => res.json()).then(user => {
-                if (user && user.id) {
-                    showDashboardTabs();
-                } else {
-                    hideDashboardTabs();
-                }
-            }).catch(hideDashboardTabs);
-        }
-        // Hide tabs by default
-        hideDashboardTabs();
-        // Check login on page load
-        checkLoginAndShowTabs();
-    </script>
 </body>
 
 </html>
