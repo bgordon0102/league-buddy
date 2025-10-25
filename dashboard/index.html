@@ -798,6 +798,14 @@
         window.renderUserProfileBar = renderUserProfileBar;
     </script>
     <script>
+        // Always fetch and show Discord user info for all users/devices
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof renderUserProfileBar === 'function') {
+                renderUserProfileBar();
+            }
+        });
+    </script>
+    <script>
         function getTeamFromRole(roles) {
             // Map Discord role IDs to team keys
             const roleToTeam = {
