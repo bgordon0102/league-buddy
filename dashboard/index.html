@@ -1043,28 +1043,28 @@
                 });
         });
         }
-        // ...existing code...
-    </script>
-    <script>
         // Hide dashboard, sidebar, and main content until logged in
-        function showDashboardAfterLogin() {
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hide all dashboard elements by default
+            document.getElementById('dashboard-main').style.display = 'none';
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) sidebar.style.display = 'none';
+            var mainContent = document.getElementById('main-content');
+            if (mainContent) mainContent.style.display = 'none';
+            document.getElementById('welcome-login').style.display = 'block';
+
+            // Check login status
             fetch('/api/me', { credentials: 'include' })
                 .then(res => res.ok ? res.json() : null)
                 .then(user => {
                     if (user && user.id) {
                         document.getElementById('dashboard-main').style.display = 'flex';
-                        document.getElementById('sidebar').style.display = 'flex';
-                        document.getElementById('main-content').style.display = 'block';
+                        if (sidebar) sidebar.style.display = 'flex';
+                        if (mainContent) mainContent.style.display = 'block';
                         document.getElementById('welcome-login').style.display = 'none';
-                    } else {
-                        document.getElementById('dashboard-main').style.display = 'none';
-                        document.getElementById('sidebar').style.display = 'none';
-                        document.getElementById('main-content').style.display = 'none';
-                        document.getElementById('welcome-login').style.display = 'block';
                     }
                 });
-        }
-        document.addEventListener('DOMContentLoaded', showDashboardAfterLogin);
+        });
     </script>
 </body>
 
