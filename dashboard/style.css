@@ -67,17 +67,27 @@
         padding: 12px;
     }
 
+
     .trade-builder-sleeper {
-        flex-direction: column;
+        flex-direction: row;
         gap: 16px;
+        overflow-x: auto;
+        align-items: flex-start;
     }
 
     .trade-team-col {
-        min-width: unset;
-        width: 100%;
+        min-width: 260px;
+        width: 260px;
         margin-bottom: 12px;
     }
 
+    #rosters-team-cards {
+        display: flex;
+        flex-direction: row;
+        gap: 24px;
+        overflow-x: auto;
+        align-items: flex-start;
+    }
     .trade-summary-bar {
         padding: 16px 0 0 0;
     }
