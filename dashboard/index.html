@@ -199,7 +199,8 @@
         <div class="welcome">
             <img src="logo-new.png" alt="LEAGUEbuddy Logo" class="main-logo">
             <h1>Welcome to LEAGUEbuddy Dashboard!</h1>
-            <p style="font-size:1.2rem;color:#ffd600;margin:18px 0 0 0;font-weight:600;">Please log in with Discord to access your team dashboard.</p>
+            <p style="font-size:1.2rem;color:#ffd600;margin:18px 0 0 0;font-weight:600;">Please log in with Discord to
+                access your team dashboard.</p>
         </div>
         <div style="text-align:center;margin:32px 0;">
             <a href="/api/auth/discord" class="discord-login-btn"
@@ -1011,7 +1012,7 @@
                 if (!user || !user.roles) return;
                 const coachTeamKey = getTeamFromRole(user.roles);
                 if (!coachTeamKey) return;
-                fetch('/api/teams').then(res => res.json()).then(teams => {
+                fetch('/api/teams').then res => res.json()).then(teams => {
                     const fromSelect = document.getElementById('from-team');
                     const toSelect = document.getElementById('to-team');
                     fromSelect.innerHTML = '';
@@ -1052,7 +1053,7 @@
                         loadRostersAndPicks();
                     }
                 });
-            });
+        });
         }
         // ...existing code...
     </script>
