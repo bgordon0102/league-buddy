@@ -92,6 +92,13 @@
             }
         }
 
+        /* Force hide sidebar and dashboard before login */
+        #dashboard-main,
+        #sidebar,
+        #main-content {
+            display: none !important;
+        }
+
         .trade-team-col {
             background: #23242a;
             border-radius: 16px;
@@ -1048,7 +1055,7 @@
                 });
         }
         // Hide dashboard, sidebar, and main content until logged in
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Hide all dashboard elements by default
             document.getElementById('dashboard-main').style.display = 'none';
             var sidebar = document.getElementById('sidebar');
