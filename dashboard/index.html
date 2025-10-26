@@ -265,7 +265,7 @@
                     style="width:100%;padding:18px 0;text-align:center;font-size:1.3rem;color:#ffd600;">Settings</li>
             </ul>
         </div>
-        <main class="main-content">
+        <main class="main-content" id="main-content" style="display:none;">
             <div id="home" class="section active">
                 <div class="welcome">
                     <img src="logo-new.png" alt="LEAGUEbuddy Logo" class="main-logo">
@@ -1044,6 +1044,27 @@
         });
         }
         // ...existing code...
+    </script>
+    <script>
+        // Hide dashboard, sidebar, and main content until logged in
+        function showDashboardAfterLogin() {
+            fetch('/api/me', { credentials: 'include' })
+                .then(res => res.ok ? res.json() : null)
+                .then(user => {
+                    if (user && user.id) {
+                        document.getElementById('dashboard-main').style.display = 'flex';
+                        document.getElementById('sidebar').style.display = 'flex';
+                        document.getElementById('main-content').style.display = 'block';
+                        document.getElementById('welcome-login').style.display = 'none';
+                    } else {
+                        document.getElementById('dashboard-main').style.display = 'none';
+                        document.getElementById('sidebar').style.display = 'none';
+                        document.getElementById('main-content').style.display = 'none';
+                        document.getElementById('welcome-login').style.display = 'block';
+                    }
+                });
+        }
+        document.addEventListener('DOMContentLoaded', showDashboardAfterLogin);
     </script>
 </body>
 
