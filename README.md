@@ -4,10 +4,6 @@ A Discord bot for managing basketball league operations, recruiting, and team ma
 
 ## Features
 
-- **Staff Commands**: Administrative functions for league staff
-- **Coach Commands**: Team management tools for coaches  
-- **League Data Management**: JSON-based data storage for teams, recruits, and scouting
-- **Role-based Command Access**: Separate command categories for staff and coaches
 
 ## Setup
 
@@ -43,10 +39,8 @@ A Discord bot for managing basketball league operations, recruiting, and team ma
 ## Commands
 
 ### Staff Commands
-- `/ping` - Test bot responsiveness
 
 ### Coach Commands  
-- `/hello` - Greeting command for coaches
 
 ## Project Structure
 
@@ -76,3 +70,7 @@ This bot uses Discord.js v14 and ES modules. Add new commands by creating files 
 ISC
 
 A Discord bot for league management.
+# LEAGUEbuddy
+
+Redeploy triggered: October 25, 2025
+ISC
