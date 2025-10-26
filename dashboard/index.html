@@ -996,55 +996,59 @@
             return null;
         }
         function setupTradeBuilderForCoach() {
-            fetch('/api/me', { credentials: 'include' }).then(res => res.json()).then(user => {
-                if (!user || !user.roles) return;
-                const coachTeamKey = getTeamFromRole(user.roles);
-                if (!coachTeamKey) return;
-                fetch('/api/teams').then res => res.json()).then(teams => {
-                    const fromSelect = document.getElementById('from-team');
-                    const toSelect = document.getElementById('to-team');
-                    fromSelect.innerHTML = '';
-                    toSelect.innerHTML = '';
-                    let coachTeamObj = null;
-                    let firstOtherTeamObj = null;
-                    teams.forEach(team => {
-                        const opt1 = document.createElement('option');
-                        opt1.value = team.key;
-                        opt1.textContent = team.name;
-                        if (team.key === coachTeamKey) {
-                            opt1.selected = true;
-                            coachTeamObj = team;
-                        }
-                        fromSelect.appendChild(opt1);
-                    });
-                    // Find first team that isn't the coach's team
-                    for (const team of teams) {
-                        if (team.key !== coachTeamKey && !firstOtherTeamObj) {
-                            firstOtherTeamObj = team;
-                        }
-                        const opt2 = document.createElement('option');
-                        opt2.value = team.key;
-                        opt2.textContent = team.name;
-                        if (firstOtherTeamObj && team.key === firstOtherTeamObj.key) {
-                            opt2.selected = true;
-                        }
-                        toSelect.appendChild(opt2);
-                    }
-                    fromSelect.value = coachTeamKey;
-                    fromSelect.disabled = true;
-                    toSelect.disabled = false;
-                    // Load correct roster for coach's team and first other team
-                    if (coachTeamObj && firstOtherTeamObj) {
-                        loadTeamCards(coachTeamObj.key, coachTeamObj.name);
-                        loadTeamCards(firstOtherTeamObj.key, firstOtherTeamObj.name);
-                        // Load assets and picks for both teams
-                        loadRostersAndPicks();
-                    }
+            fetch('/api/me', { credentials: 'include' })
+                .then(res => res.json())
+                .then(user => {
+                    if (!user || !user.roles) return;
+                    const coachTeamKey = getTeamFromRole(user.roles);
+                    if (!coachTeamKey) return;
+                    fetch('/api/teams')
+                        .then(res => res.json())
+                        .then(teams => {
+                            const fromSelect = document.getElementById('from-team');
+                            const toSelect = document.getElementById('to-team');
+                            fromSelect.innerHTML = '';
+                            toSelect.innerHTML = '';
+                            let coachTeamObj = null;
+                            let firstOtherTeamObj = null;
+                            teams.forEach(team => {
+                                const opt1 = document.createElement('option');
+                                opt1.value = team.key;
+                                opt1.textContent = team.name;
+                                if (team.key === coachTeamKey) {
+                                    opt1.selected = true;
+                                    coachTeamObj = team;
+                                }
+                                fromSelect.appendChild(opt1);
+                            });
+                            // Find first team that isn't the coach's team
+                            for (const team of teams) {
+                                if (team.key !== coachTeamKey && !firstOtherTeamObj) {
+                                    firstOtherTeamObj = team;
+                                }
+                                const opt2 = document.createElement('option');
+                                opt2.value = team.key;
+                                opt2.textContent = team.name;
+                                if (firstOtherTeamObj && team.key === firstOtherTeamObj.key) {
+                                    opt2.selected = true;
+                                }
+                                toSelect.appendChild(opt2);
+                            }
+                            fromSelect.value = coachTeamKey;
+                            fromSelect.disabled = true;
+                            toSelect.disabled = false;
+                            // Load correct roster for coach's team and first other team
+                            if (coachTeamObj && firstOtherTeamObj) {
+                                loadTeamCards(coachTeamObj.key, coachTeamObj.name);
+                                loadTeamCards(firstOtherTeamObj.key, firstOtherTeamObj.name);
+                                // Load assets and picks for both teams
+                                loadRostersAndPicks();
+                            }
+                        });
                 });
-        });
         }
         // Hide dashboard, sidebar, and main content until logged in
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Hide all dashboard elements by default
             document.getElementById('dashboard-main').style.display = 'none';
             var sidebar = document.getElementById('sidebar');
