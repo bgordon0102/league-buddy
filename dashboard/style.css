@@ -1,11 +1,11 @@
 @media (max-width: 600px) {
 
-    body.mobile-login #dashboard-main,
-    body.mobile-login .sidebar {
+    html.mobile-login>body>.dashboard-container,
+    html.mobile-login>body>.sidebar {
         display: none !important;
     }
 
-    body.mobile-login #welcome-login {
+    html.mobile-login>body>#welcome-login {
         display: block !important;
     }
 }
