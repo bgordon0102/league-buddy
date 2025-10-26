@@ -341,7 +341,7 @@
             function isMobile() { return window.innerWidth <= 600; }
             fetch('/api/me', { credentials: 'include' })
                 .then(res => res.ok ? res.json() : null)
-                .then(user => {
+                .then user => {
                     if (isMobile() && user && user.id) {
                         document.body.classList.remove('mobile-login');
                     }
@@ -1073,6 +1073,11 @@
                         if (sidebar) sidebar.style.display = 'flex';
                         if (mainContent) mainContent.style.display = 'block';
                         document.getElementById('welcome-login').style.display = 'none';
+                    } else {
+                        document.getElementById('dashboard-main').style.display = 'none';
+                        if (sidebar) sidebar.style.display = 'none';
+                        if (mainContent) mainContent.style.display = 'none';
+                        document.getElementById('welcome-login').style.display = 'block';
                     }
                 });
         });
