@@ -177,15 +177,28 @@ export async function resetSeasonData(seasonno, guild, caller = 'unknown') {
     console.log('[startseason] Wrote teams.json');
 
     // --- DRAFT CLASS SELECTION LOGIC ---
-    // Only use the draft class files for big board and recruiting data
-    let recruitingSource;
-    if (seasonno === 2) {
-        recruitingSource = path.resolve(process.cwd(), 'draft classes/CUS02/2k26_CUS02 - Recruiting.json');
-    } else {
-        recruitingSource = path.resolve(process.cwd(), 'draft classes/CUS01/2k26_CUS01 - Recruiting.json');
+    // Dynamically select draft class files based on season number
+    const draftClassFolder = `CUS${String(seasonno).padStart(2, '0')}`;
+    const bigBoardFile = path.resolve(process.cwd(), `draft classes/${draftClassFolder}/2k26_${draftClassFolder} - Big Board.json`);
+    const recruitingFile = path.resolve(process.cwd(), `draft classes/${draftClassFolder}/2k26_${draftClassFolder} - Recruiting.json`);
+    // Load and write big board
+    let bigBoardData = {};
+    try {
+        bigBoardData = safeReadJSON(bigBoardFile, {});
+        // Removed writing bigboard.json to data folder
+        console.log(`[startseason] Loaded big board for season ${seasonno}: ${bigBoardFile}`);
+    } catch (err) {
+        console.error(`[startseason] Error loading big board for season ${seasonno}:`, err);
     }
-    const recruitingData = safeReadJSON(recruitingSource, []);
-    writeJSON(path.join(DATA_DIR, 'recruiting.json'), recruitingData);
+    // Load and write recruiting data
+    let recruitingData = [];
+    try {
+        recruitingData = safeReadJSON(recruitingFile, []);
+        // Removed writing recruiting.json to data folder
+        console.log(`[startseason] Loaded recruiting data for season ${seasonno}: ${recruitingFile}`);
+    } catch (err) {
+        console.error(`[startseason] Error loading recruiting data for season ${seasonno}:`, err);
+    }
 
     // Standings
     const standings = {};
@@ -355,7 +368,7 @@ export async function execute(interaction) {
             standings[team.name] = { wins: 0, losses: 0, games: 0, pointsFor: 0, pointsAgainst: 0 };
         });
         const prospectBoards = [];
-        const recruitingData = [];
+        // Removed recruitingData initialization
         const seasonData = {
             currentWeek: 0,
             seasonNo: seasonno,
@@ -365,8 +378,9 @@ export async function execute(interaction) {
         dataManager.writeData('teams', staticTeams);
         dataManager.writeData('standings', standings);
         dataManager.writeData('scores', []);
-        dataManager.writeData('prospectBoards', prospectBoards);
-        dataManager.writeData('recruiting', recruitingData);
+        // Removed writing empty prospectBoards and recruitingData
+        // dataManager.writeData('prospectBoards', prospectBoards);
+        // dataManager.writeData('recruiting', recruitingData);
         await interaction.editReply({ content: `Season ${seasonData.seasonNo} started! All data initialized.` });
     } catch (err) {
         console.error('[startseason] Error:', err);

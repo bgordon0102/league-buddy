@@ -1,5 +1,3 @@
-// Single-team NBA 2K ratings scraper
-// Usage: node scripts/scrape_2kratings_team.js "https://www.2kratings.com/teams/charlotte-hornets"
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import fs from 'fs';
@@ -23,22 +21,36 @@ async function scrapeTeamPage(page, url) {
                 })
                 .map(el => ({ name: el.textContent.trim(), url: el.href }))
         );
-
         const browser = page.browser();
         let playerCount = 0;
         for (const player of playerLinks) {
             playerCount++;
             console.log(`   - Scraping player [${playerCount}/${playerLinks.length}]: ${player.name}`);
+            let details = {};
             try {
                 const playerPage = await browser.newPage();
-                await playerPage.goto(player.url, { waitUntil: 'networkidle2', timeout: 90000 });
+                await playerPage.goto(player.url, { waitUntil: 'networkidle2', timeout: 300000 });
                 try {
-                    await playerPage.waitForSelector('.player-img img, .player-headshot img, .attributes-table, img.profile-photo', { timeout: 5000 });
-                } catch (waitErr) {
-                    // Silently ignore timeout, do not log
+                    await playerPage.waitForSelector('.player-img img, .player-headshot img, .attributes-table, img.profile-photo', { timeout: 20000 });
+                } catch {
+                    console.log(`     Selector timeout for ${player.name}, continuing with empty fields.`);
                 }
-                await new Promise(res => setTimeout(res, 1000));
-                const details = await playerPage.evaluate(() => {
+                await new Promise(res => setTimeout(res, 5000));
+                details = await playerPage.evaluate(() => {
+                    // Nationality extraction
+                    let nationality = '';
+                    const natP = Array.from(document.querySelectorAll('p.mb-0')).find(p => p.textContent.includes('Nationality:'));
+                    if (natP) {
+                        const natLinks = natP.querySelectorAll('a.text-light');
+                        let natArr = Array.from(natLinks).map(a => a.textContent.trim()).filter(n => n);
+                        if (natArr.length === 0) {
+                            let raw = natP.textContent.split('Nationality:')[1]?.trim() || '';
+                            if (raw) {
+                                natArr = raw.split(/\s*\/\s*|,|\s*\/\s*/).map(n => n.trim()).filter(n => n);
+                            }
+                        }
+                        nationality = natArr.join(' / ');
+                    }
                     const name = document.querySelector('h1.header-title')?.textContent?.trim() || '';
                     let position = '';
                     const posP = Array.from(document.querySelectorAll('p.mb-1.my-lg-0')).find(p => p.textContent.includes('Position:'));
@@ -100,6 +112,43 @@ async function scrapeTeamPage(page, url) {
                     if (ovrSpan) {
                         ovr = ovrSpan.textContent.trim();
                     }
+                    // Prior to NBA extraction
+                    let priorToNBA = '';
+                    const aboutPs = Array.from(document.querySelectorAll('p'));
+                    for (const p of aboutPs) {
+                        const txt = p.textContent;
+                        // US College/University
+                        let match = txt.match(/([A-Za-z .'-]+?) (University|College)[.,]?$/i);
+                        if (match && match[1] && match[2]) {
+                            priorToNBA = `${match[1].trim()} ${match[2]}`;
+                            break;
+                        }
+                        // NBA G League
+                        match = txt.match(/NBA G League ([A-Za-z .'-]+)[.,]?$/i);
+                        if (match && match[1]) {
+                            priorToNBA = 'NBA G League ' + match[1].trim();
+                            break;
+                        }
+                        // Foreign/Euro/Club teams (Basket, Bourg, Zaragoza, Academy, League, team, club, BC, KK, ASVEL, Virtus, Real Madrid, etc.)
+                        match = txt.match(/([A-Za-z .'-]+?) (Basket|Bourg|Zaragoza|Academy|League|team|club|BC|KK|ASVEL|Virtus|Real Madrid|Panathinaikos|Olympiacos|Maccabi|Efes|Fenerbahce|Bayern|Monaco|Partizan|Cedevita|Zalgiris|Lokomotiv|Unicaja|Valencia|Gran Canaria|Estudiantes|Joventut|Baskonia|Besiktas|Galatasaray|Darussafaka|Tofas|Banvit|Limoges|Strasbourg|Nanterre|Le Mans|Cholet|Pau-Orthez|Antwerp|Oostende|Lietkabelis|Rytas|Promitheas|Aris|PAOK|AEK|Treviso|Trento|Venezia|Pesaro|Reggio Emilia|Brindisi|Cremona|Cantù|Varese|Virtus Roma|Scafati|Napoli|Torino|Trieste|Udine|Forlì|Imola|Verona|Caserta|Avellino|Sassari|Pistoia|Lucca|Trapani|Agrigento|Orlandina|Latina|Ravenna|Ferrara|Mantova|Piacenza|San Severo|Tortona|Montegranaro|Roseto|Recanati|Chieti|Fabriano|Bari|Matera|Potenza|Cosenza|Catanzaro|Messina|Siracusa|Catania|Palermo|Marsala|Gela|Ragusa|Enna|Caltanissetta|Syracuse|Siracusa|Catania|Palermo|Marsala|Gela|Ragusa|Enna|Caltanissetta)[.,]?$/i);
+                        if (match && match[1] && match[2]) {
+                            priorToNBA = `${match[1].trim()} ${match[2]}`;
+                            break;
+                        }
+                        // Prior to NBA: <org name>
+                        match = txt.match(/Prior to NBA: ([A-Za-z .'-]+(?: University| College| Academy| Basket| League| Bourg| Zaragoza| team| club|BC|KK|ASVEL|Virtus|Real Madrid|Panathinaikos|Olympiacos|Maccabi|Efes|Fenerbahce|Bayern|Monaco|Partizan|Cedevita|Zalgiris|Lokomotiv|Unicaja|Valencia|Gran Canaria|Estudiantes|Joventut|Baskonia|Besiktas|Galatasaray|Darussafaka|Tofas|Banvit|Limoges|Strasbourg|Nanterre|Le Mans|Cholet|Pau-Orthez|Antwerp|Oostende|Lietkabelis|Rytas|Promitheas|Aris|PAOK|AEK|Treviso|Trento|Venezia|Pesaro|Reggio Emilia|Brindisi|Cremona|Cantù|Varese|Virtus Roma|Scafati|Napoli|Torino|Trieste|Udine|Forlì|Imola|Verona|Caserta|Avellino|Sassari|Pistoia|Lucca|Trapani|Agrigento|Orlandina|Latina|Ravenna|Ferrara|Mantova|Piacenza|San Severo|Tortona|Montegranaro|Roseto|Recanati|Chieti|Fabriano|Bari|Matera|Potenza|Cosenza|Catanzaro|Messina|Siracusa|Catania|Palermo|Marsala|Gela|Ragusa|Enna|Caltanissetta|Syracuse|Siracusa|Catania|Palermo|Marsala|Gela|Ragusa|Enna|Caltanissetta)?)/);
+                        if (match && match[1]) {
+                            let val = match[1].trim();
+                            if (val.match(/(University|College|Academy|Basket|League|Bourg|Zaragoza|team|club|BC|KK|ASVEL|Virtus|Real Madrid|Panathinaikos|Olympiacos|Maccabi|Efes|Fenerbahce|Bayern|Monaco|Partizan|Cedevita|Zalgiris|Lokomotiv|Unicaja|Valencia|Gran Canaria|Estudiantes|Joventut|Baskonia|Besiktas|Galatasaray|Darussafaka|Tofas|Banvit|Limoges|Strasbourg|Nanterre|Le Mans|Cholet|Pau-Orthez|Antwerp|Oostende|Lietkabelis|Rytas|Promitheas|Aris|PAOK|AEK|Treviso|Trento|Venezia|Pesaro|Reggio Emilia|Brindisi|Cremona|Cantù|Varese|Virtus Roma|Scafati|Napoli|Torino|Trieste|Udine|Forlì|Imola|Verona|Caserta|Avellino|Sassari|Pistoia|Lucca|Trapani|Agrigento|Orlandina|Latina|Ravenna|Ferrara|Mantova|Piacenza|San Severo|Tortona|Montegranaro|Roseto|Recanati|Chieti|Fabriano|Bari|Matera|Potenza|Cosenza|Catanzaro|Messina|Siracusa|Catania|Palermo|Marsala|Gela|Ragusa|Enna|Caltanissetta|Syracuse|Siracusa|Catania|Palermo|Marsala|Gela|Ragusa|Enna|Caltanissetta)$/) || val.startsWith('NBA G League ')) {
+                                priorToNBA = val;
+                            }
+                            break;
+                        }
+                    }
+                    // Only keep if matches valid org pattern
+                    if (!(priorToNBA.match(/(University|College|Academy|Basket|League|Bourg|Zaragoza|team|club|BC|KK|ASVEL|Virtus|Real Madrid|Panathinaikos|Olympiacos|Maccabi|Efes|Fenerbahce|Bayern|Monaco|Partizan|Cedevita|Zalgiris|Lokomotiv|Unicaja|Valencia|Gran Canaria|Estudiantes|Joventut|Baskonia|Besiktas|Galatasaray|Darussafaka|Tofas|Banvit|Limoges|Strasbourg|Nanterre|Le Mans|Cholet|Pau-Orthez|Antwerp|Oostende|Lietkabelis|Rytas|Promitheas|Aris|PAOK|AEK|Treviso|Trento|Venezia|Pesaro|Reggio Emilia|Brindisi|Cremona|Cantù|Varese|Virtus Roma|Scafati|Napoli|Torino|Trieste|Udine|Forlì|Imola|Verona|Caserta|Avellino|Sassari|Pistoia|Lucca|Trapani|Agrigento|Orlandina|Latina|Ravenna|Ferrara|Mantova|Piacenza|San Severo|Tortona|Montegranaro|Roseto|Recanati|Chieti|Fabriano|Bari|Matera|Potenza|Cosenza|Catanzaro|Messina|Siracusa|Catania|Palermo|Marsala|Gela|Ragusa|Enna|Caltanissetta|Syracuse|Siracusa|Catania|Palermo|Marsala|Gela|Ragusa|Enna|Caltanissetta)$/) || priorToNBA.startsWith('NBA G League '))) {
+                        priorToNBA = '';
+                    }
                     return {
                         name,
                         position,
@@ -111,7 +160,9 @@ async function scrapeTeamPage(page, url) {
                         salary,
                         wingspan,
                         imgUrl,
-                        ovr
+                        ovr,
+                        prior_to_nba: priorToNBA,
+                        nationality
                     };
                 });
                 const missing = [];
@@ -121,11 +172,26 @@ async function scrapeTeamPage(page, url) {
                 if (missing.length) {
                     console.log(`     Not found for ${player.name}: ${missing.join(', ')}`);
                 }
-                roster.push(details);
                 await playerPage.close();
             } catch (err) {
                 console.error(`   - Error scraping player ${player.name}:`, err.message);
+                // Fill with empty fields if error
+                details = {
+                    name: player.name,
+                    position: '',
+                    height: '',
+                    weight: '',
+                    archetype: '',
+                    birthdate: '',
+                    yearsInNBA: '',
+                    salary: '',
+                    wingspan: '',
+                    imgUrl: '',
+                    ovr: '',
+                    prior_to_nba: ''
+                };
             }
+            roster.push(details);
         }
         console.log(`Step: Extracted ${roster.length} players.`);
         return roster;
@@ -142,14 +208,14 @@ async function scrapeTeamPage(page, url) {
         process.exit(1);
     }
     const browser = await puppeteer.launch({
-        headless: false,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        protocolTimeout: 1200000 // 20 minutes
     });
-    protocolTimeout: 180000 // 3 minutes
     try {
         const page = await browser.newPage();
         console.log(`Step: Loading team: ${teamUrl}`);
-        await page.goto(teamUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+        await page.goto(teamUrl, { waitUntil: 'networkidle2', timeout: 600000 });
         await new Promise(res => setTimeout(res, 7000));
         const roster = await scrapeTeamPage(page, teamUrl);
         await page.close();

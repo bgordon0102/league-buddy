@@ -15,10 +15,25 @@ async function scrapeTeamPage(url) {
     // Team overall rating
     const ovr = await page.$eval('span.attribute-box.emerald[data-order]', el => el.textContent.trim());
     // Roster: player names and profile URLs
-    const roster = await page.$$eval('a[href^="https://www.2kratings.com/"]', els =>
+    const playerLinks = await page.$$eval('a[href^="https://www.2kratings.com/"]', els =>
         els.filter(el => el.href.includes('/'))
             .map(el => ({ name: el.textContent.trim(), url: el.href }))
     );
+    let roster = [];
+    for (const player of playerLinks) {
+        const playerPage = await browser.newPage();
+        await playerPage.goto(player.url, { waitUntil: 'networkidle2', timeout: 60000 });
+        await new Promise(res => setTimeout(res, 1000));
+        const priorToNBA = await playerPage.evaluate(() => {
+            const priorNBA = Array.from(document.querySelectorAll('p.text-light.mb-1.my-lg-0')).find(p => p.textContent.includes('Prior to NBA:'));
+            if (priorNBA) {
+                return priorNBA.textContent.replace('Prior to NBA:', '').trim();
+            }
+            return '';
+        });
+        roster.push({ name: player.name, url: player.url, prior_to_nba: priorToNBA });
+        await playerPage.close();
+    }
     await browser.close();
     return { tier, ovr, roster };
 }

@@ -15,17 +15,19 @@ export async function execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
         const seasonPath = path.join(process.cwd(), 'data/season.json');
         const seasonData = JSON.parse(fs.readFileSync(seasonPath, 'utf8'));
-        const currentWeek = seasonData.currentWeek ?? 0;
-        if (currentWeek < 1) {
-            await interaction.editReply({ content: 'Big board and scouting features unlock in Week 1.' });
+        // Only scouting should be locked until week 1; big board is always viewable
+        // Dynamically select draft class file based on season number
+        // Use unique variable names to avoid redeclaration errors
+        const _seasonPath = path.join(process.cwd(), 'data/season.json');
+        const _seasonData = JSON.parse(fs.readFileSync(_seasonPath, 'utf8'));
+        const _seasonNo = _seasonData.seasonNo || 1;
+        const _draftClassFolder = `CUS${String(_seasonNo).padStart(2, '0')}`;
+        const _boardFilePath = path.join(process.cwd(), `draft classes/${_draftClassFolder}/2k26_${_draftClassFolder} - Big Board.json`);
+        if (!fs.existsSync(_boardFilePath)) {
+            await interaction.editReply({ content: `Big board file not found for season ${_seasonNo}.` });
             return;
         }
-        const boardFilePath = path.join(process.cwd(), 'draft classes/CUS01/2k26_CUS01 - Big Board.json');
-        if (!fs.existsSync(boardFilePath)) {
-            await interaction.editReply({ content: 'Big board file not found.' });
-            return;
-        }
-        const bigBoardData = readJSON(boardFilePath);
+        const bigBoardData = readJSON(_boardFilePath);
         const allPlayers = Object.values(bigBoardData).filter(player => player && player.name && (player.position_1 || player.position));
         if (allPlayers.length === 0) {
             await interaction.editReply({ content: 'No players found in big board.' });

@@ -6,10 +6,14 @@ import { EmbedBuilder } from "discord.js";
 const bigBoardsFile = path.join(process.cwd(), "data/prospectBoards.json");
 
 export async function execute(interaction) {
-    // Always use the same big board file
-    const boardFilePath = path.join(process.cwd(), "draft classes/CUS01/2k26_CUS01 - Big Board.json");
+    // Dynamically select draft class file based on season number
+    const seasonPath = path.join(process.cwd(), 'data/season.json');
+    const seasonData = JSON.parse(fs.readFileSync(seasonPath, 'utf8'));
+    const seasonNo = seasonData.seasonNo || 1;
+    const draftClassFolder = `CUS${String(seasonNo).padStart(2, '0')}`;
+    const boardFilePath = path.join(process.cwd(), `draft classes/${draftClassFolder}/2k26_${draftClassFolder} - Big Board.json`);
     if (!fs.existsSync(boardFilePath)) {
-        await interaction.reply({ content: `Big board file not found at resolved path: ${boardFilePath}`, flags: 64 });
+        await interaction.reply({ content: `Big board file not found for season ${seasonNo} at resolved path: ${boardFilePath}`, flags: 64 });
         return;
     }
     const bigBoardData = JSON.parse(fs.readFileSync(boardFilePath, 'utf8'));
