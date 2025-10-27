@@ -10,7 +10,9 @@
     "salary": "$37,958,760",
     "wingspan": "6'10\" (208cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/LaMelo-Ball-2K-Rating.png",
-    "ovr": "87"
+    "ovr": "87",
+    "prior_to_nba": "Illawarra Hawks (Australia)",
+    "nationality": "United States"
   },
   {
     "name": "Brandon Miller",
@@ -23,7 +25,9 @@
     "salary": "$11,968,800",
     "wingspan": "7'1\" (216cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Brandon-Miller-2K-Rating.png",
-    "ovr": "82"
+    "ovr": "82",
+    "prior_to_nba": "Alabama",
+    "nationality": "United States"
   },
   {
     "name": "Miles Bridges",
@@ -36,7 +40,9 @@
     "salary": "$25,000,000",
     "wingspan": "6'10\" (208cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Miles-Bridges-2K-Rating.png",
-    "ovr": "80"
+    "ovr": "80",
+    "prior_to_nba": "Michigan State",
+    "nationality": "United States"
   },
   {
     "name": "Collin Sexton",
@@ -49,7 +55,9 @@
     "salary": "$18,975,000",
     "wingspan": "6'7\" (201cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Collin-Sexton-2K-Rating.png",
-    "ovr": "80"
+    "ovr": "80",
+    "prior_to_nba": "Alabama",
+    "nationality": "United States"
   },
   {
     "name": "Mason Plumlee",
@@ -62,7 +70,9 @@
     "salary": "$3,634,153",
     "wingspan": "6'11\" (211cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Mason-Plumlee-2K-Rating.png",
-    "ovr": "75"
+    "ovr": "75",
+    "prior_to_nba": "Duke",
+    "nationality": "United States"
   },
   {
     "name": "Tre Mann",
@@ -75,7 +85,9 @@
     "salary": "$8,000,000",
     "wingspan": "6'4\" (193cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Tre-Mann-2K-Rating.png",
-    "ovr": "75"
+    "ovr": "75",
+    "prior_to_nba": "Florida",
+    "nationality": "United States"
   },
   {
     "name": "Kon Knueppel",
@@ -88,7 +100,9 @@
     "salary": "$10,015,680",
     "wingspan": "6'6\" (198cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Kon-Knueppel-2K-Rating.png",
-    "ovr": "75"
+    "ovr": "75",
+    "prior_to_nba": "Duke",
+    "nationality": "United States"
   },
   {
     "name": "Josh Green",
@@ -101,7 +115,9 @@
     "salary": "$13,666,667",
     "wingspan": "6'10\" (208cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Josh-Green-2K-Rating.png",
-    "ovr": "73"
+    "ovr": "73",
+    "prior_to_nba": "Arizona",
+    "nationality": "Australia"
   },
   {
     "name": "Moussa Diabate",
@@ -114,7 +130,9 @@
     "salary": "$2,270,735",
     "wingspan": "7'1\" (216cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Moussa-Diabate-2K-Rating.png",
-    "ovr": "73"
+    "ovr": "73",
+    "prior_to_nba": "Michigan",
+    "nationality": "France"
   },
   {
     "name": "Grant Williams",
@@ -127,7 +145,9 @@
     "salary": "$13,645,500",
     "wingspan": "6'10\" (208cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Grant-Williams-2K-Rating.png",
-    "ovr": "73"
+    "ovr": "73",
+    "prior_to_nba": "Tennessee",
+    "nationality": "United States"
   },
   {
     "name": "Pat Connaughton",
@@ -140,7 +160,9 @@
     "salary": "$9,423,869",
     "wingspan": "6'9\" (206cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Pat-Connaughton-2K-Rating.png",
-    "ovr": "72"
+    "ovr": "72",
+    "prior_to_nba": "Notre Dame",
+    "nationality": "United States"
   },
   {
     "name": "Tidjane Salaun",
@@ -153,7 +175,9 @@
     "salary": "$7,863,240",
     "wingspan": "7'2\" (218cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Tidjane-Salaun-2K-Rating.png",
-    "ovr": "72"
+    "ovr": "72",
+    "prior_to_nba": "Cholet Basket (France)",
+    "nationality": "France"
   },
   {
     "name": "KJ Simpson",
@@ -166,7 +190,9 @@
     "salary": "",
     "wingspan": "6'5\" (196cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/KJ-Simpson-2K-Rating.png",
-    "ovr": "72"
+    "ovr": "72",
+    "prior_to_nba": "Colorado",
+    "nationality": "United States"
   },
   {
     "name": "Drew  Peterson",
@@ -179,7 +205,9 @@
     "salary": "",
     "wingspan": "7'1\" (216cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Drew-Peterson-2K-Rating.png",
-    "ovr": "70"
+    "ovr": "70",
+    "prior_to_nba": "USC",
+    "nationality": "United States"
   },
   {
     "name": "Antonio Reeves",
@@ -192,7 +220,9 @@
     "salary": "",
     "wingspan": "6'8\" (203cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Antonio-Reeves-2K-Rating.png",
-    "ovr": "70"
+    "ovr": "70",
+    "prior_to_nba": "Kentucky",
+    "nationality": "United States"
   },
   {
     "name": "Liam McNeeley",
@@ -205,7 +235,9 @@
     "salary": "$2,763,960",
     "wingspan": "6'9\" (206cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Liam-McNeeley-2K-Rating.png",
-    "ovr": "70"
+    "ovr": "70",
+    "prior_to_nba": "UConn",
+    "nationality": "United States"
   },
   {
     "name": "Ryan Kalkbrenner",
@@ -218,7 +250,9 @@
     "salary": "$2,296,274",
     "wingspan": "7'5\" (226cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Ryan-Kalkbrenner-2K-Rating.png",
-    "ovr": "70"
+    "ovr": "70",
+    "prior_to_nba": "Creighton",
+    "nationality": "United States"
   },
   {
     "name": "Sion James",
@@ -231,6 +265,8 @@
     "salary": "$2,296,274",
     "wingspan": "6'7\" (201cm)",
     "imgUrl": "https://www.2kratings.com/wp-content/uploads/Sion-James-2K-Rating.png",
-    "ovr": "70"
+    "ovr": "70",
+    "prior_to_nba": "Duke",
+    "nationality": "United States"
   }
 ]
