@@ -7,7 +7,7 @@ const bigBoardsFile = path.join(process.cwd(), "data/prospectBoards.json");
 
 export async function execute(interaction) {
     // Always use the same big board file
-    const boardFilePath = path.join(process.cwd(), "draft classes/CUS01/2k26_CUS01 - Big Board.json");
+    const boardFilePath = path.join(process.cwd(), "draft classes", "2k26_CUS01 - Big Board.json");
     if (!fs.existsSync(boardFilePath)) {
         await interaction.reply({ content: `Big board file not found at resolved path: ${boardFilePath}`, flags: 64 });
         return;
@@ -15,24 +15,23 @@ export async function execute(interaction) {
     const bigBoardData = JSON.parse(fs.readFileSync(boardFilePath, 'utf8'));
     const allPlayers = Object.values(bigBoardData).filter(player => player && player.name && player.position_1);
 
-    // Page 1: 1-15
-    const players = allPlayers.slice(0, 15);
     // Extract player name (remove leading number and dot if present)
     function normalize(str) {
         return str
-            .replace(/^\d+\.\s*/, '')
+            .replace(/^[\d]+\.\s*/, '')
             .trim()
             .toLowerCase()
             .normalize('NFKD')
             .replace(/[\u0300-\u036f]/g, '');
     }
     const normalizedSelected = normalize(interaction.values[0]);
-    const selected = players.find(p => p.name && normalize(p.name) === normalizedSelected);
+    // Search the full allPlayers list for the selected player
+    const selected = allPlayers.find(p => p.name && normalize(p.name) === normalizedSelected);
     if (!selected) {
         console.log('Bigboard select debug: Selected value (raw):', interaction.values[0]);
         console.log('Bigboard select debug: Selected value (normalized):', normalizedSelected);
-        console.log('Bigboard select debug: All normalized player names:', players.map(p => normalize(p.name)));
-        console.log('Bigboard select debug: All raw player names:', players.map(p => p.name));
+        console.log('Bigboard select debug: All normalized player names:', allPlayers.map(p => normalize(p.name)));
+        console.log('Bigboard select debug: All raw player names:', allPlayers.map(p => p.name));
         await interaction.reply({ content: "Player not found.", flags: 64 });
         return;
     }

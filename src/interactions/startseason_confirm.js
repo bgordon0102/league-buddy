@@ -18,6 +18,8 @@ export async function execute(interaction) {
             console.error('[startseason_confirm] Not a ButtonInteraction:', interaction);
             return;
         }
+        // Defer immediately to avoid Discord interaction timeout
+        await interaction.deferUpdate();
         let seasonno = null;
         if (interaction.customId && interaction.customId.startsWith('startseason_confirm_')) {
             const parts = interaction.customId.split('_');
@@ -64,10 +66,13 @@ export async function execute(interaction) {
                         const sentMsg = await channel.send({ embeds: embedArr });
                         await sentMsg.pin();
                         if (envKey) {
-                            const envPath = require('path').resolve(process.cwd(), '.env');
+                            // Use ES module imports for path and fs
+                            const pathModule = await import('path');
+                            const fsModule = await import('fs');
+                            const envPath = pathModule.resolve(process.cwd(), '.env');
                             let envContent = '';
                             try {
-                                envContent = require('fs').readFileSync(envPath, 'utf8');
+                                envContent = fsModule.readFileSync(envPath, 'utf8');
                             } catch { }
                             const regex = new RegExp(`^${envKey}=.*$`, 'm');
                             if (regex.test(envContent)) {
@@ -75,7 +80,7 @@ export async function execute(interaction) {
                             } else {
                                 envContent += `\n${envKey}=${sentMsg.id}`;
                             }
-                            require('fs').writeFileSync(envPath, envContent, 'utf8');
+                            fsModule.writeFileSync(envPath, envContent, 'utf8');
                         }
                     } catch (err) {
                         if (err && err.stack) {
@@ -98,48 +103,29 @@ export async function execute(interaction) {
             errorMsg = err?.message || (typeof err === 'string' ? err : JSON.stringify(err));
         }
         console.log('[startseason_confirm] Preparing to respond to interaction. Success:', success, 'Error:', errorMsg);
-        // Always respond to the interaction, with fallback and extra logging
-        let replied = false;
+        // Respond to the interaction after async work
         try {
-            await interaction.update({
+            await interaction.editReply({
                 content: success
                     ? `✅ Season ${seasonno} has been started and all data files have been reset.`
                     : `❌ Failed to reset season data: ${errorMsg}`,
                 components: []
             });
-            replied = true;
-            console.log('[startseason_confirm] interaction.update sent');
+            console.log('[startseason_confirm] interaction.editReply sent');
         } catch (err) {
-            console.error('[startseason_confirm] interaction.update failed:', err);
-            // If update fails, try a followUp
-            try {
-                await interaction.followUp({
-                    content: success
-                        ? `✅ Season ${seasonno} has been started and all data files have been reset.`
-                        : `❌ Failed to reset season data: ${errorMsg}`,
-                    ephemeral: true
-                });
-                replied = true;
-                console.log('[startseason_confirm] interaction.followUp sent');
-            } catch (finalErr) {
-                console.error('[startseason_confirm] Failed to send interaction response:', finalErr);
-            }
-        }
-        if (!replied) {
-            // Last resort: log and do nothing (Discord API may block further responses)
-            console.error('[startseason_confirm] No response sent to interaction. Discord may have blocked further replies.');
+            console.error('[startseason_confirm] interaction.editReply failed:', err);
         }
         console.log('[startseason_confirm] EXIT handler for customId:', interaction.customId);
     } catch (outerErr) {
         console.error('[startseason_confirm] TOP-LEVEL FATAL error in button handler:', outerErr);
         try {
-            await interaction.followUp({
+            await interaction.editReply({
                 content: `❌ Fatal error in season reset: ${outerErr?.message || outerErr}`,
-                ephemeral: true
+                components: []
             });
-            console.log('[startseason_confirm] Fatal error followUp sent');
+            console.log('[startseason_confirm] Fatal error editReply sent');
         } catch (finalErr) {
-            console.error('[startseason_confirm] Failed to send fatal error followUp:', finalErr);
+            console.error('[startseason_confirm] Failed to send fatal error editReply:', finalErr);
         }
     }
 }

@@ -4,7 +4,7 @@ import path from "path";
 import { EmbedBuilder } from "discord.js";
 
 // This handler is for page 4 (46-60)
-const bigBoardsFile = path.join(process.cwd(), "draft classes/CUS01/2k26_CUS01 - Big Board.json");
+const bigBoardsFile = path.join(process.cwd(), "draft classes", "2k26_CUS01 - Big Board.json");
 
 export async function execute(interaction) {
     // Always use the same big board file

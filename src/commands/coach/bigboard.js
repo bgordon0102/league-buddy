@@ -15,14 +15,13 @@ export async function execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
         const seasonPath = path.join(process.cwd(), 'data/season.json');
         const seasonData = JSON.parse(fs.readFileSync(seasonPath, 'utf8'));
-        const currentWeek = seasonData.currentWeek ?? 0;
-        if (currentWeek < 1) {
-            await interaction.editReply({ content: 'Big board and scouting features unlock in Week 1.' });
-            return;
-        }
-        const boardFilePath = path.join(process.cwd(), 'draft classes/CUS01/2k26_CUS01 - Big Board.json');
+        const seasonNo = seasonData.seasonNo ?? 1;
+        // Big board is always viewable, even in week 0. Only scouting should be locked until the season starts.
+        // Fix file path logic to match folder structure (draft classes/CUS01/2k26_CUS01 - Big Board.json, etc.)
+        // Updated: Big board files are now directly in 'draft classes' (no CUS01 subfolder)
+        const boardFilePath = path.join(process.cwd(), 'draft classes', `2k26_CUS0${seasonNo} - Big Board.json`);
         if (!fs.existsSync(boardFilePath)) {
-            await interaction.editReply({ content: 'Big board file not found.' });
+            await interaction.editReply({ content: `Big board file not found at resolved path: ${boardFilePath}` });
             return;
         }
         const bigBoardData = readJSON(boardFilePath);

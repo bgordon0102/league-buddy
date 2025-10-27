@@ -98,10 +98,10 @@ export async function execute(interaction) {
                 { name: "Weight", value: player.weight || "-", inline: true },
                 { name: "Wingspan", value: player.wingspan || "-", inline: true },
                 { name: "Archetype", value: player.archetype || "-", inline: true },
-                { name: "Birthdate", value: player.birthdate || "-", inline: true },
                 { name: "Age", value: ageStr, inline: true },
-                { name: "Years in NBA", value: player.yearsInNBA || "-", inline: true },
-                { name: "Salary", value: player.salary || "-", inline: true }
+                { name: "Salary", value: player.salary || "-", inline: true },
+                { name: "Prior to NBA", value: player.prior_to_nba || "-", inline: true },
+                { name: "Nationality", value: player.nationality || "-", inline: true }
             );
         await interaction.editReply({ embeds: [embed] });
     } catch (err) {

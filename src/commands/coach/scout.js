@@ -31,8 +31,8 @@ export async function execute(interaction) {
             return;
         }
 
-        // Use only the single big board file for all weeks
-        const boardFilePath = path.join(process.cwd(), 'draft classes/CUS01/2k26_CUS01 - Big Board.json');
+        // Use only the single big board file for all weeks (flat structure)
+        const boardFilePath = path.join(process.cwd(), 'draft classes', `2k26_CUS01 - Big Board.json`);
         if (!fs.existsSync(boardFilePath)) {
             if (deferred) await interaction.editReply({ content: 'Big board file not found.' });
             else await interaction.reply({ content: 'Big board file not found.', ephemeral: true });
@@ -117,8 +117,8 @@ export async function handleScoutSelect(interaction, menuIndex) {
         await interaction.editReply({ content: 'Scouting features unlock in Week 1. Only the recruit board is available during preseason.' });
         return;
     }
-    // Always use the single big board file
-    const boardFilePath = path.join(process.cwd(), 'draft classes/CUS01/2k26_CUS01 - Big Board.json');
+    // Always use the single big board file (flat structure)
+    const boardFilePath = path.join(process.cwd(), 'draft classes', `2k26_CUS01 - Big Board.json`);
     if (!fs.existsSync(boardFilePath)) {
         await interaction.editReply({ content: `Board file not found at resolved path: ${boardFilePath}` });
         return;

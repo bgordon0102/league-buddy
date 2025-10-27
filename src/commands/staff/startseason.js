@@ -13,7 +13,8 @@ const LEAGUE_FILE = path.join(DATA_DIR, 'league.json');
 const PLAYERS_FILE = path.join(DATA_DIR, 'players.json');
 
 // Use the draft class file directly for big board operations
-const BIGBOARD_FILE = path.join(process.cwd(), 'draft classes/CUS01/2k26_CUS01 - Big Board.json');
+// Use the draft class file directly for big board operations (no CUS01 folder)
+const BIGBOARD_FILE = path.join(process.cwd(), 'draft classes/2k26_CUS01 - Big Board.json');
 const SCOUTING_FILE = path.join(DATA_DIR, 'scouting.json');
 const RECRUITS_FILE = path.join(DATA_DIR, 'recruits.json');
 const SCOUT_POINTS_FILE = path.join(DATA_DIR, 'scout_points.json');
@@ -177,15 +178,7 @@ export async function resetSeasonData(seasonno, guild, caller = 'unknown') {
     console.log('[startseason] Wrote teams.json');
 
     // --- DRAFT CLASS SELECTION LOGIC ---
-    // Only use the draft class files for big board and recruiting data
-    let recruitingSource;
-    if (seasonno === 2) {
-        recruitingSource = path.resolve(process.cwd(), 'draft classes/CUS02/2k26_CUS02 - Recruiting.json');
-    } else {
-        recruitingSource = path.resolve(process.cwd(), 'draft classes/CUS01/2k26_CUS01 - Recruiting.json');
-    }
-    const recruitingData = safeReadJSON(recruitingSource, []);
-    writeJSON(path.join(DATA_DIR, 'recruiting.json'), recruitingData);
+    // Only use the draft class files for big board data. Recruiting is deprecated and not regenerated.
 
     // Standings
     const standings = {};
@@ -196,6 +189,7 @@ export async function resetSeasonData(seasonno, guild, caller = 'unknown') {
 
     // Scores: always reset to empty array
     writeJSON(path.join(DATA_DIR, 'scores.json'), []);
+    // Do not regenerate recruiting.json or recruits.json
 
     // Season file: always use the freshly generated coachRoleMap
     const seasonData = {
@@ -220,7 +214,7 @@ export async function resetSeasonData(seasonno, guild, caller = 'unknown') {
     console.log('[startseason] Wrote league.json');
     writeJSON(PLAYERS_FILE, []);
     writeJSON(SCOUTING_FILE, {});
-    writeJSON(RECRUITS_FILE, []);
+    // Do not regenerate recruits.json
     writeJSON(SCOUT_POINTS_FILE, {});
 
     return staticTeams.length;
