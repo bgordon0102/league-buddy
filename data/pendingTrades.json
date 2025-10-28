@@ -1,217 +1,173 @@
-[
-  {
-    "status": "pending",
-    "createdAt": 1761417333672,
-    "expiresAt": 1761503733672
+{
+  "1432548039276498966": {
+    "trade": {
+      "tradeId": "1761616408854",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100717243138061",
+      "yourTeam": "cavaliers",
+      "otherTeam": "thunder",
+      "assetsSent": "pg darius garland, 2026 1st (lottery)",
+      "assetsReceived": "pf chet holmgren, 2026 2nd",
+      "notes": "test",
+      "submittedAt": 1761616408854,
+      "status": "committee"
+    },
+    "votes": {
+      "1076243288056664234": "approve"
+    }
   },
-  {
-    "status": "pending",
-    "createdAt": 1761417472120,
-    "expiresAt": 1761503872120
+  "1432552250169102389": {
+    "trade": {
+      "tradeId": "1761617410966",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100680018559076",
+      "yourTeam": "cavaliers",
+      "otherTeam": "lakers",
+      "assetsSent": "pg darius garland, 2026 1st (lottery)",
+      "assetsReceived": "pf chet holmgren, 2026 2nd",
+      "notes": "test",
+      "submittedAt": 1761617410966,
+      "status": "committee"
+    },
+    "votes": {
+      "1076243288056664234": "approve"
+    }
   },
-  {
-    "status": "pending",
-    "createdAt": 1761417492204,
-    "expiresAt": 1761503892204
+  "1432552652012781618": {
+    "trade": {
+      "tradeId": "1761617446908",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100680018559076",
+      "yourTeam": "cavaliers",
+      "otherTeam": "lakers",
+      "assetsSent": "garland, 2026 1st (lottery)",
+      "assetsReceived": "doncic, 2026 2nd",
+      "notes": "test",
+      "submittedAt": 1761617446908,
+      "status": "committee"
+    },
+    "votes": {
+      "1076243288056664234": "approve"
+    }
   },
-  {
-    "status": "pending",
-    "createdAt": 1761417555153,
-    "expiresAt": 1761503955153
+  "1432554107641794673": {
+    "trade": {
+      "tradeId": "1761617904670",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100680018559076",
+      "yourTeam": "cavaliers",
+      "otherTeam": "lakers",
+      "assetsSent": "garland, 2026 1st (lottery)",
+      "assetsReceived": "doncic, 2026 2nd",
+      "notes": "",
+      "submittedAt": 1761617904670,
+      "status": "committee"
+    },
+    "votes": {
+      "1076243288056664234": "approve",
+      "1195843329477328978": "approve"
+    }
   },
-  {
-    "status": "pending",
-    "createdAt": 1761417799569,
-    "expiresAt": 1761504199569
+  "1432555520711069777": {
+    "trade": {
+      "tradeId": "1761618240803",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100680018559076",
+      "yourTeam": "cavaliers",
+      "otherTeam": "lakers",
+      "assetsSent": "garland, 2026 1st (lottery)",
+      "assetsReceived": "doncic, 2026 2nd",
+      "notes": "test",
+      "submittedAt": 1761618240803,
+      "status": "committee"
+    },
+    "votes": {
+      "1076243288056664234": "approve"
+    }
   },
-  {
-    "status": "pending",
-    "createdAt": 1761417802851,
-    "expiresAt": 1761504202851
+  "1432556328940994620": {
+    "trade": {
+      "tradeId": "1761618433969",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100680018559076",
+      "yourTeam": "cavaliers",
+      "otherTeam": "lakers",
+      "assetsSent": "doncic, 2026 1st (lottery)",
+      "assetsReceived": "garland, 2026 2nd",
+      "notes": "test",
+      "submittedAt": 1761618433969,
+      "status": "committee"
+    },
+    "votes": {
+      "1076243288056664234": "approve"
+    }
   },
-  {
-    "status": "pending",
-    "createdAt": 1761417813102,
-    "expiresAt": 1761504213102
+  "1432557164106350663": {
+    "trade": {
+      "tradeId": "1761618636241",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100680018559076",
+      "yourTeam": "cavaliers",
+      "otherTeam": "lakers",
+      "assetsSent": "garland, 2030 1st (lottery)",
+      "assetsReceived": "doncic, 2030 2nd",
+      "notes": "test",
+      "submittedAt": 1761618636241,
+      "status": "committee"
+    },
+    "votes": {
+      "1076243288056664234": "approve"
+    }
   },
-  {
-    "status": "pending",
-    "createdAt": 1761418096667,
-    "expiresAt": 1761504496667
+  "1432558333616848957": {
+    "trade": {
+      "tradeId": "1761618816019",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100650423550074",
+      "yourTeam": "cavaliers",
+      "otherTeam": "pistons",
+      "assetsSent": "garland, 2026 1st (lottery)",
+      "assetsReceived": "cade cunningham, 2026 2nd",
+      "notes": "test",
+      "submittedAt": 1761618816019,
+      "status": "committee"
+    },
+    "votes": {
+      "1076243288056664234": "deny"
+    }
   },
-  {
-    "status": "pending",
-    "createdAt": 1761418098837,
-    "expiresAt": 1761504498837
+  "1432558483097522257": {
+    "trade": {
+      "tradeId": "1761618909019",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100650423550074",
+      "yourTeam": "cavaliers",
+      "otherTeam": "pistons",
+      "assetsSent": "2026 1st (lottery)",
+      "assetsReceived": "2027 1st, 2029 1st",
+      "notes": "test",
+      "submittedAt": 1761618909019,
+      "status": "committee"
+    },
+    "votes": {
+      "1076243288056664234": "deny"
+    }
   },
-  {
-    "status": "pending",
-    "createdAt": 1761418106751,
-    "expiresAt": 1761504506751
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418109249,
-    "expiresAt": 1761504509249
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418109497,
-    "expiresAt": 1761504509497
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418109698,
-    "expiresAt": 1761504509698
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418109880,
-    "expiresAt": 1761504509880
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418110048,
-    "expiresAt": 1761504510048
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418110215,
-    "expiresAt": 1761504510215
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418110415,
-    "expiresAt": 1761504510415
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418110549,
-    "expiresAt": 1761504510549
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418110764,
-    "expiresAt": 1761504510764
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418251617,
-    "expiresAt": 1761504651617
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418260384,
-    "expiresAt": 1761504660384
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418261015,
-    "expiresAt": 1761504661015
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418261198,
-    "expiresAt": 1761504661198
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418263996,
-    "expiresAt": 1761504663996
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418264194,
-    "expiresAt": 1761504664194
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418264399,
-    "expiresAt": 1761504664399
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418264564,
-    "expiresAt": 1761504664564
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418264765,
-    "expiresAt": 1761504664765
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418264961,
-    "expiresAt": 1761504664961
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418405148,
-    "expiresAt": 1761504805148
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418412615,
-    "expiresAt": 1761504812615
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418413412,
-    "expiresAt": 1761504813412
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418413630,
-    "expiresAt": 1761504813630
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418413810,
-    "expiresAt": 1761504813810
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418414048,
-    "expiresAt": 1761504814048
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418586401,
-    "expiresAt": 1761504986401
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418712132,
-    "expiresAt": 1761505112132
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761418865199,
-    "expiresAt": 1761505265199
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761419005249,
-    "expiresAt": 1761505405249
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761419455025,
-    "expiresAt": 1761505855025
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761420358970,
-    "expiresAt": 1761506758970
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761420513190,
-    "expiresAt": 1761506913190
-  },
-  {
-    "status": "pending",
-    "createdAt": 1761420874112,
-    "expiresAt": 1761507274112
+  "1432564525051154515": {
+    "trade": {
+      "tradeId": "1761620368271",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100650423550074",
+      "yourTeam": "cavaliers",
+      "otherTeam": "pistons",
+      "assetsSent": "2026 1st (lottery)",
+      "assetsReceived": "2026 2nd",
+      "notes": "test for picks",
+      "submittedAt": 1761620368271,
+      "status": "approved"
+    },
+    "votes": {
+      "1076243288056664234": "approve"
+    }
   }
-]
+}

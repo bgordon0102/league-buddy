@@ -80,14 +80,7 @@ export async function execute(interaction) {
         const actionRows = [];
         for (const player of sortedRoster) {
             lines.push(`**${player.name}** | ${player.position} | OVR: ${player.ovr}`);
-            const manageId = `roster_manage_${player.id}`;
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId(manageId)
-                    .setLabel('Manage')
-                    .setStyle(ButtonStyle.Primary)
-            );
-            actionRows.push(row);
+            // No action buttons shown
         }
         // Discord only allows 5 action rows per message, batch if needed
         const batchedRows = [];

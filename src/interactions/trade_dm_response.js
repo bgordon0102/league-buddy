@@ -41,10 +41,25 @@ export async function execute(interaction) {
     }
     if (customId === "trade_dm_deny") {
         trade.status = "denied";
-        // Notify Coach A
-        const userA = await interaction.client.users.fetch(trade.proposerId);
-        await userA.send({ content: `Your trade proposal with ${trade.otherTeam} was denied.` });
-        await interaction.reply({ content: "Trade denied. Coach A has been notified.", ephemeral: true });
+        // Notify Coach A with robust DM logic
+        try {
+            const userA = await interaction.client.users.fetch(trade.proposerId, { force: true });
+            console.log(`[DM Attempt] Notifying Coach A (ID: ${trade.proposerId}) for team ${trade.yourTeam}`);
+            await userA.send({ content: `Your trade proposal with ${trade.otherTeam} was denied.` });
+            await interaction.reply({ content: "Trade denied. Coach A has been notified.", ephemeral: true });
+        } catch (err) {
+            console.error(`[DM Error] Could not DM Coach A (ID: ${trade.proposerId}):`, err);
+            // Retry after 2 seconds
+            setTimeout(async () => {
+                try {
+                    const userA = await interaction.client.users.fetch(trade.proposerId, { force: true });
+                    await userA.send({ content: `Your trade proposal with ${trade.otherTeam} was denied.` });
+                } catch (err2) {
+                    console.error(`[DM Retry Error] Could not DM Coach A (ID: ${trade.proposerId}):`, err2);
+                }
+            }, 2000);
+            await interaction.reply({ content: `Trade denied, but could not DM Coach A (ID: ${trade.proposerId}).`, ephemeral: true });
+        }
         return;
     }
     if (customId === "trade_dm_approve") {
@@ -65,7 +80,38 @@ export async function execute(interaction) {
         const denyBtn = new ButtonBuilder().setCustomId(`committee_deny_${tradeId}`).setLabel("Deny").setStyle(ButtonStyle.Danger);
         const row = new ActionRowBuilder().addComponents(approveBtn, denyBtn);
         const committeeChannel = await interaction.client.channels.fetch(COMMITTEE_CHANNEL_ID);
-        await committeeChannel.send({ content: `<@&${committeeRoleId}>`, embeds: [embed], components: [row] });
+        const committeeMsg = await committeeChannel.send({ content: `<@&${committeeRoleId}>`, embeds: [embed], components: [row] });
+        // Save trade data in pendingTrades.json using committeeMsg.id as key
+        const pendingPath = path.join(process.cwd(), 'data/pendingTrades.json');
+        let pendingTrades = {};
+        if (fs.existsSync(pendingPath)) {
+            try {
+                pendingTrades = JSON.parse(fs.readFileSync(pendingPath, 'utf8'));
+            } catch { pendingTrades = {}; }
+        }
+        pendingTrades[committeeMsg.id] = { trade, votes: {} };
+        try {
+            fs.writeFileSync(pendingPath, JSON.stringify(pendingTrades, null, 2));
+        } catch (err) {
+            console.error('Failed to save pending trade for committee:', err);
+        }
+        // Robust DM logic for Coach B
+        try {
+            const userB = await interaction.client.users.fetch(trade.coachBId, { force: true });
+            console.log(`[DM Attempt] Notifying Coach B (ID: ${trade.coachBId}) for team ${trade.otherTeam}`);
+            await userB.send({ content: `Your trade proposal with ${trade.yourTeam} was approved and sent to committee for voting.` });
+        } catch (err) {
+            console.error(`[DM Error] Could not DM Coach B (ID: ${trade.coachBId}):`, err);
+            // Retry after 2 seconds
+            setTimeout(async () => {
+                try {
+                    const userB = await interaction.client.users.fetch(trade.coachBId, { force: true });
+                    await userB.send({ content: `Your trade proposal with ${trade.yourTeam} was approved and sent to committee for voting.` });
+                } catch (err2) {
+                    console.error(`[DM Retry Error] Could not DM Coach B (ID: ${trade.coachBId}):`, err2);
+                }
+            }, 2000);
+        }
         await interaction.reply({ content: "Trade sent to committee for voting.", ephemeral: true });
         return;
     }
