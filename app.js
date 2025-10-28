@@ -116,6 +116,17 @@ client.on('interactionCreate', async interaction => {
 
   // --- REGEX/GENERIC BUTTONS: robust customId matching ---
   if (interaction.customId) {
+    // Wire up progression OVR modal handler
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('progression_ovr_modal_')) {
+      const progressionApproveDeny = await import('./src/interactions/progression_approve_deny.js');
+      const handleOvrModal = progressionApproveDeny.handleOvrModal || progressionApproveDeny.default?.handleOvrModal;
+      if (typeof handleOvrModal === 'function') {
+        await handleOvrModal(interaction);
+      } else {
+        console.error('❌ handleOvrModal is not a function. Check exports in progression_approve_deny.js');
+      }
+      return;
+    }
     let foundHandler = null;
     for (const handler of client.interactionHandlers) {
       if (typeof handler.customId === 'string' && handler.customId === interaction.customId) {

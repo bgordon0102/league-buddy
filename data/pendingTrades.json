@@ -220,5 +220,22 @@
     "votes": {
       "1076243288056664234": "approve"
     }
+  },
+  "1432833283875536906": {
+    "trade": {
+      "tradeId": "1761684467240",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100733416374475",
+      "yourTeam": "cavaliers",
+      "otherTeam": "suns",
+      "assetsSent": "allen, 2030 1st (lottery)",
+      "assetsReceived": "dunn, 2028 2nd",
+      "notes": "test",
+      "submittedAt": 1761684467240,
+      "status": "committee"
+    },
+    "votes": {
+      "1076243288056664234": "approve"
+    }
   }
 }

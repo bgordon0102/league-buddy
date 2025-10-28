@@ -30,16 +30,76 @@ export async function execute(interaction) {
         return;
     }
 
-    // Update embed with approval/denial
-    const status = isApprove ? '✅ Approved by Staff' : '❌ Denied by Staff';
-    const updatedEmbed = EmbedBuilder.from(embed).addFields({ name: 'Status', value: status });
-
-    // Acknowledge interaction and edit message
-    await interaction.deferUpdate();
-    await message.edit({ embeds: [updatedEmbed], components: [] });
-
-    // Track regression count per player per skill set if approved
     if (isApprove) {
-        // No follow-up message; only update the embed
+        // Show modal to enter new OVR
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
+        const modal = new ModalBuilder()
+            .setCustomId(`progression_ovr_modal_${playerName}`)
+            .setTitle('Update Player OVR');
+        const ovrInput = new TextInputBuilder()
+            .setCustomId('newOvr')
+            .setLabel('Enter new OVR (if changed)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false);
+        modal.addComponents(new ActionRowBuilder().addComponents(ovrInput));
+        await interaction.showModal(modal);
+        return;
+    } else {
+        // Update embed with denial
+        const status = '❌ Denied by Staff';
+        const updatedEmbed = EmbedBuilder.from(embed).addFields({ name: 'Status', value: status });
+        await interaction.deferUpdate();
+        await message.edit({ embeds: [updatedEmbed], components: [] });
     }
+    // end of execute function
 }
+
+// Handle modal submit for OVR update
+export function handleOvrModal(interaction) {
+    if (!interaction.isModalSubmit() || !interaction.customId.startsWith('progression_ovr_modal_')) return;
+    const playerName = interaction.customId.replace('progression_ovr_modal_', '');
+    const newOvr = interaction.fields.getTextInputValue('newOvr').trim();
+    // Find team from embed
+    const message = interaction.message || interaction;
+    const embed = message.embeds?.[0] || interaction.message?.embeds?.[0];
+    let teamName = '';
+    if (embed) {
+        const teamField = embed.fields?.find(f => f.name.toLowerCase().includes('team'));
+        if (teamField) teamName = teamField.value;
+    }
+    if (!teamName) {
+        interaction.reply({ content: 'Could not determine team for OVR update.', ephemeral: true });
+        return;
+    }
+    // Load roster file
+    const fileName = teamName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() + '.json';
+    const rosterPath = path.join(process.cwd(), 'data/teams_rosters', fileName);
+    if (!fs.existsSync(rosterPath)) {
+        interaction.reply({ content: 'Roster file not found.', ephemeral: true });
+        return;
+    }
+    const roster = JSON.parse(fs.readFileSync(rosterPath, 'utf8'));
+    const players = Array.isArray(roster) ? roster : roster.players || [];
+    const idx = players.findIndex(p => p.name?.toLowerCase() === playerName.toLowerCase());
+    if (idx === -1) {
+        interaction.reply({ content: 'Player not found in roster.', ephemeral: true });
+        return;
+    }
+    if (newOvr) {
+        players[idx].ovr = newOvr;
+        if (Array.isArray(roster)) {
+            fs.writeFileSync(rosterPath, JSON.stringify(players, null, 2));
+        } else {
+            roster.players = players;
+            fs.writeFileSync(rosterPath, JSON.stringify(roster, null, 2));
+        }
+    }
+    // Update embed with approval
+    const status = '✅ Approved by Staff';
+    const updatedEmbed = EmbedBuilder.from(embed).addFields({ name: 'Status', value: status });
+    interaction.reply({ content: 'Progression approved.' + (newOvr ? ` OVR updated to ${newOvr}.` : ''), ephemeral: true });
+    message.edit({ embeds: [updatedEmbed], components: [] });
+}
+
+// Only one export statement for both functions
+// (Removed duplicate export block; functions are already exported above)

@@ -11,9 +11,17 @@
       "salary": "$46,394,100",
       "wingspan": "6'10\" (208cm)",
       "imgUrl": "https://www.2kratings.com/wp-content/uploads/Donovan-Mitchell-2K-Rating.png",
-      "ovr": "93",
+      "ovr": "94",
       "prior_to_nba": "Louisville",
-      "nationality": "United States"
+      "nationality": "United States",
+      "progression": [
+        {
+          "skillSet": "Shooting",
+          "attributeUpgrades": "+3 3pt",
+          "date": "2025-10-28T20:57:48.569Z",
+          "submittedBy": "1076243288056664234"
+        }
+      ]
     },
     {
       "name": "Evan Mobley",
