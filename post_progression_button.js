@@ -23,7 +23,7 @@ client.once('ready', async () => {
             'Submit your player progression using the button below.\n\n' +
             'Select a skill set below to apply your tier-based upgrade to.\n\n' +
             '**Skill-Sets (Groups of Attributes):**\n' +
-            '• **Inside Scoring:** Close Shot, Layup, Dunks, Post Control\n' +
+            '• **Post Scoring:** Close Shot, Standing Dunk, Layup, Dunks, Post Hook, Post Fade, Post Control\n' +
             '• **Shooting:** Mid-Range, 3PT, Free Throw\n' +
             '• **Inside Defense:** Interior D, Block, Help IQ\n' +
             '• **Perimeter Defense:** Perimeter D, Steal, Pass Perception\n' +

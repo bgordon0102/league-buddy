@@ -32,9 +32,9 @@ export async function execute(interaction) {
     // Build select menu options for players
     const playerOptions = players.map(p => ({ label: p.name, value: p.name })).slice(0, 25);
     const skillSets = [
-        { label: 'Driving', value: 'Driving', description: 'Layup, Dunk, Close Shot, Speed with Ball' },
+        { label: 'Driving', value: 'Driving', description: 'Layup, Dunk, Speed with Ball' },
         { label: 'Shooting', value: 'Shooting', description: 'Mid, 3pt, Free Throw' },
-        { label: 'Post Scoring', value: 'Post Scoring', description: 'Post Hook, Post Fade, Post Control' },
+        { label: 'Post Scoring', value: 'Post Scoring', description: 'Close Shot, Standing Dunk, Post Hook, Post Fade, Post Control' },
         { label: 'Playmaking', value: 'Playmaking', description: 'Ball Handling, Pass Accuracy, Pass IQ, Vision' },
         { label: 'Interior Defense', value: 'Interior Defense', description: 'Inside Defense, Block, Help Defense IQ' },
         { label: 'Perimeter Defense', value: 'Perimeter Defense', description: 'Perimeter Defense, Steal, Pass Perception' },
@@ -72,11 +72,11 @@ export async function execute(interaction) {
     );
     // Embed
     const embed = new EmbedBuilder()
-        .setTitle('Submit Player Progression')
-        .setDescription('Select your team, player, and skill set to begin progression.')
+        .setTitle('📈 Player Progression System')
+        .setDescription('Submit your upgrade using the button below.')
         .addFields(
-            { name: 'Team', value: teamName, inline: true },
-            { name: 'Instructions', value: 'Choose a player and skill set, then enter upgrades in the next step.', inline: false }
+            { name: 'Instructions', value: `Pick your skill set and check your tier value, then use your points to upgrade.\n(ex: Tier 3 = 5 pts → Shooting → 3PT +3, FT +2)`, inline: false }
         );
     await interaction.reply({ embeds: [embed], components: [teamRow, playerRow, skillSetRow], ephemeral: true });
+    // Do not reply again in this handler
 }

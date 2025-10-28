@@ -5,7 +5,6 @@ import { EmbedBuilder } from "discord.js";
 
 // Channel IDs (replace with your actual channel IDs)
 const PROGRESSION_CHANNEL_ID = "1425555037328773220";
-const REGRESSION_CHANNEL_ID = "1425555499440410812";
 
 export const customId = "upgrade_modal_submit";
 
@@ -51,7 +50,6 @@ export async function execute(interaction) {
         fs.writeFileSync(rosterPath, JSON.stringify(roster, null, 2));
     }
 
-    // Build embed for progression/regression request
     const embed = new EmbedBuilder()
         .setTitle("Progression/Upgrade Request")
         .addFields(

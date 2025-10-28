@@ -6,7 +6,8 @@ import path from "path";
 export const customId = "progression_skill_set_select";
 
 const skillSetAttributes = {
-    "Driving": ["Layup", "Dunk", "Close Shot", "Speed with Ball"],
+    "Driving": ["Layup", "Dunk", "Speed with Ball"],
+    "Post Scoring": ["Close Shot", "Standing Dunk", "Post Hook", "Post Fade", "Post Control"],
     "Shooting": ["Mid", "3pt", "Free Throw"],
     "Post Scoring": ["Post Hook", "Post Fade", "Post Control"],
     "Playmaking": ["Ball Handling", "Pass Accuracy", "Pass IQ", "Vision"],
@@ -59,43 +60,29 @@ export async function execute(interaction) {
             if (playerObj && playerObj.ovr) playerOvr = playerObj.ovr.toString();
         }
     }
-    // Build modal fields for attributes
-    let modalFields = [];
-    if (selectedSkillSet === "Shooting Mechanics") {
-        // Use text field for shot timing
-        modalFields.push(new TextInputBuilder()
-            .setCustomId("Shot Timing")
-            .setLabel("Shot Timing (Very Slow, Slow, Normal, Quick, Very Quick)")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(false));
+    // Modal fields: team, player, skill set, attribute upgrades
+    // Pick up to 2 attributes from the skill set for the example
+    let example = "";
+    if (selectedSkillSet === "Conditioning") {
+        example = "+3 Speed, +1 Agility, +1 Vertical";
+    } else if (selectedSkillSet === "Weight Room") {
+        example = "Type YES. +3 Strength, +8 lbs, -1 Speed, Agility, Vertical";
+    } else if (selectedSkillSet === "Shooting Mechanics") {
+        example = "Type one: Very Slow, Slow, Normal, Quick, Very Quick";
     } else if (selectedSkillSet === "Distributor") {
-        modalFields.push(new TextInputBuilder()
-            .setCustomId("Enable Play Initiator")
-            .setLabel("Enable Play Initiator (type YES to enable)")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(false));
+        example = "Enter your player's Ball Handling rating (e.g. 86)";
     } else if (selectedSkillSet === "X-Factor") {
-        modalFields.push(new TextInputBuilder()
-            .setCustomId("+3 Potential")
-            .setLabel("+3 Potential (type YES to apply)")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(false));
-    } else {
-        for (const attr of skillSetAttributes[selectedSkillSet] || []) {
-            modalFields.push(new TextInputBuilder()
-                .setCustomId(attr)
-                .setLabel(attr)
-                .setStyle(TextInputStyle.Short)
-                .setRequired(false));
-        }
+        example = "Type YES. Example: +3 Potential";
+    } else if (skillSetAttributes[selectedSkillSet]) {
+        const attrs = skillSetAttributes[selectedSkillSet];
+        example = attrs.slice(0, 3).map(a => `${a} +1`).join(", ");
     }
-    // Always include team, player, skill set, and OVR as hidden fields
-    modalFields.unshift(
+    let modalFields = [
         new TextInputBuilder().setCustomId("teamName").setLabel("Team").setStyle(TextInputStyle.Short).setValue(teamName || "").setRequired(true),
         new TextInputBuilder().setCustomId("playerName").setLabel("Player Name").setStyle(TextInputStyle.Short).setValue(selectedPlayer).setRequired(true),
         new TextInputBuilder().setCustomId("skillSet").setLabel("Skill Set").setStyle(TextInputStyle.Short).setValue(selectedSkillSet).setRequired(true),
-        new TextInputBuilder().setCustomId("currentOvr").setLabel("Current OVR").setStyle(TextInputStyle.Short).setValue(playerOvr).setRequired(true)
-    );
+        new TextInputBuilder().setCustomId("attributeUpgrades").setLabel("Attribute Upgrades").setStyle(TextInputStyle.Paragraph).setPlaceholder(`Example: ${example}`).setRequired(true)
+    ];
     // Build modal
     const modal = new ModalBuilder()
         .setCustomId("player_progression_modal_submit")

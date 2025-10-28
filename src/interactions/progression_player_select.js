@@ -1,4 +1,3 @@
-
 // Handles progression_player_select (player dropdown selection) and opens modal
 import { ModalBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle } from "discord.js";
 import fs from "fs";
@@ -35,9 +34,9 @@ export async function execute(interaction) {
     }
     // Show skill set dropdown after player selection, then immediately show modal
     const skillSets = [
-        { label: 'Driving', value: 'Driving', description: 'Layup, Dunk, Close Shot, Speed with Ball' },
+        { label: 'Driving', value: 'Driving', description: 'Layup, Dunk, Speed with Ball' },
         { label: 'Shooting', value: 'Shooting', description: 'Mid, 3pt, Free Throw' },
-        { label: 'Post Scoring', value: 'Post Scoring', description: 'Post Hook, Post Fade, Post Control' },
+        { label: 'Post Scoring', value: 'Post Scoring', description: 'Close Shot, Standing Dunk, Post Hook, Post Fade, Post Control' },
         { label: 'Playmaking', value: 'Playmaking', description: 'Ball Handling, Pass Accuracy, Pass IQ, Vision' },
         { label: 'Interior Defense', value: 'Interior Defense', description: 'Inside Defense, Block, Help Defense IQ' },
         { label: 'Perimeter Defense', value: 'Perimeter Defense', description: 'Perimeter Defense, Steal, Pass Perception' },
@@ -55,5 +54,5 @@ export async function execute(interaction) {
         .setPlaceholder('Select Skill Set')
         .addOptions(skillSets);
     const skillSetRow = new ActionRowBuilder().addComponents(skillSetSelect);
-    await interaction.reply({ content: `Select a skill set for ${selectedPlayer}:`, components: [skillSetRow], ephemeral: true });
+    await interaction.update({ content: `Select a skill set for ${selectedPlayer}:`, components: [skillSetRow] });
 }

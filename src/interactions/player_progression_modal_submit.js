@@ -9,11 +9,11 @@ export const customId = "player_progression_modal_submit";
 
 export async function execute(interaction) {
     if (!interaction.isModalSubmit() || interaction.customId !== "player_progression_modal_submit") return;
+    // Early error handling before deferReply
     const teamName = interaction.fields.getTextInputValue("teamName");
     const playerName = interaction.fields.getTextInputValue("playerName");
     const skillSet = interaction.fields.getTextInputValue("skillSet");
     const attributeUpgrades = interaction.fields.getTextInputValue("attributeUpgrades");
-    const currentOvr = interaction.fields.getTextInputValue("currentOvr");
 
     // Load roster
     const fileName = teamName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() + ".json";
@@ -30,13 +30,14 @@ export async function execute(interaction) {
         await interaction.reply({ content: "Player not found in your roster.", ephemeral: true });
         return;
     }
+    // Defer reply for all async work
+    await interaction.deferReply({ ephemeral: true });
 
     // Save progression details to player
     players[idx].progression = players[idx].progression || [];
     players[idx].progression.push({
         skillSet,
         attributeUpgrades,
-        currentOvr,
         date: new Date().toISOString(),
         submittedBy: interaction.user.id
     });
@@ -49,7 +50,9 @@ export async function execute(interaction) {
         fs.writeFileSync(rosterPath, JSON.stringify(roster, null, 2));
     }
 
+
     // Build embed for progression request
+    const coachTag = `<@${interaction.user.id}>`;
     const embed = new EmbedBuilder()
         .setTitle("Player Progression Request")
         .addFields(
@@ -57,7 +60,7 @@ export async function execute(interaction) {
             { name: "Player Name", value: playerName },
             { name: "Skill Set", value: skillSet },
             { name: "Attribute Upgrades", value: attributeUpgrades },
-            { name: "Current OVR", value: currentOvr }
+            { name: "Submitted By", value: coachTag }
         )
         .setColor(0x1E90FF);
 
@@ -82,9 +85,21 @@ export async function execute(interaction) {
     const progressionChannelId = '1428097786272026736';
     const channel = await interaction.client.channels.fetch(progressionChannelId);
     if (channel) {
-        await channel.send({ content: staffTags, embeds: [embed], components: [actionRow] });
-        await interaction.reply({ content: `Progression for ${playerName} submitted and saved!`, ephemeral: true });
+        // Add coach role tag for the submitting team
+        let coachRoleTag = "";
+        try {
+            const coachRoleMap = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'data/coachRoleMap.json'), 'utf8'));
+            const coachRoleId = coachRoleMap[teamName];
+            if (coachRoleId) {
+                coachRoleTag = `<@&${coachRoleId}>`;
+            }
+        } catch (err) {
+            console.error('Error tagging coach role:', err);
+        }
+        const allTags = [coachRoleTag, staffTags].filter(Boolean).join(' ');
+        await channel.send({ content: allTags, embeds: [embed], components: [actionRow] });
+        await interaction.editReply({ content: `Progression for ${playerName} submitted and saved!` });
     } else {
-        await interaction.reply({ content: `Error: Progression channel not found, but progression was saved.`, ephemeral: true });
+        await interaction.editReply({ content: 'Error: Progression channel not found, but progression was saved.' });
     }
 }

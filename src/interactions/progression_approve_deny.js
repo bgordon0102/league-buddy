@@ -20,38 +20,26 @@ export async function execute(interaction) {
         return;
     }
 
+    // Restrict to staff roles only
+    const staffMap = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'data/staffRoleMap.main.json'), 'utf8'));
+    const allowedRoles = [staffMap['Schedule Tracker'], staffMap['Paradise Commish']];
+    const memberRoles = interaction.member.roles.cache;
+    const isStaff = allowedRoles.some(roleId => memberRoles.has(roleId));
+    if (!isStaff) {
+        await interaction.reply({ content: 'Only Schedule Tracker or Paradise Commish can approve or deny progression requests.', ephemeral: true });
+        return;
+    }
+
     // Update embed with approval/denial
     const status = isApprove ? '✅ Approved by Staff' : '❌ Denied by Staff';
     const updatedEmbed = EmbedBuilder.from(embed).addFields({ name: 'Status', value: status });
 
-    // Edit message to show status and remove buttons
+    // Acknowledge interaction and edit message
+    await interaction.deferUpdate();
     await message.edit({ embeds: [updatedEmbed], components: [] });
-    await interaction.reply({ content: `Progression for ${playerName} ${isApprove ? 'approved' : 'denied'}!`, ephemeral: true });
 
     // Track regression count per player per skill set if approved
     if (isApprove) {
-        const teamName = embed.fields.find(f => f.name === 'Team')?.value;
-        const skillSet = embed.fields.find(f => f.name === 'Skill Set')?.value;
-        if (playerName && skillSet) {
-            const regressionPath = path.join(process.cwd(), 'data/regressionCounts.json');
-            let regressionCounts = {};
-            if (fs.existsSync(regressionPath)) {
-                regressionCounts = JSON.parse(fs.readFileSync(regressionPath, 'utf8'));
-            }
-            regressionCounts[playerName] = regressionCounts[playerName] || {};
-            regressionCounts[playerName][skillSet] = (regressionCounts[playerName][skillSet] || 0) - 1;
-            fs.writeFileSync(regressionPath, JSON.stringify(regressionCounts, null, 2));
-
-            // Post/update summary in regression channel
-            const regressionChannelId = '1428097711436992704';
-            const regressionChannel = await interaction.client.channels.fetch(regressionChannelId);
-            if (regressionChannel) {
-                let summary = `Regression summary for ${playerName} (${teamName}):\n`;
-                for (const [set, count] of Object.entries(regressionCounts[playerName])) {
-                    summary += `• ${set}: ${count}\n`;
-                }
-                await regressionChannel.send({ content: summary });
-            }
-        }
+        // No follow-up message; only update the embed
     }
 }

@@ -87,6 +87,9 @@ export async function resetSeasonData(seasonno, guild, caller = 'unknown') {
     try {
         fs.writeFileSync(path.join(DATA_DIR, 'gameInfo.json'), '{}');
         console.log('[resetSeasonData] Cleared gameInfo.json for new season');
+        // Clear progressionRequests.json for new season
+        fs.writeFileSync(path.join(DATA_DIR, 'progressionRequests.json'), '[]');
+        console.log('[resetSeasonData] Cleared progressionRequests.json for new season');
     } catch (err) {
         console.error('[resetSeasonData] Failed to clear gameInfo.json:', err);
     }
