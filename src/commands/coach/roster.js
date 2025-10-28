@@ -68,12 +68,14 @@ export async function execute(interaction) {
             return;
         }
         const roster = JSON.parse(fs.readFileSync(rosterPath, "utf8"));
-        if (!Array.isArray(roster) || roster.length === 0) {
+        // Handle new roster format: object with players and picks
+        let playersArr = Array.isArray(roster) ? roster : roster.players || [];
+        if (!Array.isArray(playersArr) || playersArr.length === 0) {
             await interaction.editReply({ content: `No players found for ${team}.` });
             return;
         }
         // Sort roster by OVR descending
-        const sortedRoster = [...roster].sort((a, b) => (b.ovr ?? 0) - (a.ovr ?? 0));
+        const sortedRoster = [...playersArr].sort((a, b) => (b.ovr ?? 0) - (a.ovr ?? 0));
         // Format roster for embed and build action rows for each player
         const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
         const lines = [];
@@ -88,44 +90,35 @@ export async function execute(interaction) {
             batchedRows.push(actionRows.slice(i, i + 5));
         }
 
-        // Load draft picks for this team
-        const picksPath = path.join(process.cwd(), 'data/team_picks.json');
-        let picksData = {};
-        if (fs.existsSync(picksPath)) {
-            try {
-                picksData = JSON.parse(fs.readFileSync(picksPath, 'utf8'));
-            } catch (e) { }
-        }
-        // Try to match team name loosely for picks
-        let teamPicks = picksData[team] || [];
-        // Debug: print team name and available keys
-        console.log('[PICKS DEBUG] Looking up picks for team:', team);
-        console.log('[PICKS DEBUG] Available keys:', Object.keys(picksData));
-        if (!teamPicks.length) {
-            // Try case-insensitive exact match
-            const teamKeyExact = Object.keys(picksData).find(k => k.toLowerCase() === team.toLowerCase());
-            if (teamKeyExact) teamPicks = picksData[teamKeyExact];
-        }
-        if (!teamPicks.length) {
-            // Try case-insensitive partial match
-            const teamKeyPartial = Object.keys(picksData).find(k => k.toLowerCase().includes(team.toLowerCase()));
-            if (teamKeyPartial) teamPicks = picksData[teamKeyPartial];
-        }
-        // Format picks, showing original team if traded
-        let pickLines = [];
-        if (Array.isArray(teamPicks) && teamPicks.length) {
-            pickLines = teamPicks.map(pick => {
-                if (typeof pick === 'string') return pick;
-                let line = `${pick.year || ''} Round ${pick.round || ''}`.trim();
-                if (pick.round === 1 && pick.protection && pick.protection !== 'unprotected') {
-                    line += ` (${pick.protection} protected)`;
+        // Load draft picks for this team from roster file
+        let teamPicks = Array.isArray(roster.picks) ? roster.picks : [];
+        // Group and format picks by year for embed
+        function formatPicksByYear(picks, teamName) {
+            const grouped = {};
+            for (const pick of picks) {
+                let pickStr = typeof pick === 'string' ? pick : pick.pick || '';
+                let yearMatch = pickStr.match(/\d{4}/);
+                let year = yearMatch ? yearMatch[0] : 'Other';
+                let line = pickStr;
+                if (typeof pick === 'object') {
+                    if (pick.protection && pick.protection !== 'unprotected') {
+                        line += ` (${pick.protection} protected)`;
+                    }
+                    if (pick.originalTeam && pick.originalTeam !== teamName) {
+                        line += ` (from ${pick.originalTeam})`;
+                    }
                 }
-                if (pick.originalTeam && pick.originalTeam !== team) {
-                    line += ` (from ${pick.originalTeam})`;
-                }
-                return line;
+                if (!grouped[year]) grouped[year] = [];
+                grouped[year].push(line);
+            }
+            let result = '';
+            Object.keys(grouped).sort().forEach(year => {
+                result += `**${year}**\n`;
+                result += grouped[year].map(p => `• ${p}`).join('\n') + '\n';
             });
+            return result.trim();
         }
+        let pickLines = teamPicks.length ? formatPicksByYear(teamPicks, team) : '';
 
         const embed = new EmbedBuilder()
             .setTitle(`Roster for ${team}`)
@@ -133,7 +126,7 @@ export async function execute(interaction) {
             .setColor(0x1E90FF);
         embed.addFields({
             name: 'Draft Picks',
-            value: pickLines.length ? pickLines.join('\n').slice(0, 1024) : 'No draft picks found.'
+            value: pickLines ? pickLines.slice(0, 1024) : 'No draft picks found.'
         });
         // Debug: show sorted roster and picks in console
         console.log('[ROSTER DEBUG] Sorted roster:', sortedRoster.map(p => `${p.name} (${p.ovr})`).join(', '));

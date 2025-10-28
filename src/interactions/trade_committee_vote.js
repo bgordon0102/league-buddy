@@ -143,90 +143,68 @@ export async function execute(interaction) {
         function normalize(str) {
             return str.toLowerCase().replace(/[^a-z0-9]/gi, '');
         }
+        // Move players
         function movePlayers(playerNames, fromRoster, toRoster) {
             for (const name of playerNames) {
                 const normName = normalize(name);
-                const idx = fromRoster.findIndex(p => {
+                const idx = fromRoster.players.findIndex(p => {
                     const normRosterName = normalize(p.name);
                     return normRosterName === normName || normRosterName.includes(normName) || normName.includes(normRosterName);
                 });
                 if (idx !== -1) {
-                    toRoster.push(fromRoster[idx]);
-                    fromRoster.splice(idx, 1);
+                    toRoster.players.push(fromRoster.players[idx]);
+                    fromRoster.players.splice(idx, 1);
                 }
             }
         }
-        const sentPlayers = trade.assetsSent.split(',').map(s => s.trim()).filter(s => s && !s.match(/pick/i));
-        const receivedPlayers = trade.assetsReceived.split(',').map(s => s.trim()).filter(s => s && !s.match(/pick/i));
-        movePlayers(sentPlayers, teamARoster, teamBRoster);
-        movePlayers(receivedPlayers, teamBRoster, teamARoster);
-        fs.writeFileSync(teamAFile, JSON.stringify(teamARoster, null, 2));
-        fs.writeFileSync(teamBFile, JSON.stringify(teamBRoster, null, 2));
-        // --- Draft pick update logic ---
-        const picksPath = path.join(process.cwd(), 'data/team_picks.json');
-        let picksData = {};
-        if (fs.existsSync(picksPath)) {
-            try {
-                picksData = JSON.parse(fs.readFileSync(picksPath, 'utf8'));
-            } catch { }
-        }
-        function movePicks(pickNames, fromTeam, toTeam) {
-            if (!Array.isArray(picksData[fromTeam])) return;
-            function convertAllPicks(team) {
-                if (!Array.isArray(picksData[team])) return;
-                picksData[team] = picksData[team].map(p => {
-                    if (typeof p === 'string') {
-                        let protection = null;
-                        const protectionMatch = p.match(/top ?(3|5|10)|lottery|unprotected/i);
-                        if (protectionMatch) protection = protectionMatch[0].toLowerCase();
-                        let basePick = p.replace(/\(.*?\)/g, '').replace(/top ?(3|5|10)|lottery|unprotected/ig, '').trim();
-                        return { pick: basePick, protection, originalTeam: team };
-                    }
-                    p.originalTeam = p.originalTeam || team;
-                    return p;
-                });
-            }
-            convertAllPicks(fromTeam);
-            convertAllPicks(toTeam);
+
+        // Move picks
+        function movePicks(pickNames, fromRoster, toRoster, fromTeamName) {
             for (const pick of pickNames) {
-                let basePick = pick;
-                let protection = null;
-                const protectionMatch = pick.match(/top ?(3|5|10)|lottery|unprotected/i);
-                if (protectionMatch) {
-                    protection = protectionMatch[0].toLowerCase();
-                }
-                basePick = basePick.replace(/\(.*?\)/g, '').replace(/top ?(3|5|10)|lottery|unprotected/ig, '').trim();
-                const normTradePick = basePick.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-                const idx = picksData[fromTeam].findIndex(p => {
-                    let pickStr = p.pick;
-                    pickStr = pickStr.replace(/\(.*?\)/g, '').replace(/top ?(3|5|10)|lottery|unprotected/ig, '').trim();
-                    const normRosterPick = pickStr.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-                    return normRosterPick === normTradePick;
+                // Find pick index (match ignoring protection)
+                const basePick = pick.replace(/\s*\(.*\)/, '');
+                const idx = fromRoster.picks.findIndex(p => {
+                    if (typeof p === 'string') {
+                        return p.replace(/\s*\(.*\)/, '') === basePick;
+                    } else if (p && typeof p.pick === 'string') {
+                        return p.pick.replace(/\s*\(.*\)/, '') === basePick;
+                    }
+                    return false;
                 });
                 if (idx !== -1) {
-                    let pickObj = picksData[fromTeam][idx];
-                    pickObj.pick = basePick;
-                    pickObj.originalTeam = pickObj.originalTeam || fromTeam;
-                    if (protection) {
-                        pickObj.protection = protection;
-                    }
-                    picksData[toTeam].push(pickObj);
-                    picksData[fromTeam].splice(idx, 1);
+                    // Build new pick object for receiver
+                    let protection = null;
+                    const protectionMatch = pick.match(/top ?(3|5|10)|lottery|unprotected|protected/i);
+                    if (protectionMatch) protection = protectionMatch[0].toLowerCase();
+                    let newPickObj = {
+                        pick: basePick,
+                        originalTeam: fromTeamName,
+                    };
+                    if (protection) newPickObj.protection = protection;
+                    toRoster.picks.push(newPickObj);
+                    fromRoster.picks.splice(idx, 1);
                 }
             }
         }
+
+        // Extract picks from asset string
         function extractPicks(assetStr) {
             return assetStr.split(',').map(s => s.trim()).filter(s => {
-                return s.match(/\d{4} ?(1st|2nd)( |$|\(|top|lottery|unprotected|protected)/i);
+                return s.match(/\d{4}|20\d{2} ?(1st|2nd)( |$|\(|top|lottery|unprotected|protected)/i);
             });
         }
-        const sentPicks = extractPicks(trade.assetsSent);
-        const receivedPicks = extractPicks(trade.assetsReceived);
-        movePicks(sentPicks, trade.yourTeam, trade.otherTeam);
-        movePicks(receivedPicks, trade.otherTeam, trade.yourTeam);
-        try {
-            fs.writeFileSync(picksPath, JSON.stringify(picksData, null, 2));
-        } catch { }
+
+        // Move assets
+        const sentPlayers = trade.players || trade.assetsSent.split(',').map(s => s.trim()).filter(s => s && !s.match(/pick/i));
+        const receivedPlayers = trade.playersTo || trade.assetsReceived.split(',').map(s => s.trim()).filter(s => s && !s.match(/pick/i));
+        const sentPicks = trade.picks || extractPicks(trade.assetsSent);
+        const receivedPicks = trade.picksTo || extractPicks(trade.assetsReceived);
+        movePlayers(sentPlayers, teamARoster, teamBRoster);
+        movePlayers(receivedPlayers, teamBRoster, teamARoster);
+        movePicks(sentPicks, teamARoster, teamBRoster, trade.yourTeam);
+        movePicks(receivedPicks, teamBRoster, teamARoster, trade.otherTeam);
+        fs.writeFileSync(teamAFile, JSON.stringify(teamARoster, null, 2));
+        fs.writeFileSync(teamBFile, JSON.stringify(teamBRoster, null, 2));
         // Post to approved channel
         let approvedChannel, userA;
         try {

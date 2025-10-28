@@ -169,5 +169,22 @@
     "votes": {
       "1076243288056664234": "approve"
     }
+  },
+  "1432577047061860392": {
+    "trade": {
+      "tradeId": "1761623374303",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100650423550074",
+      "yourTeam": "cavaliers",
+      "otherTeam": "pistons",
+      "assetsSent": "2026 2nd",
+      "assetsReceived": "2026 1st (lottery), 2030 1st",
+      "notes": "",
+      "submittedAt": 1761623374303,
+      "status": "approved"
+    },
+    "votes": {
+      "1076243288056664234": "approve"
+    }
   }
 }
