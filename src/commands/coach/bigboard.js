@@ -13,21 +13,42 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction) {
     try {
         await interaction.deferReply({ ephemeral: true });
-        const seasonPath = path.join(process.cwd(), 'data/season.json');
-        const seasonData = JSON.parse(fs.readFileSync(seasonPath, 'utf8'));
-        const seasonNo = seasonData.seasonNo ?? 1;
-        // Big board is always viewable, even in week 0. Only scouting should be locked until the season starts.
-        // Fix file path logic to match folder structure (draft classes/CUS01/2k26_CUS01 - Big Board.json, etc.)
-        // Updated: Big board files are now directly in 'draft classes' (no CUS01 subfolder)
-        const boardFilePath = path.join(process.cwd(), 'draft classes', `2k26_CUS0${seasonNo} - Big Board.json`);
-        if (!fs.existsSync(boardFilePath)) {
-            await interaction.editReply({ content: `Big board file not found at resolved path: ${boardFilePath}` });
+        // Read current season number
+        const seasonPath = path.join(process.cwd(), 'data', 'season.json');
+        let seasonNo = 1;
+        try {
+            if (fs.existsSync(seasonPath)) {
+                const seasonData = JSON.parse(fs.readFileSync(seasonPath, 'utf8'));
+                if (seasonData && seasonData.seasonNo) seasonNo = seasonData.seasonNo;
+            }
+        } catch (err) {
+            console.error('bigboard.js: Failed to read season.json:', err);
+        }
+        // Map season number to class string
+        const classString = `CUS${seasonNo.toString().padStart(2, '0')}`;
+        // Find the big board file in the root 'draft classes' folder
+        const draftClassesDir = path.join(process.cwd(), 'draft classes');
+        let bigBoardFile = null;
+        if (fs.existsSync(draftClassesDir)) {
+            const files = fs.readdirSync(draftClassesDir).filter(f => f.includes(classString) && f.includes('Big Board.json'));
+            if (files.length > 0) bigBoardFile = path.join(draftClassesDir, files[0]);
+        }
+        if (!bigBoardFile || !fs.existsSync(bigBoardFile)) {
+            await interaction.editReply({ content: `No big board found for season ${seasonNo}.` });
             return;
         }
-        const bigBoardData = readJSON(boardFilePath);
-        const allPlayers = Object.values(bigBoardData).filter(player => player && player.name && (player.position_1 || player.position));
+        // Load players from the big board file
+        let allPlayers = [];
+        try {
+            const boardData = JSON.parse(fs.readFileSync(bigBoardFile, 'utf8'));
+            allPlayers = Object.values(boardData).filter(player => player && player.name && (player.position_1 || player.position));
+        } catch (err) {
+            console.error('bigboard.js: Failed to read big board file:', err);
+            await interaction.editReply({ content: 'Error loading big board.' });
+            return;
+        }
         if (allPlayers.length === 0) {
-            await interaction.editReply({ content: 'No players found in big board.' });
+            await interaction.editReply({ content: 'No players found in this big board.' });
             return;
         }
         const playerLines = allPlayers.map((player, index) => {
@@ -36,8 +57,8 @@ export async function execute(interaction) {
             const team = player.team || player.college || '';
             return `${index + 1}: ${pos} ${name} - ${team}`;
         });
-        // Create 4 select menus for groups of 15 players each
-        const numMenus = 4;
+        // Create select menus for groups of 15 players each
+        const numMenus = Math.ceil(allPlayers.length / 15);
         const components = [];
         for (let i = 0; i < numMenus; i++) {
             const startIdx = i * 15;
@@ -58,10 +79,15 @@ export async function execute(interaction) {
             const row = new ActionRowBuilder().addComponents(selectMenu);
             components.push(row);
         }
+        // Truncate description to Discord's limit
+        const MAX_EMBED_DESCRIPTION = 4096;
+        const descriptionText = Array.isArray(playerLines) && playerLines.length
+            ? playerLines.join('\n').slice(0, MAX_EMBED_DESCRIPTION)
+            : 'No players available';
         const embed = new EmbedBuilder()
             .setTitle('📋 Big Board')
             .setColor(0x1f8b4c)
-            .setDescription(playerLines.length ? playerLines.join('\n') : 'No players available')
+            .setDescription(descriptionText)
             .setThumbnail('https://cdn.discordapp.com/icons/1153432333259530240/leaguebuddy_logo.png');
         await interaction.editReply({ embeds: [embed], components });
     } catch (err) {

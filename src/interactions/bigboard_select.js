@@ -6,14 +6,24 @@ import { EmbedBuilder } from "discord.js";
 const bigBoardsFile = path.join(process.cwd(), "data/prospectBoards.json");
 
 export async function execute(interaction) {
-    // Always use the same big board file
-    const boardFilePath = path.join(process.cwd(), "draft classes", "2k26_CUS01 - Big Board.json");
-    if (!fs.existsSync(boardFilePath)) {
-        await interaction.reply({ content: `Big board file not found at resolved path: ${boardFilePath}`, flags: 64 });
-        return;
+    await interaction.deferReply({ flags: 64 });
+    // Aggregate all players from every Big Board JSON file in draft classes
+    const draftClassesDir = path.join(process.cwd(), 'draft classes');
+    const boardFiles = fs.readdirSync(draftClassesDir)
+        .filter(f => f.endsWith('Big Board.json'));
+    let allPlayers = [];
+    for (const file of boardFiles) {
+        const filePath = path.join(draftClassesDir, file);
+        if (fs.existsSync(filePath)) {
+            try {
+                const boardData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                const players = Object.values(boardData).filter(player => player && player.name && player.position_1);
+                allPlayers = allPlayers.concat(players);
+            } catch (err) {
+                console.error(`Error reading big board file ${filePath}:`, err);
+            }
+        }
     }
-    const bigBoardData = JSON.parse(fs.readFileSync(boardFilePath, 'utf8'));
-    const allPlayers = Object.values(bigBoardData).filter(player => player && player.name && player.position_1);
 
     // Extract player name (remove leading number and dot if present)
     function normalize(str) {
@@ -28,11 +38,11 @@ export async function execute(interaction) {
     // Search the full allPlayers list for the selected player
     const selected = allPlayers.find(p => p.name && normalize(p.name) === normalizedSelected);
     if (!selected) {
-        console.log('Bigboard select debug: Selected value (raw):', interaction.values[0]);
-        console.log('Bigboard select debug: Selected value (normalized):', normalizedSelected);
-        console.log('Bigboard select debug: All normalized player names:', allPlayers.map(p => normalize(p.name)));
-        console.log('Bigboard select debug: All raw player names:', allPlayers.map(p => p.name));
-        await interaction.reply({ content: "Player not found.", flags: 64 });
+        try {
+            await interaction.editReply({ content: "Player not found." });
+        } catch (err) {
+            console.error('bigboard_select: Failed to editReply for not found:', err);
+        }
         return;
     }
 
@@ -48,7 +58,7 @@ export async function execute(interaction) {
 
     const embed = new EmbedBuilder()
         .setTitle(`${selected.position_1} - ${selected.name}`)
-        .setThumbnail(selected.image || null)
+        .setThumbnail(selected.image ? selected.image : null)
         .addFields(
             { name: "Team", value: selected.team || "N/A", inline: true },
             { name: "Class", value: selected.class || "N/A", inline: true },
@@ -77,5 +87,5 @@ export async function execute(interaction) {
         embed.addFields({ name: 'Scouted Info', value: info.join(' | '), inline: false });
     }
 
-    await interaction.reply({ embeds: [embed], flags: 64 });
+    await interaction.editReply({ embeds: [embed] });
 }

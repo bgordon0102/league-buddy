@@ -170,8 +170,9 @@ async function loadCommands() {
       const fileURL = pathToFileURL(filePath).href;
       try {
         const commandModule = await import(fileURL);
-        if (commandModule.data && commandModule.execute) {
-          client.commands.set(commandModule.data.name, commandModule);
+        const cmd = commandModule.default || commandModule;
+        if (cmd.data && cmd.execute) {
+          client.commands.set(cmd.data.name, cmd);
         }
       } catch (err) {
         console.error(`❌ Failed to load command ${file}:`, err);

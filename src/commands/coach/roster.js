@@ -74,12 +74,26 @@ export async function execute(interaction) {
         }
         // Sort roster by OVR descending
         const sortedRoster = [...roster].sort((a, b) => (b.ovr ?? 0) - (a.ovr ?? 0));
-        // Format roster for embed
-        // Only show top 10 players, condensed info
-        // Show all players, condensed info
-        const lines = sortedRoster.map(player => {
-            return `**${player.name}** | ${player.position} | OVR: ${player.ovr}`;
-        });
+        // Format roster for embed and build action rows for each player
+        const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
+        const lines = [];
+        const actionRows = [];
+        for (const player of sortedRoster) {
+            lines.push(`**${player.name}** | ${player.position} | OVR: ${player.ovr}`);
+            const manageId = `roster_manage_${player.id}`;
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(manageId)
+                    .setLabel('Manage')
+                    .setStyle(ButtonStyle.Primary)
+            );
+            actionRows.push(row);
+        }
+        // Discord only allows 5 action rows per message, batch if needed
+        const batchedRows = [];
+        for (let i = 0; i < actionRows.length; i += 5) {
+            batchedRows.push(actionRows.slice(i, i + 5));
+        }
 
         // Load draft picks for this team
         const picksPath = path.join(process.cwd(), 'data/team_picks.json');
@@ -131,7 +145,11 @@ export async function execute(interaction) {
         // Debug: show sorted roster and picks in console
         console.log('[ROSTER DEBUG] Sorted roster:', sortedRoster.map(p => `${p.name} (${p.ovr})`).join(', '));
         console.log('[ROSTER DEBUG] Picks:', pickLines);
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed], components: batchedRows[0] || [] });
+        // If more than 5 rows, send additional follow-up messages with only buttons
+        for (let i = 1; i < batchedRows.length; i++) {
+            await interaction.followUp({ components: batchedRows[i], ephemeral: true });
+        }
     } catch (err) {
         console.error('Error in roster:', err);
         if (responded) {
