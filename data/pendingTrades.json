@@ -186,5 +186,39 @@
     "votes": {
       "1076243288056664234": "approve"
     }
+  },
+  "1432828711392121124": {
+    "trade": {
+      "tradeId": "1761683322322",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100717243138061",
+      "yourTeam": "cavaliers",
+      "otherTeam": "thunder",
+      "assetsSent": "garland, 2030 (lottery)",
+      "assetsReceived": "holmgren, 2026 2nd",
+      "notes": "test",
+      "submittedAt": 1761683322322,
+      "status": "approved"
+    },
+    "votes": {
+      "1076243288056664234": "approve"
+    }
+  },
+  "1432831336325976176": {
+    "trade": {
+      "tradeId": "1761683990865",
+      "proposerId": "1076243288056664234",
+      "coachBId": "1428100733416374475",
+      "yourTeam": "cavaliers",
+      "otherTeam": "suns",
+      "assetsSent": "garland, 2026 1st (lottery)",
+      "assetsReceived": "booker, 2030 2nd",
+      "notes": "test",
+      "submittedAt": 1761683990865,
+      "status": "approved"
+    },
+    "votes": {
+      "1076243288056664234": "approve"
+    }
   }
 }

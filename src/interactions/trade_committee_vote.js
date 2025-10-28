@@ -103,10 +103,20 @@ export async function execute(interaction) {
     entry.votes = entry.votes || {};
     if (interaction.customId.startsWith('committee_approve_')) {
         entry.votes[interaction.user.id] = 'approve';
-        entry.trade.status = 'approved';
     } else if (interaction.customId.startsWith('committee_deny_')) {
         entry.votes[interaction.user.id] = 'deny';
+    }
+    // Count votes
+    const votesArr = Object.values(entry.votes);
+    const approveCount = votesArr.filter(v => v === 'approve').length;
+    const denyCount = votesArr.filter(v => v === 'deny').length;
+    let finalized = false;
+    if (approveCount >= 3) {
+        entry.trade.status = 'approved';
+        finalized = true;
+    } else if (denyCount >= 3) {
         entry.trade.status = 'denied';
+        finalized = true;
     }
     pendingTrades[messageId] = entry;
     try {
@@ -123,7 +133,7 @@ export async function execute(interaction) {
     // Prepare embed for notification
     const notifyRoleId = "1428119680572325929";
     const embed = new EmbedBuilder()
-        .setTitle(trade.status === 'approved' ? "Trade Approved" : "Trade Denied")
+        .setTitle(trade.status === 'approved' ? "Trade Approved" : trade.status === 'denied' ? "Trade Denied" : "Trade Committee Vote Required")
         .addFields(
             { name: "Your Team", value: trade.yourTeam, inline: true },
             { name: "Other Team", value: trade.otherTeam, inline: true },
@@ -131,10 +141,10 @@ export async function execute(interaction) {
             { name: "Assets Received", value: trade.assetsReceived }
         );
     if (trade.notes) embed.addFields({ name: "Notes", value: trade.notes });
-    embed.setColor(trade.status === 'approved' ? 0x57F287 : 0xED4245);
+    embed.setColor(trade.status === 'approved' ? 0x57F287 : trade.status === 'denied' ? 0xED4245 : 0x5865F2);
 
     // Only update rosters/picks and post to correct channel based on trade status
-    if (trade.status === 'approved') {
+    if (finalized && trade.status === 'approved') {
         // Roster update logic
         const teamAFile = path.join(process.cwd(), 'data/teams_rosters', teamToFile(trade.yourTeam));
         const teamBFile = path.join(process.cwd(), 'data/teams_rosters', teamToFile(trade.otherTeam));
@@ -172,15 +182,21 @@ export async function execute(interaction) {
                     return false;
                 });
                 if (idx !== -1) {
-                    // Build new pick object for receiver
+                    // Determine if pick is 1st or 2nd round
+                    const isFirst = /1st/i.test(basePick);
+                    const isSecond = /2nd/i.test(basePick);
                     let protection = null;
-                    const protectionMatch = pick.match(/top ?(3|5|10)|lottery|unprotected|protected/i);
-                    if (protectionMatch) protection = protectionMatch[0].toLowerCase();
+                    const protectionMatch = pick.match(/top ?(3|5|10)|lottery/i);
                     let newPickObj = {
                         pick: basePick,
                         originalTeam: fromTeamName,
                     };
-                    if (protection) newPickObj.protection = protection;
+                    // Only allow protections for 1st round picks
+                    if (isFirst && protectionMatch) {
+                        protection = protectionMatch[0].toLowerCase();
+                        newPickObj.protection = protection;
+                    }
+                    // Do not allow protections for 2nd round picks
                     toRoster.picks.push(newPickObj);
                     fromRoster.picks.splice(idx, 1);
                 }
@@ -225,7 +241,7 @@ export async function execute(interaction) {
         } catch (dmErr) {
             console.error('Failed to send DM to Coach A (proposerId):', trade.proposerId, dmErr);
         }
-    } else if (trade.status === 'denied') {
+    } else if (finalized && trade.status === 'denied') {
         // Post to denied channel
         let deniedChannel;
         try {
@@ -241,5 +257,9 @@ export async function execute(interaction) {
             }
         }
     }
-    await interaction.reply({ content: `Trade ${trade.status}.`, flags: 64 });
+    if (finalized) {
+        await interaction.reply({ content: `Trade ${trade.status}.`, flags: 64 });
+    } else {
+        await interaction.reply({ content: `Vote recorded: ${approveCount} approve, ${denyCount} deny. First to 3 wins.`, flags: 64 });
+    }
 }
