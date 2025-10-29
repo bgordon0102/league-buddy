@@ -62,3 +62,4 @@ async function execute(interaction) {
 }
 
 export { data, execute };
+export default { data, execute };

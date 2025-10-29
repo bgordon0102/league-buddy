@@ -1,4 +1,3 @@
-
 import { SlashCommandBuilder } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
@@ -160,3 +159,5 @@ export async function execute(interaction) {
         await interaction.editReply({ content: 'Error simulating scores.' });
     }
 }
+
+export default { data, execute };

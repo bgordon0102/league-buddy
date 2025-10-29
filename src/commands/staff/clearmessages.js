@@ -1,6 +1,7 @@
+
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 
-export const data = new SlashCommandBuilder()
+const data = new SlashCommandBuilder()
   .setName('clearmessages')
   .setDescription('Clear messages in the current thread or text channel.')
   .addStringOption(option =>
@@ -9,7 +10,7 @@ export const data = new SlashCommandBuilder()
       .setRequired(true))
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-export async function execute(interaction) {
+async function execute(interaction) {
   console.log('[DEBUG] clearmessages.js execute called');
   await interaction.deferReply({ ephemeral: true });
   try {
@@ -52,3 +53,5 @@ export async function execute(interaction) {
     await interaction.editReply({ content: 'Error deleting messages.' });
   }
 }
+
+export default { data, execute };

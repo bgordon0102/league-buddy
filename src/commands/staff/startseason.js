@@ -280,7 +280,6 @@ export async function execute(interaction) {
         console.error('[startseason] Error during deferReply:', err);
         return;
     }
-    // ...existing code...
     const dataManager = new DataManager();
     // fs and path are already imported at the top as ES modules
     const SEASON_FILE = path.join(process.cwd(), 'data', 'season.json');
@@ -374,3 +373,5 @@ export async function execute(interaction) {
         }
     }
 }
+
+export default { data, execute };

@@ -83,3 +83,5 @@ export async function execute(interaction) {
         await interaction.editReply({ content: 'Error sending reminder.' });
     }
 }
+
+export default { data, execute };

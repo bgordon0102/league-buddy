@@ -102,3 +102,5 @@ export async function execute(interaction) {
         await replyMethod('Error clearing week threads.');
     }
 }
+
+export default { data, execute };

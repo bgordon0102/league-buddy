@@ -162,3 +162,5 @@ export async function execute(interaction) {
         interaction.editReply({ content: `Week advanced! Current week is now ${season.currentWeek}. Created ${createdThreads.length}/${matchups.length} threads in the dedicated channel. Standings updated.` });
     });
 }
+
+export default { data, execute };

@@ -3,7 +3,7 @@ import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
 import fs from "fs";
 import path from "path";
 
-export const data = new SlashCommandBuilder()
+const data = new SlashCommandBuilder()
     .setName("roster")
     .setDescription("Show a team's NBA 2K roster")
     .addStringOption((option) =>
@@ -14,8 +14,7 @@ export const data = new SlashCommandBuilder()
             .setAutocomplete(true)
     );
 
-// Autocomplete handler for team names (from teams.json)
-export async function autocomplete(interaction) {
+async function autocomplete(interaction) {
     try {
         console.log('[DEBUG] roster autocomplete called');
         const focusedValue = interaction.options.getFocused() || "";
@@ -54,7 +53,7 @@ export async function autocomplete(interaction) {
     }
 }
 
-export async function execute(interaction) {
+async function execute(interaction) {
     let responded = false;
     try {
         await interaction.deferReply({ ephemeral: true });
@@ -145,3 +144,5 @@ export async function execute(interaction) {
         }
     }
 }
+
+export default { data, execute, autocomplete };

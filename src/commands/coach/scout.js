@@ -214,4 +214,5 @@ export async function handleScoutSelect(interaction, menuIndex) {
     card.setFooter({ text: footerMsg });
     await safeReplyOrEdit({ embeds: [card], components: [], flags: 64 });
 }
-// Removed leftover CommonJS export
+
+export default { data, execute };

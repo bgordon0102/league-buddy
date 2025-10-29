@@ -28,9 +28,9 @@ async function loadCommandsForDeployment() {
       const fileURL = pathToFileURL(filePath).href;
 
       try {
-        const command = await import(fileURL);
-
-        if ('data' in command) {
+        const commandModule = await import(fileURL);
+        const command = commandModule.default || commandModule;
+        if (command && 'data' in command) {
           commands.push(command.data.toJSON());
           console.log(`✅ Loaded ${folder}/${file}`);
         } else {

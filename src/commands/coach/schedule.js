@@ -14,8 +14,7 @@ export const data = new SlashCommandBuilder()
             .setRequired(true)
             .setAutocomplete(true)
     );
-// Autocomplete handler for team names
-export async function autocomplete(interaction) {
+async function autocomplete(interaction) {
     try {
         const focusedValue = interaction.options.getFocused();
         const teamsPath = path.join(process.cwd(), "data/teams.json");
@@ -53,7 +52,7 @@ export async function autocomplete(interaction) {
     }
 }
 
-export async function execute(interaction) {
+async function execute(interaction) {
     let responded = false;
     console.log('[DEBUG] schedule.js execute called');
     try {
@@ -123,3 +122,5 @@ export async function execute(interaction) {
         }
     }
 }
+
+export default { data, execute, autocomplete };

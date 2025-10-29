@@ -252,3 +252,5 @@ export async function execute(interaction) {
         await interaction.editReply({ content: `❌ Unexpected error: ${err && err.message ? err.message : err}` });
     }
 }
+
+export default { data, execute };

@@ -10,11 +10,12 @@
 
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 
-export const data = new SlashCommandBuilder()
+
+const data = new SlashCommandBuilder()
     .setName('mycommands')
     .setDescription('Shows a list of commands available to you.');
 
-export async function execute(interaction) {
+async function execute(interaction) {
     const member = interaction.member;
     let responded = false;
     try {
@@ -71,5 +72,7 @@ export async function execute(interaction) {
         }
     }
 }
+
+export default { data, execute };
 
 

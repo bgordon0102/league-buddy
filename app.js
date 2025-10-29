@@ -180,10 +180,15 @@ async function loadCommands() {
       const filePath = join(commandsPath, file);
       const fileURL = pathToFileURL(filePath).href;
       try {
-        const commandModule = await import(fileURL);
-        const cmd = commandModule.default || commandModule;
-        if (cmd.data && cmd.execute) {
-          client.commands.set(cmd.data.name, cmd);
+        try {
+          const commandModule = await import(fileURL);
+          console.log(`DEBUG: Export from ${file}:`, commandModule);
+          const cmd = commandModule.default;
+          if (cmd && cmd.data && cmd.execute) {
+            client.commands.set(cmd.data.name, cmd);
+          }
+        } catch (err) {
+          console.error(`❌ Error importing ${file}:`, err);
         }
       } catch (err) {
         console.error(`❌ Failed to load command ${file}:`, err);

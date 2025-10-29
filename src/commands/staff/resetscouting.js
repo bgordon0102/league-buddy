@@ -63,3 +63,5 @@ export async function execute(interaction) {
     await interaction.editReply({ content: 'Error resetting scouting data.' });
   }
 }
+
+export default { data, execute };

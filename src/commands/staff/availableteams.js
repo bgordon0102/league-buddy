@@ -60,3 +60,5 @@ export async function execute(interaction) {
         await interaction.editReply({ content: 'Error listing available teams.' });
     }
 }
+
+export default { data, execute };

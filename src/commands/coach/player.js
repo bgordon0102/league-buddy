@@ -3,7 +3,7 @@ import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
 import fs from "fs";
 import path from "path";
 
-export const data = new SlashCommandBuilder()
+const data = new SlashCommandBuilder()
     .setName("player")
     .setDescription("Search for an NBA 2K player")
     .addStringOption((option) =>
@@ -28,7 +28,7 @@ function loadAllPlayers() {
     return players;
 }
 
-export async function autocomplete(interaction) {
+async function autocomplete(interaction) {
     try {
         const focusedValue = interaction.options.getFocused() || "";
         let allPlayers = loadAllPlayers();
@@ -51,7 +51,7 @@ export async function autocomplete(interaction) {
     }
 }
 
-export async function execute(interaction) {
+async function execute(interaction) {
     try {
         await interaction.deferReply({ ephemeral: true });
         const playerName = interaction.options.getString("name");
@@ -109,3 +109,5 @@ export async function execute(interaction) {
         await interaction.editReply({ content: 'Error showing player info.' });
     }
 }
+
+export default { data, execute, autocomplete };

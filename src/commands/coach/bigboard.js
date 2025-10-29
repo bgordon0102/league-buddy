@@ -95,3 +95,5 @@ export async function execute(interaction) {
         await interaction.editReply({ content: 'Error loading big board.' });
     }
 }
+
+export default { data, execute };
