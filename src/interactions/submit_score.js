@@ -1,6 +1,79 @@
 // Handle submit score button interaction
-export async function handleSubmitScore(interaction) {
-    await interaction.reply({ content: 'Score submission received. (Stub handler)', ephemeral: true });
+import fs from 'fs';
+import path from 'path';
+
+const scoresPath = path.join(process.cwd(), 'data', 'scores.json');
+const standingsPath = path.join(process.cwd(), 'data', 'standings.json');
+
+function readJson(file) {
+    return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : {};
+}
+function writeJson(file, data) {
+    fs.writeFileSync(file, JSON.stringify(data, null, 2));
+}
+
+// Handle submit score button interaction
+export async function handleSubmitScore(interaction, winner, loser, winnerScore, loserScore) {
+    const scores = Array.isArray(readJson(scoresPath)) ? readJson(scoresPath) : [];
+    scores.push({
+        winner,
+        loser,
+        winnerScore,
+        loserScore,
+        submittedBy: interaction.user.id,
+        status: 'pending',
+        timestamp: Date.now()
+    });
+    writeJson(scoresPath, scores);
+    await interaction.reply({
+        content: `Score submitted: ${winner} ${winnerScore} - ${loser} ${loserScore}. Awaiting approval.`,
+        components: [
+            {
+                type: 1,
+                components: [
+                    { type: 2, style: 3, label: 'Approve', custom_id: 'approve_score' },
+                    { type: 2, style: 4, label: 'Deny', custom_id: 'deny_score' }
+                ]
+            }
+        ]
+    });
+}
+
+// Handler for Approve button
+export async function handleApproveScore(interaction, scoreIndex) {
+    const scores = Array.isArray(readJson(scoresPath)) ? readJson(scoresPath) : [];
+    const standings = readJson(standingsPath);
+    const score = scores[scoreIndex];
+    if (!score || score.status !== 'pending') return interaction.reply({ content: 'Score not found or already processed.', ephemeral: true });
+
+    // Update standings
+    standings[score.winner].wins += 1;
+    standings[score.winner].games += 1;
+    standings[score.winner].pointsFor += score.winnerScore;
+    standings[score.winner].pointsAgainst += score.loserScore;
+
+    standings[score.loser].losses += 1;
+    standings[score.loser].games += 1;
+    standings[score.loser].pointsFor += score.loserScore;
+    standings[score.loser].pointsAgainst += score.winnerScore;
+
+    score.status = 'approved';
+    writeJson(scoresPath, scores);
+    writeJson(standingsPath, standings);
+
+    await interaction.update({ content: 'Score approved and standings updated.', components: [] });
+}
+
+// Handler for Deny button
+export async function handleDenyScore(interaction, scoreIndex) {
+    const scores = Array.isArray(readJson(scoresPath)) ? readJson(scoresPath) : [];
+    const score = scores[scoreIndex];
+    if (!score || score.status !== 'pending') return interaction.reply({ content: 'Score not found or already processed.', ephemeral: true });
+
+    score.status = 'denied';
+    writeJson(scoresPath, scores);
+
+    await interaction.update({ content: 'Score denied. Please resubmit if needed.', components: [] });
 }
 export const customId_submit_team_comparison = 'submit_team_comparison';
 export const customId_modal_set_game_info = 'modal_set_game_info';
@@ -94,18 +167,8 @@ async function handleSetGameInfoModal(interaction) {
     let components = [
         new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setCustomId(`submit_score_${teamA.replace(/\s+/g, '_').toLowerCase()}`)
-                .setLabel(`${teamA} Submit Score`)
-                .setStyle(ButtonStyle.Primary),
-            new ButtonBuilder()
-                .setCustomId(`submit_score_${teamB.replace(/\s+/g, '_').toLowerCase()}`)
-                .setLabel(`${teamB} Submit Score`)
-                .setStyle(ButtonStyle.Primary)
-        ),
-        new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId('submit_team_comparison')
-                .setLabel('Submit Team Comparison')
+                .setCustomId('submit_score')
+                .setLabel('Submit Score')
                 .setStyle(ButtonStyle.Success)
         ),
         new ActionRowBuilder().addComponents(
@@ -128,53 +191,10 @@ async function handleSetGameInfoModal(interaction) {
 // ...existing code for other handlers...
 
 // Stub: handleBoxScoreImage
-async function handleBoxScoreImage(message) {
-    const attachment = message.attachments?.first();
-    if (!attachment) {
-        await message.channel.send('No image attachment found. Please upload your box score as a file.');
-        return;
-    }
-    await message.channel.send('Processing box score image...');
-    const imageUrl = attachment.url;
-    try {
-        const response = await fetch(imageUrl);
-        const imageBuffer = await response.arrayBuffer();
-        const result = await Tesseract.recognize(Buffer.from(imageBuffer), 'eng', { logger: m => console.log(m) });
-        const text = result.data.text;
-        const threadId = message.channel.id;
-        if (!pendingOcrResults.has(threadId)) pendingOcrResults.set(threadId, {});
-        pendingOcrResults.get(threadId).boxScores = pendingOcrResults.get(threadId).boxScores || [];
-        pendingOcrResults.get(threadId).boxScores.push({ user: message.author.id, text });
-        await message.channel.send(`Box Score processed for ${message.author}. Text:\n\n${text}`);
-    } catch (err) {
-        await message.channel.send('Failed to process image. Please try again or use a clearer image.');
-        console.error('[OCR ERROR]', err);
-    }
-}
+// Box score image logic removed for new workflow
 
 // Stub: handleTeamComparisonImage
-async function handleTeamComparisonImage(message) {
-    const attachment = message.attachments?.first();
-    if (!attachment) {
-        await message.channel.send('No image attachment found. Please upload your team comparison as a file.');
-        return;
-    }
-    await message.channel.send('Processing team comparison image...');
-    const imageUrl = attachment.url;
-    try {
-        const response = await fetch(imageUrl);
-        const imageBuffer = await response.arrayBuffer();
-        const result = await Tesseract.recognize(Buffer.from(imageBuffer), 'eng', { logger: m => console.log(m) });
-        const text = result.data.text;
-        const threadId = message.channel.id;
-        if (!pendingOcrResults.has(threadId)) pendingOcrResults.set(threadId, {});
-        pendingOcrResults.get(threadId).teamComparison = { user: message.author.id, text };
-        await message.channel.send(`Team Comparison processed for ${message.author}. Text:\n\n${text}`);
-    } catch (err) {
-        await message.channel.send('Failed to process image. Please try again or use a clearer image.');
-        console.error('[OCR ERROR]', err);
-    }
-}
+// Team comparison image logic removed for new workflow
 
 // ...existing code for exports...
 export const customId_set_game_info = 'set_game_info';
